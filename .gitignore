@@ -1,0 +1,4 @@
+*\#*
+*.bmk
+node_modules
+config.js

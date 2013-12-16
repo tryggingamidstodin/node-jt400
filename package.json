@@ -1,0 +1,22 @@
+{
+  "name": "jt400",
+  "version": "0.0.0",
+  "description": "jt400 wrapper for nodejs",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jakobrun/jt400.git"
+  },
+  "author": "",
+  "license": "mit",
+  "bugs": {
+    "url": "https://github.com/jakobrun/jt400/issues"
+  },
+  "dependencies": {
+    "java": "~0.2.9",
+    "q": "~0.9.7"
+  },
+  "devDependencies": {
+    "jasmine-node": "~1.11.0"
+  }
+}

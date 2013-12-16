@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project name="${project.name}" default="archive">
+  	<path id="project.classpath">
+		<fileset dir="lib">
+			<include name="json-simple-1.1.1.jar"/>
+			<include name="jt400.jar"/>
+		</fileset>
+  	</path>
+	<target name="build">
+		<javac srcdir="src" destdir="build" encoding="utf-8" includeantruntime="false">
+			<include name="**/*.java" />
+			<classpath refid="project.classpath"/>
+		</javac>
+	</target>
+	<target name="archive" depends="build">
+		<jar destfile="lib/jt400wrap.jar" 
+					compress="true">
+				 	<fileset dir="build" />
+		</jar>	
+	</target>
+</project>
