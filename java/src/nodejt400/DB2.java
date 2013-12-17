@@ -92,6 +92,31 @@ public class DB2
 		return array.toJSONString();
 	}
 
+	public int executeUpdate(String sql)
+			throws Exception
+	{
+		Connection c = sqlPool.getConnection();
+		PreparedStatement st = null;
+		JSONArray array = new JSONArray();
+		int result = 0;
+		try
+		{
+			st = c.prepareStatement(sql);
+			result = st.executeUpdate();
+		}
+		catch (Exception e)
+		{
+			throw e;
+		}
+		finally
+		{
+			if (st != null)
+				st.close();
+			c.close();
+		}
+		return result;
+	}
+
 	private String trim(String value)
 	{
 		return value == null ? null : value.trim();
