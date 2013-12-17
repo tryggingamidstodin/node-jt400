@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -56,7 +57,7 @@ public class DB2
 		return new DB2(conf);
 	}
 
-	public String executeQuery(String sql)
+	public String executeQuery(String sql, String paramsJson)
 			throws Exception
 	{
 		Connection c = sqlPool.getConnection();
@@ -65,6 +66,7 @@ public class DB2
 		try
 		{
 			st = c.prepareStatement(sql);
+			setParams(paramsJson, st);
 			ResultSet rs = st.executeQuery();
 			ResultSetMetaData metaData = rs.getMetaData();
 			while (rs.next())
@@ -92,16 +94,16 @@ public class DB2
 		return array.toJSONString();
 	}
 
-	public int executeUpdate(String sql)
+	public int executeUpdate(String sql, String paramsJson)
 			throws Exception
 	{
 		Connection c = sqlPool.getConnection();
 		PreparedStatement st = null;
-		JSONArray array = new JSONArray();
 		int result = 0;
 		try
 		{
 			st = c.prepareStatement(sql);
+			setParams(paramsJson, st);
 			result = st.executeUpdate();
 		}
 		catch (Exception e)
@@ -115,6 +117,27 @@ public class DB2
 			c.close();
 		}
 		return result;
+	}
+
+	private void setParams(String paramsJson, PreparedStatement st) throws SQLException
+	{
+		String[] params = parseParams(paramsJson);
+		for (int i = 0; i < params.length; i++)
+		{
+			st.setString(i + 1, params[i]);
+		}
+	}
+
+	private String[] parseParams(String paramsJson)
+	{
+		JSONArray jsonArray = (JSONArray) JSONValue.parse(paramsJson);
+		int n = jsonArray.size();
+		String[] params = new String[n];
+		for (int i = 0; i < n; i++)
+		{
+			params[i] = (String) jsonArray.get(i);
+		}
+		return params;
 	}
 
 	private String trim(String value)
