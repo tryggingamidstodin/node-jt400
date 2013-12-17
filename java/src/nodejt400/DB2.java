@@ -121,21 +121,33 @@ public class DB2
 
 	private void setParams(String paramsJson, PreparedStatement st) throws SQLException
 	{
-		String[] params = parseParams(paramsJson);
+		Object[] params = parseParams(paramsJson);
 		for (int i = 0; i < params.length; i++)
 		{
-			st.setString(i + 1, params[i]);
+			Object value = params[i];
+			if (value instanceof Long)
+			{
+				st.setLong(i + 1, (Long) value);
+			}
+			else if (value instanceof Double)
+			{
+				st.setDouble(i + 1, (Double) value);
+			}
+			else
+			{
+				st.setString(i + 1, value.toString());
+			}
 		}
 	}
 
-	private String[] parseParams(String paramsJson)
+	private Object[] parseParams(String paramsJson)
 	{
 		JSONArray jsonArray = (JSONArray) JSONValue.parse(paramsJson);
 		int n = jsonArray.size();
-		String[] params = new String[n];
+		Object[] params = new Object[n];
 		for (int i = 0; i < n; i++)
 		{
-			params[i] = (String) jsonArray.get(i);
+			params[i] = jsonArray.get(i);
 		}
 		return params;
 	}

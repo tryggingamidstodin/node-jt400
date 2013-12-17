@@ -18,7 +18,8 @@ describe('db2', function () {
 	});
 
 	it('should execute query with params', function (done) {
-		db2.executeQuery('select * from tsttbl where timi=?', ['2013-12-18-12.06.45.000']).then( function (data) {
+		db2.executeQuery('select * from tsttbl where baz=?', [123.23]).then( function (data) {
+			expect(data.length).toBe(1);
 			done();
 		}, onFail(done));
 	});
@@ -31,7 +32,7 @@ describe('db2', function () {
 	});
 
 	it('should execute update', function (done) {
-		db2.executeUpdate('update tsttbl set foo=? where testtblid=?', ['ble', '2422'])
+		db2.executeUpdate('update tsttbl set foo=? where testtblid=?', ['ble', 2422])
 			.then(function (nUpdated) {
 				done();
 			}, onFail(done));
