@@ -73,7 +73,7 @@ public class DB2
 				int columnCount = metaData.getColumnCount();
 				for (int i = 1; i <= columnCount; i++)
 				{
-					json.put(metaData.getColumnName(i), rs.getString(i));
+					json.put(metaData.getColumnName(i), trim(rs.getString(i)));
 				}
 				array.add(json);
 			}
@@ -89,8 +89,12 @@ public class DB2
 				st.close();
 			c.close();
 		}
-
 		return array.toJSONString();
+	}
+
+	private String trim(String value)
+	{
+		return value == null ? null : value.trim();
 	}
 }
 

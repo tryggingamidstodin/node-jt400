@@ -5,8 +5,8 @@ var config = require('../config'),
 describe('db2', function () {
 
 	it('should config', function (done) {
-		db2.executeQuery('select * from tsttblfd', function (err, data) {
-			console.log(err, data);
+		db2.executeQuery('select * from tsttbl').then( function (data) {
+			console.log(data);
 			done();
 		});
 	});
