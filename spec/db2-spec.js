@@ -1,6 +1,6 @@
 'use strict';
 var config = require('../config'),
-	db2 = require('../db2').init(config);
+	db2 = require('../lib/db2').init(config);
 
 describe('db2', function () {
 
