@@ -14,7 +14,8 @@
   },
   "dependencies": {
     "java": "~0.2.9",
-    "q": "~0.9.7"
+    "q": "~0.9.7",
+    "underscore": "~1.5.2"
   },
   "devDependencies": {
     "jasmine-node": "~1.11.0"
