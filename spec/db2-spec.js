@@ -35,6 +35,7 @@ describe('db2', function () {
 
 	it('should insert records', function () {
 		expect(idList.length).toBe(2);
+		expect(idList[0]).toBeGreaterThan(1);
 	});
 
 	it('should execute query', function (done) {
