@@ -13,7 +13,7 @@
     "url": "https://github.com/jakobrun/jt400/issues"
   },
   "dependencies": {
-    "java": "~0.2.9",
+    "java": "~0.2.2",
     "q": "~0.9.7",
     "underscore": "~1.5.2"
   },
