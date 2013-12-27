@@ -8,10 +8,9 @@ function wrap(fn) {
 	};
 }
 
-function onFail(done) {
+function onFail(that, done) {
 	return function (err) {
-		console.log(err);
-		expect(true).toBe(false);
+		that.fail(err);
 		done();
 	};
 }
@@ -20,7 +19,7 @@ describe('db2', function () {
 	var idList;
 
 	beforeEach(function (done) {
-		db2.executeUpdate('delete from tsttbl')
+		db2.update('delete from tsttbl')
 		.then(function () {
 			var records = [{foo: 'bar', bar: 123, baz: '123.23'},
 							{foo: 'bar2', bar: 124, baz: '321.32'}];
@@ -30,7 +29,7 @@ describe('db2', function () {
 			idList = idListResult;
 			done();
 		})
-		.fail(onFail(done));
+		.fail(onFail(this, done));
 	});
 
 	it('should insert records', function () {
@@ -39,33 +38,33 @@ describe('db2', function () {
 	});
 
 	it('should execute query', function (done) {
-		db2.executeQuery('select * from tsttbl').then( function (data) {
+		db2.query('select * from tsttbl').then( function (data) {
 			expect(data.length).toBe(2);
 			done();
-		}, onFail(done));
+		}, onFail(this, done));
 	});
 
 	it('should execute query with params', function (done) {
-		db2.executeQuery('select * from tsttbl where baz=?', [123.23]).then( function (data) {
+		db2.query('select * from tsttbl where baz=?', [123.23]).then( function (data) {
 			expect(data.length).toBe(1);
 			done();
-		}, onFail(done));
+		}, onFail(this, done));
 	});
 
 	it('should execute update', function (done) {
-		db2.executeUpdate('update tsttbl set foo=\'bar3\' where foo=\'bar\'')
+		db2.update('update tsttbl set foo=\'bar3\' where foo=\'bar\'')
 			.then(function (nUpdated) {
 				expect(nUpdated).toBe(1);
 				done();
-			}, onFail(done));
+			}, onFail(this, done));
 	});
 
 	it('should execute update', function (done) {
-		db2.executeUpdate('update tsttbl set foo=? where testtblid=?', ['ble', 0])
+		db2.update('update tsttbl set foo=? where testtblid=?', ['ble', 0])
 			.then(function (nUpdated) {
 				expect(nUpdated).toBe(0);
 				done();
-			}, onFail(done));
+			}, onFail(this, done));
 	});
 
 
