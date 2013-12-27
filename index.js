@@ -1,1 +1,1 @@
-module.exports = require('./lib/db2.js');
+module.exports = require('./lib/jt400.js');
