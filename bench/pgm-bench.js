@@ -1,7 +1,6 @@
 /*global suite, set, bench, console */
 'use strict';
-var config = require('../config'),
-	jt400 = require('../lib/db2').init(config);
+var jt400 = require('../lib/jt400');
 
 suite('pgm', function () {
 	var log = console.log.bind(console),

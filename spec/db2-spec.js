@@ -1,6 +1,5 @@
 'use strict';
-var config = require('../config'),
-	db2 = require('../lib/db2').init(config);
+var jt400 = require('../lib/jt400');
 
 function wrap(fn) {
 	return function () {
@@ -15,15 +14,15 @@ function onFail(that, done) {
 	};
 }
 
-describe('db2', function () {
+describe('jt400', function () {
 	var idList;
 
 	beforeEach(function (done) {
-		db2.update('delete from tsttbl')
+		jt400.update('delete from tsttbl')
 		.then(function () {
 			var records = [{foo: 'bar', bar: 123, baz: '123.23'},
 							{foo: 'bar2', bar: 124, baz: '321.32'}];
-			return db2.insertList('tsttbl', 'testtblid', records);
+			return jt400.insertList('tsttbl', 'testtblid', records);
 		})
 		.then(function (idListResult) {
 			idList = idListResult;
@@ -38,21 +37,21 @@ describe('db2', function () {
 	});
 
 	it('should execute query', function (done) {
-		db2.query('select * from tsttbl').then( function (data) {
+		jt400.query('select * from tsttbl').then( function (data) {
 			expect(data.length).toBe(2);
 			done();
 		}, onFail(this, done));
 	});
 
 	it('should execute query with params', function (done) {
-		db2.query('select * from tsttbl where baz=?', [123.23]).then( function (data) {
+		jt400.query('select * from tsttbl where baz=?', [123.23]).then( function (data) {
 			expect(data.length).toBe(1);
 			done();
 		}, onFail(this, done));
 	});
 
 	it('should execute update', function (done) {
-		db2.update('update tsttbl set foo=\'bar3\' where foo=\'bar\'')
+		jt400.update('update tsttbl set foo=\'bar3\' where foo=\'bar\'')
 			.then(function (nUpdated) {
 				expect(nUpdated).toBe(1);
 				done();
@@ -60,7 +59,7 @@ describe('db2', function () {
 	});
 
 	it('should execute update', function (done) {
-		db2.update('update tsttbl set foo=? where testtblid=?', ['ble', 0])
+		jt400.update('update tsttbl set foo=? where testtblid=?', ['ble', 0])
 			.then(function (nUpdated) {
 				expect(nUpdated).toBe(0);
 				done();

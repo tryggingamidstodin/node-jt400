@@ -23,11 +23,11 @@ import com.ibm.as400.access.ProgramCall;
 import com.ibm.as400.access.ProgramParameter;
 import com.ibm.as400.access.QSYSObjectPathName;
 
-public class DB2
+public class JT400
 {
 	private final AS400JDBCConnectionPool sqlPool;
 
-	public DB2(JSONObject jsonConf)
+	public JT400(JSONObject jsonConf)
 	{
 		Props conf = new Props(jsonConf);
 		AS400JDBCConnectionPoolDataSource ds = new AS400JDBCConnectionPoolDataSource();
@@ -61,10 +61,10 @@ public class DB2
 		this.sqlPool = new AS400JDBCConnectionPool(ds);
 	}
 
-	public static final DB2 getInstance(String jsonConf)
+	public static final JT400 getInstance(String jsonConf)
 	{
 		JSONObject conf = (JSONObject) JSONValue.parse(jsonConf);
-		return new DB2(conf);
+		return new JT400(conf);
 	}
 
 	public String query(String sql, String paramsJson)

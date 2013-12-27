@@ -1,6 +1,5 @@
 'use strict';
-var config = require('../config'),
-	jt400 = require('../lib/db2').init(config);
+var jt400 = require('../lib/jt400');
 
 function onError(that, done) {
 	return function (err) {
