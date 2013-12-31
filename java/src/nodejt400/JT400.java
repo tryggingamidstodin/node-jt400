@@ -150,6 +150,11 @@ public class JT400
 		}
 	}
 
+	public void close()
+	{
+		sqlPool.close();
+	}
+
 	public Pgm pgm(String programName, String paramsSchemaJsonStr)
 	{
 		return new Pgm(programName, paramsSchemaJsonStr);
