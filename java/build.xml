@@ -3,6 +3,7 @@
   	<path id="project.classpath">
 		<fileset dir="lib">
 			<include name="json-simple-1.1.1.jar"/>
+			<include name="hsqldb.jar"/>
 			<include name="jt400.jar"/>
 		</fileset>
   	</path>
