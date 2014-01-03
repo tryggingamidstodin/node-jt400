@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Types;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -99,6 +100,10 @@ public class JdbcJsonClient
 			else if (value instanceof Double)
 			{
 				st.setDouble(i + 1, (Double) value);
+			}
+			else if (value == null)
+			{
+				st.setNull(i + 1, Types.VARCHAR);
 			}
 			else
 			{
