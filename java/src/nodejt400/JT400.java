@@ -93,6 +93,12 @@ public class JT400 implements ConnectionProvider
 		return client.update(sql, paramsJson);
 	}
 
+	public double insertAndGetId(String sql, String paramsJson)
+			throws Exception
+	{
+		return client.insertAndGetId(sql, paramsJson);
+	}
+
 	public void close()
 	{
 		sqlPool.close();

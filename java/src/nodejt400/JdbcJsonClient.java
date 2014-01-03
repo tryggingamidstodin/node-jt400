@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Types;
 
 import org.json.simple.JSONArray;
@@ -73,6 +74,36 @@ public class JdbcJsonClient
 			st = c.prepareStatement(sql);
 			setParams(paramsJson, st);
 			result = st.executeUpdate();
+		}
+		catch (Exception e)
+		{
+			throw e;
+		}
+		finally
+		{
+			if (st != null)
+				st.close();
+			c.close();
+		}
+		return result;
+	}
+
+	public double insertAndGetId(String sql, String paramsJson)
+			throws Exception
+	{
+		Connection c = pool.getConnection();
+		PreparedStatement st = null;
+		double result = 0;
+		try
+		{
+			st = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+			setParams(paramsJson, st);
+			st.executeUpdate();
+			ResultSet keys = st.getGeneratedKeys();
+			if (keys.next())
+			{
+				result = keys.getDouble(1);
+			}
 		}
 		catch (Exception e)
 		{

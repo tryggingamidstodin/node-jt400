@@ -33,6 +33,12 @@ public class HsqlClient implements ConnectionProvider
 		return client.update(sql, paramsJson);
 	}
 
+	public double insertAndGetId(String sql, String paramsJson)
+			throws Exception
+	{
+		return client.insertAndGetId(sql, paramsJson);
+	}
+
 	/**
 	 * Mock program call
 	 * @param programName
