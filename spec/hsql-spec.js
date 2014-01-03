@@ -36,6 +36,21 @@ describe('hsql in memory', function () {
 		.fail(onFail(this, done));
 	});
 
+	it('should insert list', function (done) {
+		jt400.insertList('testtbl', 'ID', [
+			{ID: '123', NAME: 'foo'},
+			{ID: '124', NAME: 'bar'}
+		])
+		.then(function (res) {
+			return jt400.query('select * from testtbl');
+		})
+		.then(function (res) {
+			expect(res.length).toBe(3);
+			done();
+		})
+		.fail(onFail(this, done));
+	});
+
 	it('should mock pgm call', function (done) {
 		var callFoo = jt400.pgm('foo', {name: 'bar', size: 10}, {name: 'baz', size: 9, decimals: 2}),
 			input = {bar: 'a', baz: 10};
