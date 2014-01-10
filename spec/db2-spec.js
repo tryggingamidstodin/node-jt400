@@ -31,6 +31,11 @@ describe('jt400', function () {
 		.fail(onFail(this, done));
 	});
 
+	it('should return same instance in configure', function () {
+		expect(jt400).toBe(jt400.configure({host: 'foo'}));
+		jt400.configure({});
+	});
+
 	it('should insert records', function () {
 		expect(idList.length).toBe(2);
 		expect(idList[0]).toBeGreaterThan(1);
