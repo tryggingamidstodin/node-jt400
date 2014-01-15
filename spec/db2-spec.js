@@ -71,5 +71,18 @@ describe('jt400', function () {
 			}, onFail(this, done));
 	});
 
+	it('should insert dates and timestamps', function (done) {
+		var params = [new Date(2014, 0, 15), new Date(2014, 0, 16, 15, 32, 5), 'bar'];
+		jt400.update('update tsttbl set fra=?, timi=? where foo=?', params)
+			.then(function (nUpdated) {
+				return jt400.query('select fra, timi from tsttbl where foo=?', ['bar']);
+			})
+			.then(function (res) {
+				expect(res[0].FRA).toEqual('2014-01-15');
+				expect(res[0].TIMI).toEqual('2014-01-16 15:32:05.000000');
+				done();
+			}, onFail(this, done));
+	});
+
 
 });

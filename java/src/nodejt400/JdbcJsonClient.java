@@ -47,6 +47,7 @@ public class JdbcJsonClient
 		}
 		catch (Exception e)
 		{
+			System.err.println(sql + " params: " + paramsJson);
 			throw e;
 		}
 		finally
@@ -77,6 +78,7 @@ public class JdbcJsonClient
 		}
 		catch (Exception e)
 		{
+			System.err.println(sql + " params: " + paramsJson);
 			throw e;
 		}
 		finally
@@ -107,6 +109,7 @@ public class JdbcJsonClient
 		}
 		catch (Exception e)
 		{
+			System.err.println(sql + " params: " + paramsJson);
 			throw e;
 		}
 		finally
@@ -124,21 +127,29 @@ public class JdbcJsonClient
 		for (int i = 0; i < params.length; i++)
 		{
 			Object value = params[i];
-			if (value instanceof Long)
+			try
 			{
-				st.setLong(i + 1, (Long) value);
+				if (value instanceof Long)
+				{
+					st.setLong(i + 1, (Long) value);
+				}
+				else if (value instanceof Double)
+				{
+					st.setDouble(i + 1, (Double) value);
+				}
+				else if (value == null)
+				{
+					st.setNull(i + 1, Types.VARCHAR);
+				}
+				else
+				{
+					st.setString(i + 1, value.toString());
+				}
 			}
-			else if (value instanceof Double)
+			catch (SQLException e)
 			{
-				st.setDouble(i + 1, (Double) value);
-			}
-			else if (value == null)
-			{
-				st.setNull(i + 1, Types.VARCHAR);
-			}
-			else
-			{
-				st.setString(i + 1, value.toString());
+				System.err.println("Value: " + value + ", index: " + i);
+				throw e;
 			}
 		}
 	}
