@@ -87,6 +87,12 @@ public class JT400 implements ConnectionProvider
 		return client.query(sql, paramsJson);
 	}
 
+	public String executeQuery(String sql, String paramsJson)
+			throws Exception
+	{
+		return client.executeQuery(sql, paramsJson);
+	}
+
 	public int update(String sql, String paramsJson)
 			throws Exception
 	{

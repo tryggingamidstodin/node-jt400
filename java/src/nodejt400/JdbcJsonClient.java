@@ -59,6 +59,59 @@ public class JdbcJsonClient
 		return array.toJSONString();
 	}
 
+	public String executeQuery(String sql, String paramsJson)
+			throws Exception
+	{
+		Connection c = pool.getConnection();
+		PreparedStatement st = null;
+		JSONObject result = new JSONObject();
+		try
+		{
+			JSONObject metadataJson = new JSONObject();
+			JSONArray columns = new JSONArray();
+			JSONArray data = new JSONArray();
+			result.put("metadata", metadataJson);
+			result.put("data", data);
+			metadataJson.put("columns", columns);
+			st = c.prepareStatement(sql);
+			setParams(paramsJson, st);
+			ResultSet rs = st.executeQuery();
+			ResultSetMetaData metaData = rs.getMetaData();
+			int columnCount = metaData.getColumnCount();
+			for (int i = 1; i <= columnCount; i++)
+			{
+				JSONObject column = new JSONObject();
+				columns.add(column);
+				column.put("name", metaData.getColumnName(i));
+				column.put("typeName", metaData.getColumnTypeName(i));
+				column.put("precision", metaData.getPrecision(i));
+				column.put("scale", metaData.getScale(i));
+			}
+			while (rs.next())
+			{
+				JSONArray row = new JSONArray();
+				for (int i = 1; i <= columnCount; i++)
+				{
+					row.add(trim(rs.getString(i)));
+				}
+				data.add(row);
+			}
+
+		}
+		catch (Exception e)
+		{
+			System.err.println(sql + " params: " + paramsJson);
+			throw e;
+		}
+		finally
+		{
+			if (st != null)
+				st.close();
+			c.close();
+		}
+		return result.toJSONString();
+	}
+
 	private String trim(String value)
 	{
 		return value == null ? null : value.trim();
