@@ -8,7 +8,7 @@
 		</fileset>
   	</path>
 	<target name="build">
-		<javac srcdir="src" destdir="build" encoding="utf-8" includeantruntime="false">
+		<javac srcdir="src" destdir="build" encoding="utf-8" includeantruntime="false" target="1.6">
 			<include name="**/*.java" />
 			<classpath refid="project.classpath"/>
 		</javac>
