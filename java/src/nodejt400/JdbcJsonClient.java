@@ -112,6 +112,89 @@ public class JdbcJsonClient
 		return result.toJSONString();
 	}
 
+	public String getMetaData(String catalog, String schema, String tableNamePattern) throws Exception{
+		StringBuffer sb = new StringBuffer();
+		String data = "";
+		StringReadStream stream = getMetaDataAsStream(catalog, schema, tableNamePattern);
+		while((data = stream.read()) != null)
+		{
+			sb.append(data);
+		}
+		return sb.toString();
+	}
+
+	private static class MetaDataReadStream implements StringReadStream
+	{
+		private Connection c;
+		private ResultSet rs;
+		private boolean next;
+		private String catalog;
+		private String schema;
+		private String sep = "[";
+		
+		public MetaDataReadStream(Connection c, String catalog, String schema, String tableNamePattern) throws Exception
+		{
+			this.c = c;
+			this.rs = c.getMetaData().getTables(catalog, schema, tableNamePattern, null);
+			this.catalog = catalog;
+			this.schema = schema;
+			this.next = rs.next();
+		}
+
+		public String read() throws Exception
+		{
+			if(next)
+			{
+				try
+				{
+					boolean moreCols = next;
+					JSONObject table = new JSONObject();
+					String tableName = rs.getString(3);
+					table.put("table", tableName);
+					table.put("remarks", rs.getString(5)==null?"":rs.getString(5));
+					table.put("schema", rs.getString(2));
+					JSONArray columns = new JSONArray();
+					table.put("columns",columns);
+					ResultSet crs = c.getMetaData().getColumns(catalog, schema, tableName, "%");
+					while(crs.next())
+					{
+						JSONObject column = new JSONObject();
+						columns.add(column);
+						column.put("name", crs.getString(4));
+						column.put("typeName", crs.getString(6));
+						column.put("precision", crs.getInt(7));
+						column.put("scale", crs.getInt(9));
+					}
+					crs.close();
+					next = rs.next();
+					String res = sep + table.toJSONString();
+					sep = ",";
+					return next ? res : res + "]";
+				}
+				catch(Exception ex){
+					c.close();
+					throw ex;
+				}
+			}
+			c.close();
+			return null;
+		}
+	}
+
+	public StringReadStream getMetaDataAsStream(String catalog, String schema, String tableNamePattern) throws Exception{
+		Connection c = pool.getConnection();
+		try
+		{
+			return new MetaDataReadStream(c, catalog, schema, tableNamePattern);
+		}
+		catch (Exception e)
+		{
+			c.close();
+			throw e;
+		}
+		
+	}
+
 	private String trim(String value)
 	{
 		return value == null ? null : value.trim();

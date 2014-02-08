@@ -18,6 +18,7 @@
     "underscore": "~1.5.2"
   },
   "devDependencies": {
-    "jasmine-node": "~1.11.0"
+    "jasmine-node": "~1.11.0",
+    "JSONStream": "~0.7.1"
   }
 }
