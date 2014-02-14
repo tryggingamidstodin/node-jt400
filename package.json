@@ -7,6 +7,9 @@
     "type": "git",
     "url": "git://github.com/jakobrun/jt400.git"
   },
+  "scripts": {
+    "test": "jasmine-node --matchall --autotest spec"
+  },
   "author": "",
   "license": "mit",
   "bugs": {
@@ -14,7 +17,7 @@
   },
   "dependencies": {
     "java": "~0.2.2",
-    "q": "~0.9.7",
+    "q": "~1.0.0",
     "underscore": "~1.5.2"
   },
   "devDependencies": {

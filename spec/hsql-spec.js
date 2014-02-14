@@ -122,7 +122,7 @@ describe('hsql in memory', function() {
 			.fail(onFail(this, done));
 	});
 
-	it('should return metadata', function (done) {
+	xit('should return metadata', function (done) {
 		jt400.getMetaData({schema: 'PUBLIC'}).then(function (result) {
 			expect(result).toEqual([{
 				schema: 'PUBLIC',
@@ -135,7 +135,7 @@ describe('hsql in memory', function() {
 			.fail(onFail(this, done));
 	});
 
-	it('should return metadata as stream', function (done) {
+	xit('should return metadata as stream', function (done) {
 		var stream = jt400.getMetaDataAsStream({schema: 'PUBLIC'})
 			.pipe(JSONStream.parse()),
 			schema;
