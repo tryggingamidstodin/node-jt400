@@ -8,7 +8,7 @@
     "url": "git://github.com/jakobrun/jt400.git"
   },
   "scripts": {
-    "test": "jasmine-node --matchall --autotest spec"
+    "test": "jasmine-node spec --matchall --autotest --watch lib/*"
   },
   "author": "",
   "license": "mit",

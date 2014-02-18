@@ -87,20 +87,21 @@ public class JT400 implements ConnectionProvider
 		return client.query(sql, paramsJson);
 	}
 
-	public String executeQuery(String sql, String paramsJson)
+	public StringReadStream executeAsStream(String sql, String paramsJson)
 			throws Exception
 	{
-		return client.executeQuery(sql, paramsJson);
+		return client.executeAsStream(sql, paramsJson);
 	}
 
-	public String getMetaData(String catalog, String schema, String table) throws Exception
+	public StringReadStream getTablesAsStream(String catalog, String schema, String table) throws Exception
 	{
-		return client.getMetaData(catalog, schema, table);
-	}	
+		return client.getTablesAsStream(catalog, schema, table);
+	}
 
-	public StringReadStream getMetaDataAsStream(String catalog, String schema, String table) throws Exception
+	public String getColumns(String catalog, String schema, String tableNamePattern, String columnNamePattern)
+	throws Exception
 	{
-		return client.getMetaDataAsStream(catalog, schema, table);
+		return client.getColumns(catalog, schema, tableNamePattern, columnNamePattern);
 	}
 
 	public int update(String sql, String paramsJson)
