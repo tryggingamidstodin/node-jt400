@@ -59,83 +59,7 @@ public class JdbcJsonClient
 		return array.toJSONString();
 	}
 
-	private static class ResultSetStream implements StringReadStream
-	{
-		private Connection c;
-		private PreparedStatement st;
-		private ResultSet rs;
-		private ResultSetMetaData metaData;
-		private int columnCount;
-		private int bufferSize = 100;
-		private boolean next;
-		
-		public ResultSetStream(Connection c, PreparedStatement st, ResultSet rs) throws Exception
-		{
-			this.c = c;
-			this.st = st;
-			this.rs = rs;
-			this.metaData = rs.getMetaData();
-			this.columnCount = metaData.getColumnCount();
-			this.next = rs.next();
-		}
-
-		public void close() throws Exception
-		{
-			next = false;
-			rs.close();
-			st.close();
-			c.close();
-		}
-
-		public String getMetaData() throws Exception
-		{
-			JSONObject metadataJson = new JSONObject();
-			JSONArray columns = new JSONArray();
-			metadataJson.put("columns", columns);
-			for (int i = 1; i <= columnCount; i++)
-			{
-				JSONObject column = new JSONObject();
-				columns.add(column);
-				column.put("name", metaData.getColumnName(i));
-				column.put("typeName", metaData.getColumnTypeName(i));
-				column.put("precision", metaData.getPrecision(i));
-				column.put("scale", metaData.getScale(i));
-			}
-			return metadataJson.toJSONString();
-		}
-
-		public String read() throws Exception
-		{
-			if(next)
-			{
-				try
-				{
-					int i = 0;
-					JSONArray rows = new JSONArray();
-					while(next && i < bufferSize) 
-					{
-						JSONArray row = new JSONArray();
-						for (int j = 1; j <= columnCount; j++)
-						{
-							row.add(trim(rs.getString(j)));
-						}
-						rows.add(row);
-						next = rs.next();
-						i++;
-					}
-					return rows.toJSONString();
-				}
-				catch(Exception ex){
-					close();
-					throw ex;
-				}
-			}
-			close();
-			return null;
-		}
-	}
-
-	public StringReadStream executeAsStream(String sql, String paramsJson)
+	public ResultSetStream executeAsStream(String sql, String paramsJson)
 			throws Exception
 	{
 		Connection c = pool.getConnection();
@@ -159,65 +83,8 @@ public class JdbcJsonClient
 		}
 	}
 
-	private static class TablesReadStream implements StringReadStream
+	public TablesReadStream getTablesAsStream(String catalog, String schema, String tableNamePattern) throws Exception
 	{
-		private Connection c;
-		private ResultSet rs;
-		private boolean next;
-		private int bufferSize = 100;
-		
-		public TablesReadStream(Connection c, String catalog, String schema, String tableNamePattern) throws Exception
-		{
-			this.c = c;
-			this.rs = c.getMetaData().getTables(catalog, schema, tableNamePattern, null);
-			this.next = rs.next();
-		}
-
-		public String read() throws Exception
-		{
-			if(next)
-			{
-				try
-				{
-					JSONArray rows = new JSONArray();
-					int i = 0;
-					while(next && i < bufferSize)
-					{
-						JSONObject table = new JSONObject();
-						String tableName = rs.getString(3);
-						table.put("table", tableName);
-						table.put("remarks", rs.getString(5) == null ? "" : rs.getString(5));
-						table.put("schema", rs.getString(2));
-						rows.add(table);
-						next = rs.next();
-						i++;
-					}
-
-					return rows.toJSONString();
-				}
-				catch(Exception ex){
-					c.close();
-					throw ex;
-				}
-			}
-			c.close();
-			return null;
-		}
-
-		public String getMetaData() throws Exception
-		{
-			return null;
-		}
-
-		public void close() throws Exception
-		{
-			rs.close();
-			c.close();
-		}
-
-	}
-
-	public StringReadStream getTablesAsStream(String catalog, String schema, String tableNamePattern) throws Exception{
 		Connection c = pool.getConnection();
 		try
 		{
@@ -257,7 +124,7 @@ public class JdbcJsonClient
 		}		
 	}
 
-	private static final String trim(String value)
+	public static final String trim(String value)
 	{
 		return value == null ? null : value.trim();
 	}
