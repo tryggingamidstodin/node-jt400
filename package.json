@@ -5,15 +5,15 @@
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git://github.com/jakobrun/jt400.git"
+    "url": "git://github.com/tryggingamidstodin/jt400.git"
   },
   "scripts": {
-    "test": "jasmine-node spec --matchall --autotest --watch lib/*"
+    "test": "jasmine-node spec --matchall --autotest --watch ."
   },
   "author": "",
   "license": "mit",
   "bugs": {
-    "url": "https://github.com/jakobrun/jt400/issues"
+    "url": "https://github.com/tryggingamidstodin/jt400/issues"
   },
   "dependencies": {
     "java": "~0.2.2",
