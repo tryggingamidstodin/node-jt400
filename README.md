@@ -31,7 +31,7 @@ jt400.update('update FOO set BAR=? WHERE BAZ=?', [1, 'a'])
 ## SQL insert
 
 ```javascript
-insert list in one statement
+//insert list in one statement
 var tableName = 'foo',
     idColumn  = 'fooid',
     rows = [
