@@ -16,21 +16,26 @@ public class ResultSetStream
 
 	private final ResultSet rs;
 
-	private final ResultSetMetaData metaData;
-
 	private final int columnCount;
 
-	private final int bufferSize = 100;
+	private final int bufferSize;
 
 	private boolean next;
 
-	public ResultSetStream(Connection c, PreparedStatement st, ResultSet rs) throws Exception
+	private String sep = "[";
+
+	public ResultSetStream(Connection c, PreparedStatement st, ResultSet rs, int bufferSize, boolean loadMetadata) throws Exception
 	{
 		this.c = c;
 		this.st = st;
 		this.rs = rs;
-		this.metaData = rs.getMetaData();
+		this.bufferSize = bufferSize;
+		ResultSetMetaData metaData = rs.getMetaData();
 		this.columnCount = metaData.getColumnCount();
+		if(loadMetadata)
+		{
+			sep += getMetaData(metaData) + ",";
+		}
 		this.next = rs.next();
 	}
 
@@ -42,11 +47,9 @@ public class ResultSetStream
 		c.close();
 	}
 
-	public String getMetaData() throws Exception
+	private String getMetaData(ResultSetMetaData metaData) throws Exception
 	{
-		JSONObject metadataJson = new JSONObject();
 		JSONArray columns = new JSONArray();
-		metadataJson.put("columns", columns);
 		for (int i = 1; i <= columnCount; i++)
 		{
 			JSONObject column = new JSONObject();
@@ -56,7 +59,7 @@ public class ResultSetStream
 			column.put("precision", metaData.getPrecision(i));
 			column.put("scale", metaData.getScale(i));
 		}
-		return metadataJson.toJSONString();
+		return columns.toJSONString();
 	}
 
 	public String read() throws Exception
@@ -66,7 +69,7 @@ public class ResultSetStream
 			try
 			{
 				int i = 0;
-				JSONArray rows = new JSONArray();
+				StringBuffer sb = new StringBuffer();
 				while (next && i < bufferSize)
 				{
 					JSONArray row = new JSONArray();
@@ -74,11 +77,17 @@ public class ResultSetStream
 					{
 						row.add(JdbcJsonClient.trim(rs.getString(j)));
 					}
-					rows.add(row);
+					sb.append(sep);
+					sep = ",";
+					sb.append(row.toJSONString());
 					next = rs.next();
 					i++;
 				}
-				return rows.toJSONString();
+				if(!next)
+				{
+					sb.append("]");
+				}
+				return sb.toString();
 			}
 			catch (Exception ex)
 			{

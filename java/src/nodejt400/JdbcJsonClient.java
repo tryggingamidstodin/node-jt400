@@ -59,7 +59,7 @@ public class JdbcJsonClient
 		return array.toJSONString();
 	}
 
-	public ResultSetStream executeAsStream(String sql, String paramsJson)
+	public ResultSetStream executeAsStream(String sql, String paramsJson, int bufferSize, boolean metadata)
 			throws Exception
 	{
 		Connection c = pool.getConnection();
@@ -69,8 +69,7 @@ public class JdbcJsonClient
 			st = c.prepareStatement(sql);
 			setParams(paramsJson, st);
 			ResultSet rs = st.executeQuery();
-			return new ResultSetStream(c, st, rs);
-
+			return new ResultSetStream(c, st, rs, bufferSize, metadata);
 		}
 		catch (Exception e)
 		{

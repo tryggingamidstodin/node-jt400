@@ -27,10 +27,10 @@ public class HsqlClient implements ConnectionProvider
 		return client.query(sql, paramsJson);
 	}
 
-	public ResultSetStream executeAsStream(String sql, String paramsJson)
+	public ResultSetStream executeAsStream(String sql, String paramsJson, int bufferSize, boolean metadata)
 			throws Exception
 	{
-		return client.executeAsStream(sql, paramsJson);
+		return client.executeAsStream(sql, paramsJson, bufferSize, metadata);
 	}
 
 	public TablesReadStream getTablesAsStream(String catalog, String schema, String table) throws Exception

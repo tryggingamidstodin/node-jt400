@@ -97,18 +97,18 @@ describe('hsql in memory', function() {
 	});
 
 	it('executeAsStream should return results as stream of rows, each row being an array and emit metadata event', function(done) {
-		var stream = jt400.executeAsStream('select * from testtbl'),
-			data = [],
+		var stream = jt400.executeAsStream({sql: 'select * from testtbl', metadata: true}),
+			rows = [],
 			metadata;
-		stream.getMetaData().then(function (res) {
-			metadata = res;
-		});
-		stream.on('data', function (row) {
-			data.push(row);
+		stream.on('data', function (data) {
+			if(!metadata) {
+				metadata = data;
+			} else {
+				rows.push(data);
+			}
 		});
 		stream.on('end', function () {
-			expect(metadata).toEqual({
-				columns: [{
+			expect(metadata).toEqual([{
 					name: 'ID',
 					typeName: 'DECIMAL',
 					precision: 15,
@@ -129,8 +129,8 @@ describe('hsql in memory', function() {
 					precision: 26,
 					scale: 6
 				}]
-			});
-			expect(data).toEqual([
+			);
+			expect(rows).toEqual([
 				['1234567891234', 'Foo bar baz', null, null]
 			]);
 			done();
@@ -167,16 +167,30 @@ describe('hsql in memory', function() {
 		.fail(onFail(this, done));
 	});
 
+	it('should return buffer stream when not in objectmode', function (done) {
+		var stream = jt400.executeAsStream({sql: 'select * from testtbl', metadata: false, objectMode: false}),
+			data = '',
+			_this = this;
+		stream.on('data', function (buffer) {
+			data += buffer;
+		});
+		stream.on('end', function () {
+			expect(data).toBe('[["1234567891234","Foo bar baz",null,null]]');
+			done();
+		});
+		stream.on('error', onFail(_this, done));
+	});
+
 	it('should close stream', function (done) {
 		var i=1, data = [], _this = this;
-		while(i<110) {
+		while(i<40) {
 			data.push(i++);
 		}
 		q.all(data.map(function (item) {
 			return jt400.update('insert into testtbl (NAME) values(?)', ['n'+item]);
 		})).then(function () {
 			var res = [];
-			var stream = jt400.executeAsStream('select NAME from testtbl');
+			var stream = jt400.executeAsStream({sql: 'select NAME from testtbl', bufferSize: 10});
 			stream.on('data', function (row) {
 				res.push(row);
 				if(res.length >= 10) {
@@ -184,7 +198,7 @@ describe('hsql in memory', function() {
 				}
 			});
 			stream.on('end', function () {
-				expect(res.length).toBeLessThan(15);
+				expect(res.length).toBeLessThan(21);
 				done();
 			});
 			stream.on('error', onFail(_this, done));
