@@ -234,7 +234,7 @@ class TextPgmParam extends PgmParam
 	public TextPgmParam(Props paramDef)
 	{
 		super(paramDef);
-		parser = new AS400Text(paramDef.getInt("size"));
+		parser = new AS400Text(paramDef.getInt("size"), "Cp871");
 	}
 
 	@Override
