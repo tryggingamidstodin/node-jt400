@@ -130,26 +130,12 @@ public class JT400 implements ConnectionProvider
 	{
 		private final String name;
 
-		private final PgmParam[] paramArray;
+		private final String paramsSchemaJsonStr;
 
 		public Pgm(String programName, String paramsSchemaJsonStr)
 		{
 			this.name = programName;
-			JSONArray paramsSchema = (JSONArray) JSONValue.parse(paramsSchemaJsonStr);
-			int n = paramsSchema.size();
-			paramArray = new PgmParam[n];
-			for (int i = 0; i < n; i++)
-			{
-				Props paramDef = new Props((JSONObject) paramsSchema.get(i));
-				if ("decimal".equals(paramDef.get("type")) || paramDef.has("decimals"))
-				{
-					paramArray[i] = new DecimalPgmParam(paramDef);
-				}
-				else
-				{
-					paramArray[i] = new TextPgmParam(paramDef);
-				}
-			}
+			this.paramsSchemaJsonStr = paramsSchemaJsonStr;
 		}
 
 		public String run(String paramsJsonStr) throws Exception
@@ -158,6 +144,22 @@ public class JT400 implements ConnectionProvider
 			JSONObject result = new JSONObject();
 			try
 			{
+				JSONArray paramsSchema = (JSONArray) JSONValue.parse(paramsSchemaJsonStr);
+				int n = paramsSchema.size();
+				PgmParam[] paramArray = new PgmParam[n];
+				for (int i = 0; i < n; i++)
+				{
+					Props paramDef = new Props((JSONObject) paramsSchema.get(i));
+					if ("decimal".equals(paramDef.get("type")) || paramDef.has("decimals"))
+					{
+						paramArray[i] = new DecimalPgmParam(paramDef);
+					}
+					else
+					{
+						paramArray[i] = new TextPgmParam(paramDef);
+					}
+				}
+
 				JSONObject params = (JSONObject) JSONValue.parse(paramsJsonStr);
 				for (PgmParam param : paramArray)
 				{

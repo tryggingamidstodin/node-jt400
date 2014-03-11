@@ -1,5 +1,6 @@
 'use strict';
-var jt400 = require('../lib/jt400');
+var jt400 = require('../lib/jt400'),
+	q = require('q');
 
 function onError(that, done) {
 	return function (err) {
@@ -11,8 +12,9 @@ function onError(that, done) {
 describe('PGM', function () {
 	it('should run rpg program', function (done) {
 		var getIsk = jt400.pgm('GET_ISK', [{name: 'mynt', size: 3}]);
-		getIsk({mynt: 'Kr.'}).then(function (result) {
-			expect(result.mynt).toBe('ISK');
+		q.all([getIsk({mynt: 'Kr.'}), getIsk({mynt: 'EUR'})]).then(function (result) {
+			expect(result[0].mynt).toBe('ISK');
+			expect(result[1].mynt).toBe('EUR');
 			done();
 		}).fail(onError(this, done));
 	});
@@ -24,7 +26,7 @@ describe('PGM', function () {
 			{name: 'valid', size: 1}]);
 		getNetfang({kt: '0123456789'}).then(function (result) {
 			expect(result.email).toBe('');
-			expect(result.valid).toBe('N');
+			expect(result.valid).toBe('J');
 			done();
 		}).fail(onError(this, done));
 	});
