@@ -16,10 +16,10 @@
     "url": "https://github.com/tryggingamidstodin/jt400/issues"
   },
   "dependencies": {
-    "java": "~0.2.2",
     "q": "~1.0.0",
     "underscore": "~1.5.2",
-    "JSONStream": "~0.8.0"
+    "JSONStream": "~0.8.0",
+    "java": "^0.3.2"
   },
   "devDependencies": {
     "jasmine-node": "~1.11.0",
