@@ -75,6 +75,12 @@ public class JT400 implements ConnectionProvider
 		return sqlPool.getConnection();
 	}
 
+	@Override
+	public void close(Connection c) throws Exception
+	{
+		c.close();
+	}
+
 	public static final JT400 getInstance(String jsonConf)
 	{
 		JSONObject conf = (JSONObject) JSONValue.parse(jsonConf);
@@ -114,6 +120,11 @@ public class JT400 implements ConnectionProvider
 			throws Exception
 	{
 		return client.insertAndGetId(sql, paramsJson);
+	}
+
+	public Transaction createTransaction() throws Exception
+	{
+		return new Transaction(getConnection());
 	}
 
 	public void close()

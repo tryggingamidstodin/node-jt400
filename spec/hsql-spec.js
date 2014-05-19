@@ -3,13 +3,6 @@ var jt400 = require('../lib/jt400').useInMemoryDb(),
 	JSONStream = require('JSONStream'),
 	q = require('q');
 
-function onFail(that, done) {
-	return function(err) {
-		that.fail(err);
-		done();
-	};
-}
-
 describe('hsql in memory', function() {
 
 	beforeEach(function(done) {
@@ -20,7 +13,7 @@ describe('hsql in memory', function() {
 			.then(function() {
 				done();
 			})
-			.fail(onFail(this, done));
+			.fail(done);
 	});
 
 	afterEach(function(done) {
@@ -28,7 +21,7 @@ describe('hsql in memory', function() {
 			.then(function() {
 				done();
 			})
-			.fail(onFail(this, done));
+			.fail(done);
 	});
 
 	it('should select form testtbl', function(done) {
@@ -37,7 +30,7 @@ describe('hsql in memory', function() {
 				expect(res.length).toBe(1);
 				done();
 			})
-			.fail(onFail(this, done));
+			.fail(done);
 	});
 
 	it('should insert and return id', function(done) {
@@ -46,7 +39,7 @@ describe('hsql in memory', function() {
 				expect(res).toBe(1234567891235);
 				done();
 			})
-			.fail(onFail(this, done));
+			.fail(done);
 	});
 
 	it('should insert list', function(done) {
@@ -63,7 +56,7 @@ describe('hsql in memory', function() {
 				expect(res.length).toBe(3);
 				done();
 			})
-			.fail(onFail(this, done));
+			.fail(done);
 	});
 
 	it('should mock pgm call', function(done) {
@@ -83,7 +76,7 @@ describe('hsql in memory', function() {
 			expect(res).toEqual(input);
 			done();
 		})
-			.fail(onFail(this, done));
+			.fail(done);
 	});
 
 	it('should insert date and timestamp', function (done) {
@@ -93,7 +86,7 @@ describe('hsql in memory', function() {
 		}]).then(function () {
 			done();
 		})
-			.fail(onFail(this, done));
+			.fail(done);
 	});
 
 	it('executeAsStream should return results as stream of rows, each row being an array and emit metadata event', function(done) {
@@ -135,11 +128,11 @@ describe('hsql in memory', function() {
 			]);
 			done();
 		});
-		stream.on('error', onFail(this, done));
+		stream.on('error', done);
 	});
 
 	it('should return stream', function (done) {
-		var i=1, data = [], _this = this;
+		var i=1, data = [];
 		while(i<110) {
 			data.push(i++);
 		}
@@ -162,9 +155,9 @@ describe('hsql in memory', function() {
 				});
 				done();
 			});
-			stream.on('error', onFail(_this, done));
+			stream.on('error', done);
 		})
-		.fail(onFail(this, done));
+		.fail(done);
 	});
 
 	it('should return buffer stream when not in objectmode', function (done) {
@@ -178,7 +171,7 @@ describe('hsql in memory', function() {
 			expect(data).toBe('[["1234567891234","Foo bar baz",null,null]]');
 			done();
 		});
-		stream.on('error', onFail(_this, done));
+		stream.on('error', done);
 	});
 
 	it('should close stream', function (done) {
@@ -201,9 +194,9 @@ describe('hsql in memory', function() {
 				expect(res.length).toBeLessThan(21);
 				done();
 			});
-			stream.on('error', onFail(_this, done));
+			stream.on('error', done);
 		})
-		.fail(onFail(this, done));
+		.fail(done);
 	});
 
 	it('should return table metadata as stream', function (done) {
@@ -220,7 +213,7 @@ describe('hsql in memory', function() {
 			}]);
 			done();
 		});
-		stream.on('error', onFail(this, done));
+		stream.on('error', done);
 	});
 
 	it('should return columns', function (done) {
@@ -248,6 +241,50 @@ describe('hsql in memory', function() {
 				scale: 0
 			}]);
 			done();
-		}).fail(onFail(this, done));
+		}).fail(done);
+	});
+
+	describe('transaction', function () {
+		it('should commit', function (done) {
+			var transaction = jt400.transaction(),
+				rowId;
+			transaction.insertAndGetId("insert into testtbl (NAME) values('Transaction 1')")
+			.then(function (res) {
+				rowId = res;
+				return transaction.update("update testtbl set NAME='Transaction 2' where id=?", [rowId]);
+			})
+			.then(function () {
+				transaction.commit();
+			})
+			.then(function () {
+				return jt400.query('select NAME from testtbl where id=?', [rowId]);
+			})
+			.then(function (res) {
+				expect(res[0].NAME).toEqual('Transaction 2');
+				done();
+			})
+			.fail(done);
+		});
+
+		it('should rollback', function (done) {
+			var transaction = jt400.transaction(),
+				rowId;
+			transaction.insertAndGetId("insert into testtbl (NAME) values('Transaction 1')")
+			.then(function (res) {
+				rowId = res;
+				return transaction.update("update testtbl2 set NAME='Transaction 2' where id=?", [rowId]);
+			})
+			.fail(function () {
+				transaction.rollback();
+			})
+			.then(function () {
+				return jt400.query('select NAME from testtbl where id=?', [rowId]);
+			})
+			.then(function (res) {
+				expect(res.length).toBe(0);
+				done();
+			})
+			.fail(done);
+		});
 	});
 });

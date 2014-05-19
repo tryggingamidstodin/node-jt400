@@ -1,30 +1,35 @@
 package nodejt400;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 
-import org.hsqldb.jdbc.JDBCDriver;
-
-public class HsqlClient implements ConnectionProvider
+public class Transaction implements ConnectionProvider
 {
+
+	private final Connection connection;
+
 	private final JdbcJsonClient client;
 
-	public HsqlClient() throws Exception
+	public Transaction(Connection connection) throws Exception
 	{
-		DriverManager.registerDriver(new JDBCDriver());
-		client = new JdbcJsonClient(this);
+		this.connection = connection;
+		this.connection.setAutoCommit(false);
+		this.client = new JdbcJsonClient(this);
 	}
 
-	@Override
-	public Connection getConnection() throws Exception
+	public void commit() throws Exception
 	{
-		return DriverManager.getConnection("jdbc:hsqldb:mem:test", "quser", "");
+		this.connection.commit();
 	}
 
-	@Override
-	public void close(Connection c) throws Exception
+	public void rollback() throws Exception
 	{
-		c.close();
+		this.connection.rollback();
+	}
+
+	public void end() throws Exception
+	{
+		this.connection.setAutoCommit(false);
+		this.connection.close();
 	}
 
 	public String query(String sql, String paramsJson)
@@ -43,11 +48,13 @@ public class HsqlClient implements ConnectionProvider
 	{
 		return client.getTablesAsStream(catalog, schema, table);
 	}
+
 	public String getColumns(String catalog, String schema, String tableNamePattern, String columnNamePattern)
-	throws Exception
+			throws Exception
 	{
 		return client.getColumns(catalog, schema, tableNamePattern, columnNamePattern);
 	}
+
 	public int update(String sql, String paramsJson)
 			throws Exception
 	{
@@ -60,31 +67,15 @@ public class HsqlClient implements ConnectionProvider
 		return client.insertAndGetId(sql, paramsJson);
 	}
 
-	public Transaction createTransaction() throws Exception
+	@Override
+	public Connection getConnection() throws Exception
 	{
-		return new Transaction(getConnection());
+		return connection;
 	}
 
-	/**
-	 * Mock program call
-	 * @param programName
-	 * @param paramsSchemaJsonStr
-	 * @return
-	 */
-	public Pgm pgm(String programName, String paramsSchemaJsonStr)
+	@Override
+	public void close(Connection c) throws Exception
 	{
-		return new Pgm(programName, paramsSchemaJsonStr);
-	}
 
-	public class Pgm
-	{
-		public Pgm(String programName, String paramsSchemaJsonStr)
-		{
-		}
-
-		public String run(String paramsJsonStr)
-		{
-			return paramsJsonStr;
-		}
 	}
 }

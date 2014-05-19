@@ -54,7 +54,7 @@ public class JdbcJsonClient
 		{
 			if (st != null)
 				st.close();
-			c.close();
+			pool.close(c);
 		}
 		return array.toJSONString();
 	}
@@ -77,7 +77,7 @@ public class JdbcJsonClient
 			if(st!=null) {
 				st.close();
 			}
-			c.close();
+			pool.close(c);
 			throw e;
 		}
 	}
@@ -91,7 +91,7 @@ public class JdbcJsonClient
 		}
 		catch (Exception e)
 		{
-			c.close();
+			pool.close(c);
 			throw e;
 		}		
 	}
@@ -114,11 +114,12 @@ public class JdbcJsonClient
 				column.put("scale", crs.getInt(9));
 			}
 			crs.close();
+			pool.close(c);
 			return columns.toJSONString();
 		}
 		catch (Exception e)
 		{
-			c.close();
+			pool.close(c);
 			throw e;
 		}		
 	}
@@ -149,7 +150,7 @@ public class JdbcJsonClient
 		{
 			if (st != null)
 				st.close();
-			c.close();
+			pool.close(c);
 		}
 		return result;
 	}
@@ -180,7 +181,7 @@ public class JdbcJsonClient
 		{
 			if (st != null)
 				st.close();
-			c.close();
+			pool.close(c);
 		}
 		return result;
 	}
