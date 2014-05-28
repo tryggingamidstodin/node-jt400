@@ -246,15 +246,13 @@ describe('hsql in memory', function() {
 
 	describe('transaction', function () {
 		it('should commit', function (done) {
-			var transaction = jt400.transaction(),
-				rowId;
-			transaction.insertAndGetId("insert into testtbl (NAME) values('Transaction 1')")
-			.then(function (res) {
-				rowId = res;
-				return transaction.update("update testtbl set NAME='Transaction 2' where id=?", [rowId]);
-			})
-			.then(function () {
-				transaction.commit();
+			var rowId;
+			jt400.transaction(function (transaction) {
+				return transaction.insertAndGetId("insert into testtbl (NAME) values('Transaction 1')")
+				.then(function (res) {
+					rowId = res;
+					return transaction.update("update testtbl set NAME='Transaction 2' where id=?", [rowId]);
+				});
 			})
 			.then(function () {
 				return jt400.query('select NAME from testtbl where id=?', [rowId]);
@@ -264,18 +262,20 @@ describe('hsql in memory', function() {
 				done();
 			})
 			.fail(done);
+
 		});
 
 		it('should rollback', function (done) {
-			var transaction = jt400.transaction(),
-				rowId;
-			transaction.insertAndGetId("insert into testtbl (NAME) values('Transaction 1')")
-			.then(function (res) {
-				rowId = res;
-				return transaction.update("update testtbl2 set NAME='Transaction 2' where id=?", [rowId]);
+			var fakeError = new Error('fake error'), rowId;
+			jt400.transaction(function (transaction) {
+				return transaction.insertAndGetId("insert into testtbl (NAME) values('Transaction 1')")
+				.then(function (res) {
+					rowId = res;
+					throw fakeError;
+				});
 			})
-			.fail(function () {
-				transaction.rollback();
+			.fail(function (err) {
+				expect(err).toBe(fakeError);
 			})
 			.then(function () {
 				return jt400.query('select NAME from testtbl where id=?', [rowId]);
