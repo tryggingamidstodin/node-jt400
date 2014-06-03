@@ -18,6 +18,7 @@ describe('jt400', function () {
 	var idList;
 
 	beforeEach(function (done) {
+		jt400.configure({});
 		jt400.update('delete from tsttbl')
 		.then(function () {
 			var records = [{foo: 'bar', bar: 123, baz: '123.23'},
@@ -33,7 +34,16 @@ describe('jt400', function () {
 
 	it('should return same instance in configure', function () {
 		expect(jt400).toBe(jt400.configure({host: 'foo'}));
-		jt400.configure({});
+	});
+
+	it('should configure host', function (done) {
+		jt400.configure({host: 'nohost'});
+		jt400.query('select * from tsttbl').then(function (res) {
+			done(new Error('should not return result from nohost'));
+		}).fail(function (err) {
+			expect(err.message).toMatch('cannot establish the connection');
+			done();
+		});
 	});
 
 	it('should insert records', function () {
