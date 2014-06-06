@@ -9,11 +9,13 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 import com.ibm.as400.access.AS400;
+import com.ibm.as400.access.AS400DataType;
 import com.ibm.as400.access.AS400JDBCConnectionHandle;
 import com.ibm.as400.access.AS400JDBCConnectionPool;
 import com.ibm.as400.access.AS400JDBCConnectionPoolDataSource;
 import com.ibm.as400.access.AS400Message;
 import com.ibm.as400.access.AS400PackedDecimal;
+import com.ibm.as400.access.AS400Structure;
 import com.ibm.as400.access.AS400Text;
 import com.ibm.as400.access.ProgramCall;
 import com.ibm.as400.access.ProgramParameter;
@@ -158,17 +160,12 @@ public class JT400 implements ConnectionProvider
 				JSONArray paramsSchema = (JSONArray) JSONValue.parse(paramsSchemaJsonStr);
 				int n = paramsSchema.size();
 				PgmParam[] paramArray = new PgmParam[n];
+				ProgramParameter[] pgmParamArray = new ProgramParameter[n];
 				for (int i = 0; i < n; i++)
 				{
-					Props paramDef = new Props((JSONObject) paramsSchema.get(i));
-					if ("decimal".equals(paramDef.get("type")) || paramDef.has("decimals"))
-					{
-						paramArray[i] = new DecimalPgmParam(paramDef);
-					}
-					else
-					{
-						paramArray[i] = new TextPgmParam(paramDef);
-					}
+					JSONObject paramJson = (JSONObject) paramsSchema.get(i);
+					paramArray[i] = PgmParam.parse(paramJson);
+					pgmParamArray[i] = paramArray[i].asPgmParam();
 				}
 
 				JSONObject params = (JSONObject) JSONValue.parse(paramsJsonStr);
@@ -182,7 +179,7 @@ public class JT400 implements ConnectionProvider
 				ProgramCall call = new ProgramCall(as400);
 
 				//Run
-				call.setProgram(QSYSObjectPathName.toPath("*LIBL", name, "PGM"), paramArray);
+				call.setProgram(QSYSObjectPathName.toPath("*LIBL", name, "PGM"), pgmParamArray);
 				if (!call.run())
 				{
 					AS400Message[] ms = call.getMessageList();
@@ -220,70 +217,202 @@ public class JT400 implements ConnectionProvider
 	}
 }
 
-abstract class PgmParam extends ProgramParameter
+abstract class PgmParam
 {
-	Props paramDef;
+	private final String name;
 
-	public PgmParam(Props paramDef)
+	private final int size;
+
+	protected ProgramParameter pgmParam;
+
+	public PgmParam(String name, int size)
 	{
-		super(paramDef.getInt("size"));
-		this.paramDef = paramDef;
+		this.name = name;
+		this.size = size;
+	}
+
+	public PgmParam(String name, Props paramDef)
+	{
+		this(name, paramDef.getInt("size"));
 	}
 
 	public String getName()
 	{
-		return paramDef.get("name");
+		return name;
 	}
 
-	public abstract void setValue(Object value) throws PropertyVetoException;
+	public ProgramParameter asPgmParam()
+	{
+		pgmParam = size == -1 ? new ProgramParameter() : new ProgramParameter(size);
+		return pgmParam;
+	}
 
-	public abstract Object getValue();
+	public void setValue(Object value) throws PropertyVetoException
+	{
+		pgmParam.setInputData(getAS400DataType().toBytes(toInputValue(value)));
+	}
+
+	public Object getValue()
+	{
+		return toOutputValue(getAS400DataType().toObject(pgmParam.getOutputData()));
+	}
+
+	public abstract Object toInputValue(Object value);
+
+	public Object toOutputValue(Object output)
+	{
+		return output;
+	}
+
+	public static final PgmParam parse(JSONObject paramJson)
+	{
+		Object nameAttr = paramJson.get("name");
+		String name = null;
+		Props paramDef = null;
+		if (nameAttr == null ||
+				nameAttr instanceof JSONObject ||
+				nameAttr instanceof JSONArray)
+		{
+			name = (String) paramJson.keySet().iterator().next();
+			Object paramsObject = paramJson.get(name);
+			if (paramsObject instanceof JSONArray)
+			{
+				return new StructPgmParam(name, (JSONArray) paramsObject);
+			}
+			else
+			{
+				paramDef = new Props((JSONObject) paramsObject);
+			}
+		}
+		else
+		{
+			paramDef = new Props(paramJson);
+			name = (String) nameAttr;
+		}
+		if ("decimal".equals(paramDef.get("type")) || paramDef.has("decimals"))
+		{
+			return new DecimalPgmParam(name, paramDef);
+		}
+		return new TextPgmParam(name, paramDef);
+	}
+
+	public abstract AS400DataType getAS400DataType();
 }
 
 class TextPgmParam extends PgmParam
 {
 	private final AS400Text parser;
 
-	public TextPgmParam(Props paramDef)
+	public TextPgmParam(String name, Props paramDef)
 	{
-		super(paramDef);
+		super(name, paramDef);
 		parser = new AS400Text(paramDef.getInt("size"), "Cp871");
 	}
 
 	@Override
-	public void setValue(Object value) throws PropertyVetoException
+	public Object toInputValue(Object value)
 	{
-		super.setInputData(parser.toBytes(value == null ? "" : value));
+		return value == null ? "" : value;
 	}
 
 	@Override
-	public Object getValue()
+	public Object toOutputValue(Object output)
 	{
-		return ((String) parser.toObject(super.getOutputData())).trim();
+		return ((String) output).trim();
 	}
+
+	@Override
+	public AS400DataType getAS400DataType()
+	{
+		return parser;
+	}
+
 }
 
 class DecimalPgmParam extends PgmParam
 {
 	private final AS400PackedDecimal parser;
 
-	public DecimalPgmParam(Props paramDef)
+	public DecimalPgmParam(String name, Props paramDef)
 	{
-		super(paramDef);
+		super(name, paramDef);
 		parser = new AS400PackedDecimal(paramDef.getInt("size"), paramDef.getInt("decimals"));
+	}
+
+	@Override
+	public Object toInputValue(Object value)
+	{
+		return new BigDecimal(value == null ? "0" : value.toString());
+	}
+
+	@Override
+	public AS400DataType getAS400DataType()
+	{
+		return parser;
+	}
+}
+
+class StructPgmParam extends PgmParam
+{
+	private final PgmParam[] params;
+
+	private final AS400Structure asStructure;
+
+	public StructPgmParam(String name, JSONArray structure)
+	{
+		super(name, -1);
+		int n = structure.size();
+		AS400DataType[] asDT = new AS400DataType[n];
+		params = new PgmParam[n];
+		for (int i = 0; i < n; i++)
+		{
+			JSONObject paramJson = (JSONObject) structure.get(i);
+			params[i] = PgmParam.parse(paramJson);
+			asDT[i] = params[i].getAS400DataType();
+		}
+
+		asStructure = new AS400Structure(asDT);
 	}
 
 	@Override
 	public void setValue(Object value) throws PropertyVetoException
 	{
-		super.setInputData(parser.toBytes(new BigDecimal(value == null ? "0" : value.toString())));
+		pgmParam.setOutputDataLength(asStructure.getByteLength());
+		super.setValue(value);
 	}
 
 	@Override
-	public Object getValue()
+	public Object toInputValue(Object value)
 	{
-		return parser.toObject(super.getOutputData());
+		JSONObject jsonParams = (JSONObject) value;
+		Object[] values = new Object[params.length];
+		for (int i = 0; i < params.length; i++)
+		{
+			Object subValue = jsonParams.get(params[i].getName());
+			values[i] = params[i].toInputValue(subValue);
+		}
+		return values;
 	}
+
+	@Override
+	public Object toOutputValue(Object output)
+	{
+		JSONObject result = new JSONObject();
+		Object[] values = (Object[]) output;
+		for (int i = 0; i < params.length; i++)
+		{
+			PgmParam p = params[i];
+			result.put(p.getName(), p.toOutputValue(values[i]));
+		}
+		return result;
+	}
+
+	@Override
+	public AS400DataType getAS400DataType()
+	{
+		return asStructure;
+	}
+
 }
 
 class Props

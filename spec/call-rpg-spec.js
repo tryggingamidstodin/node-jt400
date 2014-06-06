@@ -30,4 +30,18 @@ describe('PGM', function () {
 			done();
 		}).fail(onError(this, done));
 	});
+
+	it('should run pgm with datastructure param', function (done) {
+		var tstDs = jt400.pgm('TST_DS', [
+				{p1: [
+					{name: 'txt1', size: 3},
+					{name: 'num1', size: 9, decimals: 0}
+				]}
+			]);
+		tstDs({p1: {txt1: 'tst', num1: 400}}).then(function (result) {
+			expect(result.p1.txt1).toBe('tst');
+			expect(result.p1.num1).toBe(401);
+			done();
+		}).fail(onError(this, done));
+	});
 });
