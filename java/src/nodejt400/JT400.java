@@ -17,6 +17,7 @@ import com.ibm.as400.access.AS400Message;
 import com.ibm.as400.access.AS400PackedDecimal;
 import com.ibm.as400.access.AS400Structure;
 import com.ibm.as400.access.AS400Text;
+import com.ibm.as400.access.AS400ZonedDecimal;
 import com.ibm.as400.access.ProgramCall;
 import com.ibm.as400.access.ProgramParameter;
 import com.ibm.as400.access.QSYSObjectPathName;
@@ -233,7 +234,7 @@ abstract class PgmParam
 
 	public PgmParam(String name, Props paramDef)
 	{
-		this(name, paramDef.getInt("size"));
+		this(name, paramDef.getFirstInt("size", "precision"));
 	}
 
 	public String getName()
@@ -289,7 +290,15 @@ abstract class PgmParam
 			paramDef = new Props(paramJson);
 			name = (String) nameAttr;
 		}
-		if ("decimal".equals(paramDef.get("type")) || paramDef.has("decimals"))
+
+		String typeName = paramDef.getFirst("type", "typeName").toLowerCase();
+
+		if ("numeric".equals(typeName))
+		{
+			return new ZonedPgmParam(name, paramDef);
+		}
+
+		if ("decimal".equals(typeName) || paramDef.has("decimals"))
 		{
 			return new DecimalPgmParam(name, paramDef);
 		}
@@ -306,7 +315,7 @@ class TextPgmParam extends PgmParam
 	public TextPgmParam(String name, Props paramDef)
 	{
 		super(name, paramDef);
-		parser = new AS400Text(paramDef.getInt("size"), "Cp871");
+		parser = new AS400Text(paramDef.getFirstInt("size", "precision"), "Cp871");
 	}
 
 	@Override
@@ -329,6 +338,29 @@ class TextPgmParam extends PgmParam
 
 }
 
+class ZonedPgmParam extends PgmParam
+{
+	private final AS400ZonedDecimal parser;
+
+	public ZonedPgmParam(String name, Props paramDef)
+	{
+		super(name, paramDef);
+		parser = new AS400ZonedDecimal(paramDef.getFirstInt("size", "precision"), paramDef.getFirstInt("decimals", "scale"));
+	}
+
+	@Override
+	public Object toInputValue(Object value)
+	{
+		return new BigDecimal(value == null ? "0" : value.toString());
+	}
+
+	@Override
+	public AS400DataType getAS400DataType()
+	{
+		return parser;
+	}
+}
+
 class DecimalPgmParam extends PgmParam
 {
 	private final AS400PackedDecimal parser;
@@ -336,7 +368,7 @@ class DecimalPgmParam extends PgmParam
 	public DecimalPgmParam(String name, Props paramDef)
 	{
 		super(name, paramDef);
-		parser = new AS400PackedDecimal(paramDef.getInt("size"), paramDef.getInt("decimals"));
+		parser = new AS400PackedDecimal(paramDef.getFirstInt("size", "precision"), paramDef.getFirstInt("decimals", "scale"));
 	}
 
 	@Override
@@ -424,14 +456,44 @@ class Props
 		this.w = w;
 	}
 
+	public boolean hasAny(String... keys)
+	{
+		for (String key : keys)
+		{
+			if (has(key))
+				return true;
+		}
+		return false;
+	}
 	public boolean has(String key)
 	{
 		return w.get(key) != null;
 	}
 
+	public String getFirst(String... keys)
+	{
+		for (String key : keys)
+		{
+			if (has(key))
+			{
+				return get(key);
+			}
+		}
+		return "";
+	}
 	public String get(String key)
 	{
 		return (String) w.get(key);
+	}
+
+	public int getFirstInt(String... keys)
+	{
+		for (String key : keys)
+		{
+			if (has(key))
+				return getInt(key);
+		}
+		throw new RuntimeException("missing attribute: " + keys);
 	}
 
 	public int getInt(String key)
