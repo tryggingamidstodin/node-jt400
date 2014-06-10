@@ -112,6 +112,11 @@ public class JdbcJsonClient
 				column.put("typeName", crs.getString(6));
 				column.put("precision", crs.getInt(7));
 				column.put("scale", crs.getInt(9));
+				String remarks = crs.getString(12);
+				if (remarks != null)
+				{
+					column.put("remarks", remarks);
+				}
 			}
 			crs.close();
 			pool.close(c);
