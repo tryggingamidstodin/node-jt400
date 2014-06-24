@@ -172,7 +172,15 @@ public class JT400 implements ConnectionProvider
 				JSONObject params = (JSONObject) JSONValue.parse(paramsJsonStr);
 				for (PgmParam param : paramArray)
 				{
-					param.setValue(params.get(param.getName()));
+					try
+					{
+						param.setValue(params.get(param.getName()));
+					}
+					catch (Exception ex)
+					{
+						System.err.println("Error set param value in pgm: " + name + " paramname: " + param.getName() + ", value: " + params.get(param.getName()));
+						throw ex;
+					}
 				}
 
 				AS400JDBCConnectionHandle handle = (AS400JDBCConnectionHandle) c;
@@ -321,7 +329,7 @@ class TextPgmParam extends PgmParam
 	@Override
 	public Object toInputValue(Object value)
 	{
-		return value == null ? "" : value;
+		return value == null ? "" : value.toString();
 	}
 
 	@Override
