@@ -25,7 +25,6 @@ describe('PGM', function () {
 			{name: 'email', size: 30},
 			{name: 'valid', size: 1}]);
 		getNetfang({kt: '0123456789'}).then(function (result) {
-			expect(result.email).toBe('');
 			expect(result.valid).toBe('J');
 			done();
 		}).fail(onError(this, done));
