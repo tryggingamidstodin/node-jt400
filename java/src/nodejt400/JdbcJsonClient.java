@@ -39,7 +39,7 @@ public class JdbcJsonClient
 				int columnCount = metaData.getColumnCount();
 				for (int i = 1; i <= columnCount; i++)
 				{
-					json.put(metaData.getColumnName(i), trim(rs.getString(i)));
+					json.put(metaData.getColumnLabel(i), trim(rs.getString(i)));
 				}
 				array.add(json);
 			}

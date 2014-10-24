@@ -33,6 +33,13 @@ describe('hsql in memory', function() {
 			.fail(done);
 	});
 
+	it('should use column alias when selecting', function () {
+		jt400.query('select ID, NAME MYNAME from testtbl')
+			.then(function (res) {
+				expect(res[0].MYNAME).toBeDefined();
+			});
+	});
+
 	it('should insert and return id', function(done) {
 		jt400.insertAndGetId('insert into testtbl (NAME) values(?)', ['foo'])
 			.then(function(res) {
