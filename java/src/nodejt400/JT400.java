@@ -38,6 +38,7 @@ public class JT400 implements ConnectionProvider
 		String naming = conf.get("naming", "system");
 		ds.setNaming(naming);
 		ds.setDateFormat(conf.get("dateFormat", "iso"));
+		ds.setTransactionIsolation(conf.get("transactionIsolation", "repeatable read"));
 		ds.setMetaDataSource(0);
 		String value = conf.get("sort");
 		if (value != null)
