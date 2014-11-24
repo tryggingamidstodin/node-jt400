@@ -44,7 +44,7 @@ describe('jt400', function () {
 			expect(err.message).toMatch('cannot establish the connection');
 			done();
 		});
-	});
+	}, 15000);
 
 	it('should insert records', function () {
 		expect(idList.length).toBe(2);
