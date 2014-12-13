@@ -22,6 +22,8 @@ public class ResultSetStream
 
 	private boolean next;
 
+	private String metadataResult;
+
 	private String sep = "[";
 
 	public ResultSetStream(Connection c, PreparedStatement st, ResultSet rs, int bufferSize, boolean loadMetadata) throws Exception
@@ -32,11 +34,16 @@ public class ResultSetStream
 		this.bufferSize = bufferSize;
 		ResultSetMetaData metaData = rs.getMetaData();
 		this.columnCount = metaData.getColumnCount();
+		this.next = rs.next();
 		if(loadMetadata)
 		{
-			sep += getMetaData(metaData) + ",";
+			String md = getMetaData(metaData);
+			if(next) {
+				sep += md + ",";
+			} else {
+				metadataResult = "[" + md + "]";
+			}
 		}
-		this.next = rs.next();
 	}
 
 	public void close() throws Exception
@@ -94,6 +101,10 @@ public class ResultSetStream
 				close();
 				throw ex;
 			}
+		} else if(metadataResult != null) {
+			String res = metadataResult;
+			metadataResult = null;
+			return res;
 		}
 		close();
 		return null;

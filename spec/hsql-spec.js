@@ -167,6 +167,25 @@ describe('hsql in memory', function() {
 		.fail(done);
 	});
 
+	it('should still return metadata when result is cero rows', function (done) {
+		var stream = jt400.executeAsStream({sql: 'select * from testtbl where ID=-1', metadata: true}),
+			rows = [],
+			metadata;
+		stream.on('data', function (data) {
+			if(!metadata){
+				metadata = data;
+			} else {
+				rows.push(data);
+			}
+		});
+		stream.on('end', function () {
+			expect(metadata).toBeDefined();
+			expect(rows.length).toEqual(0);
+			done();
+		});
+		stream.on('error', done);
+	});
+
 	it('should return buffer stream when not in objectmode', function (done) {
 		var stream = jt400.executeAsStream({sql: 'select * from testtbl', metadata: false, objectMode: false}),
 			data = '',
