@@ -11,11 +11,15 @@
   "latedef": true,
   "newcap": true,
   "noarg": true,
-  "quotmark": false,
+  "quotmark": "single",
   "regexp": true,
   "undef": true,
-  "unused": false,
+  "unused": true,
   "globalstrict": true,
   "trailing": true,
-  "smarttabs": true
+  "smarttabs": true,
+  "maxparams": 4,
+  "maxdepth": 3,
+  "maxstatements": 12,
+  "maxcomplexity": 6
 }

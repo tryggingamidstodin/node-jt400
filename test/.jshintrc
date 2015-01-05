@@ -15,8 +15,12 @@
   "quotmark": false,
   "regexp": true,
   "undef": true,
-  "unused": false,
+  "unused": true,
   "globalstrict": true,
   "trailing": true,
-  "smarttabs": true
+  "smarttabs": true,
+  "maxparams": 4,
+  "maxdepth": 3,
+  "maxstatements": 12,
+  "maxcomplexity": 6
 }

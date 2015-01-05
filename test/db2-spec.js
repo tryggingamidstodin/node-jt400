@@ -2,12 +2,6 @@
 var jt400 = require('../lib/jt400'),
 	expect = require('chai').expect;
 
-function wrap(fn) {
-	return function () {
-		return fn();
-	};
-}
-
 describe('jt400', function () {
 	var idList;
 
@@ -31,7 +25,7 @@ describe('jt400', function () {
 	it('should configure host', function (done) {
 		this.timeout(15000);
 		jt400.configure({host: 'nohost'});
-		jt400.query('select * from tsttbl').then(function (res) {
+		jt400.query('select * from tsttbl').then(function () {
 			done(new Error('should not return result from nohost'));
 		}).fail(function (err) {
 			expect(err.message).to.have.string('cannot establish the connection');
@@ -73,7 +67,7 @@ describe('jt400', function () {
 	it('should insert dates and timestamps', function (done) {
 		var params = [new Date(2014, 0, 15), new Date(2014, 0, 16, 15, 32, 5), 'bar'];
 		jt400.update('update tsttbl set fra=?, timi=? where foo=?', params)
-			.then(function (nUpdated) {
+			.then(function () {
 				return jt400.query('select fra, timi from tsttbl where foo=?', ['bar']);
 			})
 			.then(function (res) {
