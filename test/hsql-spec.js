@@ -1,7 +1,8 @@
 'use strict';
 var jt400 = require('../lib/jt400').useInMemoryDb(),
 	JSONStream = require('JSONStream'),
-	q = require('q');
+	q = require('q'),
+	expect = require('chai').expect;
 
 describe('hsql in memory', function() {
 
@@ -27,7 +28,7 @@ describe('hsql in memory', function() {
 	it('should select form testtbl', function(done) {
 		jt400.query('select * from testtbl')
 			.then(function(res) {
-				expect(res.length).toBe(1);
+				expect(res.length).to.equal(1);
 				done();
 			})
 			.fail(done);
@@ -36,14 +37,14 @@ describe('hsql in memory', function() {
 	it('should use column alias when selecting', function () {
 		jt400.query('select ID, NAME MYNAME from testtbl')
 			.then(function (res) {
-				expect(res[0].MYNAME).toBeDefined();
+				expect(res[0].MYNAME).to.exist();
 			});
 	});
 
 	it('should insert and return id', function(done) {
 		jt400.insertAndGetId('insert into testtbl (NAME) values(?)', ['foo'])
 			.then(function(res) {
-				expect(res).toBe(1234567891235);
+				expect(res).to.equal(1234567891235);
 				done();
 			})
 			.fail(done);
@@ -56,11 +57,11 @@ describe('hsql in memory', function() {
 			NAME: 'bar'
 		}])
 			.then(function(res) {
-				expect(res).toEqual([1234567891235, 1234567891236]);
+				expect(res).to.eql([1234567891235, 1234567891236]);
 				return jt400.query('select * from testtbl');
 			})
 			.then(function(res) {
-				expect(res.length).toBe(3);
+				expect(res.length).to.equal(3);
 				done();
 			})
 			.fail(done);
@@ -80,7 +81,7 @@ describe('hsql in memory', function() {
 				baz: 10
 			};
 		callFoo(input).then(function(res) {
-			expect(res).toEqual(input);
+			expect(res).to.eql(input);
 			done();
 		})
 			.fail(done);
@@ -108,7 +109,7 @@ describe('hsql in memory', function() {
 			}
 		});
 		stream.on('end', function () {
-			expect(metadata).toEqual([{
+			expect(metadata).to.eql([{
 					name: 'ID',
 					typeName: 'DECIMAL',
 					precision: 15,
@@ -130,7 +131,7 @@ describe('hsql in memory', function() {
 					scale: 6
 				}]
 			);
-			expect(rows).toEqual([
+			expect(rows).to.eql([
 				['1234567891234', 'Foo bar baz', null, null]
 			]);
 			done();
@@ -154,10 +155,10 @@ describe('hsql in memory', function() {
 				res.push(row);
 			});
 			stream.on('end', function () {
-				expect(res.length).toBe(110);
+				expect(res.length).to.equal(110);
 				res.forEach(function (row, index) {
 					if(index>0) {
-						expect(row[0]).toEqual('n'+index);
+						expect(row[0]).to.eql('n'+index);
 					}
 				});
 				done();
@@ -179,8 +180,8 @@ describe('hsql in memory', function() {
 			}
 		});
 		stream.on('end', function () {
-			expect(metadata).toBeDefined();
-			expect(rows.length).toEqual(0);
+			expect(metadata).to.exist();
+			expect(rows.length).to.equal(0);
 			done();
 		});
 		stream.on('error', done);
@@ -194,7 +195,7 @@ describe('hsql in memory', function() {
 			data += buffer;
 		});
 		stream.on('end', function () {
-			expect(data).toBe('[["1234567891234","Foo bar baz",null,null]]');
+			expect(data).to.equal('[["1234567891234","Foo bar baz",null,null]]');
 			done();
 		});
 		stream.on('error', done);
@@ -217,7 +218,7 @@ describe('hsql in memory', function() {
 				}
 			});
 			stream.on('end', function () {
-				expect(res.length).toBeLessThan(21);
+				expect(res.length).to.be.below(21);
 				done();
 			});
 			stream.on('error', done);
@@ -232,7 +233,7 @@ describe('hsql in memory', function() {
 			schema.push(data);
 		});
 		stream.on('end', function () {
-			expect(schema).toEqual([{
+			expect(schema).to.eql([{
 				schema: 'PUBLIC',
 				table: 'TESTTBL',
 				remarks: ''
@@ -245,7 +246,7 @@ describe('hsql in memory', function() {
 	it('should return columns', function (done) {
 		jt400.getColumns({schema: 'PUBLIC', table: 'TESTTBL'})
 		.then(function (res) {
-			expect(res).toEqual([{
+			expect(res).to.eql([{
 				name: 'ID',
 				typeName: 'DECIMAL',
 				precision: 15,
@@ -284,7 +285,7 @@ describe('hsql in memory', function() {
 				return jt400.query('select NAME from testtbl where id=?', [rowId]);
 			})
 			.then(function (res) {
-				expect(res[0].NAME).toEqual('Transaction 2');
+				expect(res[0].NAME).to.eql('Transaction 2');
 				done();
 			})
 			.fail(done);
@@ -301,13 +302,13 @@ describe('hsql in memory', function() {
 				});
 			})
 			.fail(function (err) {
-				expect(err).toBe(fakeError);
+				expect(err).to.equal(fakeError);
 			})
 			.then(function () {
 				return jt400.query('select NAME from testtbl where id=?', [rowId]);
 			})
 			.then(function (res) {
-				expect(res.length).toBe(0);
+				expect(res.length).to.equal(0);
 				done();
 			})
 			.fail(done);

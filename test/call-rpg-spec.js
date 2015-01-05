@@ -1,22 +1,15 @@
 'use strict';
 var jt400 = require('../lib/jt400'),
-	q = require('q');
-
-function onError(that, done) {
-	return function (err) {
-		that.fail(err);
-		done();
-	};
-}
+	q = require('q'),
+	expect = require('chai').expect;
 
 describe('PGM', function () {
 	it('should run rpg program', function (done) {
 		var getIsk = jt400.pgm('GET_ISK', [{name: 'mynt', size: 3}]);
 		q.all([getIsk({mynt: 'Kr.'}), getIsk({mynt: 'EUR'})]).then(function (result) {
-			expect(result[0].mynt).toBe('ISK');
-			expect(result[1].mynt).toBe('EUR');
-			done();
-		}).fail(onError(this, done));
+			expect(result[0].mynt).to.equal('ISK');
+			expect(result[1].mynt).to.equal('EUR');
+		}).then(done, done);
 	});
 
 	it('should run GETNETFG', function (done) {
@@ -25,9 +18,8 @@ describe('PGM', function () {
 			{name: 'email', size: 30},
 			{name: 'valid', size: 1}]);
 		getNetfang({kt: '0123456789'}).then(function (result) {
-			expect(result.valid).toBe('J');
-			done();
-		}).fail(onError(this, done));
+			expect(result.valid).to.equal('J');
+		}).then(done, done);
 	});
 
 	it('should run pgm with datastructure param', function (done) {
@@ -39,11 +31,10 @@ describe('PGM', function () {
 				]}
 			]);
 		tstDs({p1: {txt1: 'tst', num1: 400, num2: 7}}).then(function (result) {
-			expect(result.p1.txt1).toBe('tst');
-			expect(result.p1.num1).toBe(401);
-			expect(result.p1.num2).toBe(8);
-			done();
-		}).fail(onError(this, done));
+			expect(result.p1.txt1).to.equal('tst');
+			expect(result.p1.num1).to.equal(401);
+			expect(result.p1.num2).to.equal(8);
+		}).then(done, done);
 	});
 
 	it('should run pgm with datastructure param with columns format', function (done) {
@@ -55,10 +46,9 @@ describe('PGM', function () {
 				]}
 			]);
 		tstDs({p1: {txt1: 'tst', num1: 400, num2: 7}}).then(function (result) {
-			expect(result.p1.txt1).toBe('tst');
-			expect(result.p1.num1).toBe(401);
-			expect(result.p1.num2).toBe(8);
-			done();
-		}).fail(onError(this, done));
+			expect(result.p1.txt1).to.equal('tst');
+			expect(result.p1.num1).to.equal(401);
+			expect(result.p1.num2).to.equal(8);
+		}).then(done, done);
 	});
 });

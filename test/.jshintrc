@@ -1,5 +1,6 @@
 {
   "node": true,
+  "mocha": true,
   "browser": false,
   "esnext": true,
   "bitwise": true,
@@ -17,14 +18,5 @@
   "unused": false,
   "globalstrict": true,
   "trailing": true,
-  "smarttabs": true,
-  "-W015": true,
-  "globals": {
-    "require" : true,
-    "describe" : true,
-    "it" : true,
-    "beforeEach" : true,
-    "afterEach" : true,
-    "expect": true
-  }
+  "smarttabs": true
 }

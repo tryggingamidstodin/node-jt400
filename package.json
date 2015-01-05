@@ -8,7 +8,7 @@
     "url": "git://github.com/tryggingamidstodin/jt400.git"
   },
   "scripts": {
-    "test": "jasmine-node spec --matchall --autotest --watch ."
+    "test": "mocha -w"
   },
   "author": "",
   "license": "mit",
@@ -23,7 +23,8 @@
   },
   "devDependencies": {
     "JSONStream": "~0.7.1",
-    "jasmine-node": "~1.11.0",
-    "matcha": "^0.6.0"
+    "chai": "^1.10.0",
+    "matcha": "^0.6.0",
+    "mocha": "^2.1.0"
   }
 }

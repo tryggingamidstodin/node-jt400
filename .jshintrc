@@ -17,9 +17,5 @@
   "unused": false,
   "globalstrict": true,
   "trailing": true,
-  "smarttabs": true,
-  "-W015": true,
-  "globals": {
-    "require" : true
-  }
+  "smarttabs": true
 }
