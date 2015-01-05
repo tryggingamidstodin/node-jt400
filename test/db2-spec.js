@@ -18,6 +18,10 @@ describe('jt400', function () {
 		}).then(done, done);
 	});
 
+    it('should not be in memory', function () {
+        expect(jt400.isInMemory()).to.not.be.ok();
+    });
+
 	it('should return same instance in configure', function () {
 		expect(jt400).to.equal(jt400.configure({host: 'foo'}));
 	});

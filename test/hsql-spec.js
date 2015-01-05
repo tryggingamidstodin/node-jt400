@@ -25,6 +25,9 @@ describe('hsql in memory', function() {
     });
 
     describe('query', function() {
+        it('should be in memory', function () {
+            expect(jt400.isInMemory()).to.be.true();
+        });
         it('should select form testtbl', function(done) {
             jt400.query('select * from testtbl')
                 .then(function(res) {
