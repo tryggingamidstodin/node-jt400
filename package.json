@@ -19,7 +19,7 @@
     "q": "~1.0.0",
     "underscore": "~1.5.2",
     "JSONStream": "~0.8.0",
-    "java": "^0.3.2"
+    "java": "0.4.2"
   },
   "devDependencies": {
     "JSONStream": "~0.7.1",
