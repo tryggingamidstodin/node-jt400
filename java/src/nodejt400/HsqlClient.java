@@ -48,6 +48,12 @@ public class HsqlClient implements ConnectionProvider
 	{
 		return client.getColumns(catalog, schema, tableNamePattern, columnNamePattern);
 	}
+	public String getPrimaryKeys(String catalog, String schema, String table)
+	throws Exception
+	{
+		return client.getPrimaryKeys(catalog, schema, table);
+	}
+
 	public int update(String sql, String paramsJson)
 			throws Exception
 	{

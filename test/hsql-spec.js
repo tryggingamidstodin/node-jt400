@@ -301,6 +301,13 @@ describe('hsql in memory', function() {
                     done();
                 }).fail(done);
         });
+
+        it('should return primary key', function (done) {
+            jt400.getPrimaryKeys({table: 'TESTTBL'}).then(function (res) {
+                expect(res.length).to.equal(1);
+                expect(res[0].name).to.equal('ID');
+            }).then(done, done);
+        });
     });
 
     describe('transaction', function() {

@@ -126,7 +126,32 @@ public class JdbcJsonClient
 		{
 			pool.close(c);
 			throw e;
-		}		
+		}
+	}
+
+	public String getPrimaryKeys(String catalog, String schema, String table)
+	throws Exception
+	{
+		Connection c = pool.getConnection();
+		try
+		{
+			JSONArray columns = new JSONArray();
+			ResultSet crs = c.getMetaData().getPrimaryKeys(catalog, schema, table);
+			while(crs.next())
+			{
+				JSONObject column = new JSONObject();
+				columns.add(column);
+				column.put("name", crs.getString(4));
+			}
+			crs.close();
+			pool.close(c);
+			return columns.toJSONString();
+		}
+		catch (Exception e)
+		{
+			pool.close(c);
+			throw e;
+		}
 	}
 
 	public static final String trim(String value)
