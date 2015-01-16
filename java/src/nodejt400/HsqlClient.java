@@ -71,6 +71,11 @@ public class HsqlClient implements ConnectionProvider
 		return new Transaction(getConnection());
 	}
 
+	public KeyedDataQ createKeyedDataQ(String name)throws Exception
+	{
+		return null;
+	}
+
 	/**
 	 * Mock program call
 	 * @param programName

@@ -231,6 +231,12 @@ public class JT400 implements ConnectionProvider
 
 		}
 	}
+
+	public KeyedDataQ createKeyedDataQ(String name)throws Exception
+	{
+		return new KeyedDataQ(this, name);
+	}
+
 }
 
 abstract class PgmParam
