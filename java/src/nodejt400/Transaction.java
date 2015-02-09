@@ -38,6 +38,12 @@ public class Transaction implements ConnectionProvider
 		return client.query(sql, paramsJson);
 	}
 
+	public StatementWrap execute(String sql, String paramsJson)
+		throws Exception
+	{
+			return client.execute(sql, paramsJson);
+	}
+
 	public ResultSetStream executeAsStream(String sql, String paramsJson, int bufferSize, boolean metadata)
 			throws Exception
 	{

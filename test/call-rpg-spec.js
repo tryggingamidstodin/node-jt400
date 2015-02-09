@@ -5,6 +5,7 @@ var jt400 = require('../lib/jt400'),
 
 describe('PGM', function () {
 	it('should run rpg program', function (done) {
+		this.timeout(15000);
 		var getIsk = jt400.pgm('GET_ISK', [{name: 'mynt', size: 3}]);
 		q.all([getIsk({mynt: 'Kr.'}), getIsk({mynt: 'EUR'})]).then(function (result) {
 			expect(result[0].mynt).to.equal('ISK');

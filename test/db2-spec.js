@@ -6,6 +6,7 @@ describe('jt400', function () {
 	var idList;
 
 	beforeEach(function (done) {
+		this.timeout(5000);
 		jt400.configure({});
 		jt400.update('delete from tsttbl')
 		.then(function () {
