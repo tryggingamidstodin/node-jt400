@@ -1,11 +1,11 @@
 {
-  "name": "jt400",
+  "name": "node-jt400",
   "version": "0.0.9",
   "description": "jt400 wrapper for nodejs",
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git://github.com/tryggingamidstodin/jt400.git"
+    "url": "git://github.com/tryggingamidstodin/node-jt400.git"
   },
   "scripts": {
     "test": "mocha -w"
@@ -13,7 +13,7 @@
   "author": "",
   "license": "mit",
   "bugs": {
-    "url": "https://github.com/tryggingamidstodin/jt400/issues"
+    "url": "https://github.com/tryggingamidstodin/node-jt400/issues"
   },
   "dependencies": {
     "q": "~1.0.0",
@@ -22,7 +22,6 @@
     "java": "0.4.2"
   },
   "devDependencies": {
-    "JSONStream": "~0.7.1",
     "chai": "^1.10.0",
     "gulp": "^3.8.10",
     "gulp-jshint": "^1.9.0",
