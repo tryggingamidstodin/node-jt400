@@ -44,12 +44,6 @@ public class Transaction implements ConnectionProvider
 			return client.execute(sql, paramsJson);
 	}
 
-	public ResultSetStream executeAsStream(String sql, String paramsJson, int bufferSize, boolean metadata)
-			throws Exception
-	{
-		return client.executeAsStream(sql, paramsJson, bufferSize, metadata);
-	}
-
 	public TablesReadStream getTablesAsStream(String catalog, String schema, String table) throws Exception
 	{
 		return client.getTablesAsStream(catalog, schema, table);
@@ -80,8 +74,17 @@ public class Transaction implements ConnectionProvider
 	}
 
 	@Override
-	public void close(Connection c) throws Exception
+	public void returnConnection(Connection c) throws Exception
 	{
 
+	}
+
+	@Override
+	public void close(){
+		try{
+			connection.close();
+		}catch(Exception ex){
+			ex.printStackTrace();
+		}
 	}
 }

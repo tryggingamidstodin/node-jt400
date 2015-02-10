@@ -48,7 +48,7 @@ public class KeyedDataQ
 		}
 		finally
 		{
-			connectionProvider.close(c);
+			connectionProvider.returnConnection(c);
 		}
 	}
 
@@ -66,7 +66,7 @@ public class KeyedDataQ
 		}
 		finally
 		{
-			connectionProvider.close(c);
+			connectionProvider.returnConnection(c);
 		}
 	}
 

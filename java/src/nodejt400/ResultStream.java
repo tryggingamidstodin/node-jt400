@@ -41,7 +41,7 @@ public class ResultStream
     next = false;
     rs.close();
     st.close();
-    connectionProvider.close(c);
+    connectionProvider.returnConnection(c);
   }
 
   public String read() throws Exception

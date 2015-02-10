@@ -7,16 +7,20 @@
 			<include name="jt400.jar"/>
 		</fileset>
   	</path>
-	<target name="build">
+  <target name="clean">
+  	<delete includeemptydirs="true">
+	    <fileset dir="build" includes="**/*"/>
+		</delete>
+  </target>
+	<target name="build" depends="clean">
 		<javac srcdir="src" destdir="build" encoding="utf-8" includeantruntime="false" target="1.6" source="1.6">
 			<include name="**/*.java" />
 			<classpath refid="project.classpath"/>
 		</javac>
 	</target>
 	<target name="archive" depends="build">
-		<jar destfile="lib/jt400wrap.jar" 
-					compress="true">
+		<jar destfile="lib/jt400wrap.jar" compress="true">
 				 	<fileset dir="build" />
-		</jar>	
+		</jar>
 	</target>
 </project>

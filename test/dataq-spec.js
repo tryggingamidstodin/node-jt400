@@ -1,9 +1,10 @@
 'use strict';
-var jt400 = require('../'),
+var jt400 = require('../').pool(),
     expect = require('chai').expect;
 
 describe('keyed dataQ', function () {
     it('should read and write', function (done) {
+        this.timeout(5000);
         var dataQ = jt400.createKeyedDataQ({name: 'SDQS1'});
 
         dataQ.read('mytestkey').then(function (data) {

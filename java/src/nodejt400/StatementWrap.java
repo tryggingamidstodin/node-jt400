@@ -41,7 +41,7 @@ public class StatementWrap
       rs.close();
     }
     st.close();
-    connectionProvider.close(c);
+    connectionProvider.returnConnection(c);
   }
 
   public int updated()

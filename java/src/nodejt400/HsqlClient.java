@@ -22,9 +22,13 @@ public class HsqlClient implements ConnectionProvider
 	}
 
 	@Override
-	public void close(Connection c) throws Exception
+	public void returnConnection(Connection c) throws Exception
 	{
 		c.close();
+	}
+
+	@Override
+	public void close(){
 	}
 
 	public String query(String sql, String paramsJson)

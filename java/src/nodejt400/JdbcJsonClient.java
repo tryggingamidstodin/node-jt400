@@ -54,7 +54,7 @@ public class JdbcJsonClient
 		{
 			if (st != null)
 				st.close();
-			pool.close(c);
+			pool.returnConnection(c);
 		}
 		return array.toJSONString();
 	}
@@ -76,7 +76,7 @@ public class JdbcJsonClient
 			if(st!=null) {
 				st.close();
 			}
-			pool.close(c);
+			pool.returnConnection(c);
 			throw e;
 		}
 	}
@@ -90,7 +90,7 @@ public class JdbcJsonClient
 		}
 		catch (Exception e)
 		{
-			pool.close(c);
+			pool.returnConnection(c);
 			throw e;
 		}
 	}
@@ -118,12 +118,12 @@ public class JdbcJsonClient
 				}
 			}
 			crs.close();
-			pool.close(c);
+			pool.returnConnection(c);
 			return columns.toJSONString();
 		}
 		catch (Exception e)
 		{
-			pool.close(c);
+			pool.returnConnection(c);
 			throw e;
 		}
 	}
@@ -143,12 +143,12 @@ public class JdbcJsonClient
 				column.put("name", crs.getString(4));
 			}
 			crs.close();
-			pool.close(c);
+			pool.returnConnection(c);
 			return columns.toJSONString();
 		}
 		catch (Exception e)
 		{
-			pool.close(c);
+			pool.returnConnection(c);
 			throw e;
 		}
 	}
@@ -179,7 +179,7 @@ public class JdbcJsonClient
 		{
 			if (st != null)
 				st.close();
-			pool.close(c);
+			pool.returnConnection(c);
 		}
 		return result;
 	}
@@ -210,7 +210,7 @@ public class JdbcJsonClient
 		{
 			if (st != null)
 				st.close();
-			pool.close(c);
+			pool.returnConnection(c);
 		}
 		return result;
 	}

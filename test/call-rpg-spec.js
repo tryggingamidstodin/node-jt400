@@ -1,5 +1,5 @@
 'use strict';
-var jt400 = require('../lib/jt400'),
+var jt400 = require('../lib/jt400').pool(),
 	q = require('q'),
 	expect = require('chai').expect;
 

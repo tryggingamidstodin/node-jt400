@@ -6,5 +6,7 @@ public interface ConnectionProvider
 {
 	Connection getConnection() throws Exception;
 
-	void close(Connection c) throws Exception;
+	void returnConnection(Connection c) throws Exception;
+
+  void close();
 }
