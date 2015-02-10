@@ -10,7 +10,14 @@
   "scripts": {
     "test": "mocha -w"
   },
-  "author": "",
+  "keywords": [
+    "as400",
+    "IBM",
+    "java",
+    "db2",
+    "jdbc",
+    "jt400"
+  ],
   "license": "mit",
   "bugs": {
     "url": "https://github.com/tryggingamidstodin/node-jt400/issues"
