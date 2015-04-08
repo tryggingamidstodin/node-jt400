@@ -1,16 +1,15 @@
 package nodejt400;
 
-import java.sql.DriverManager;
 import java.sql.Connection;
-
+import java.sql.DriverManager;
 import java.util.Properties;
 
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
-import com.ibm.as400.access.AS400JDBCDriver;
 import com.ibm.as400.access.AS400JDBCConnectionPool;
 import com.ibm.as400.access.AS400JDBCConnectionPoolDataSource;
+import com.ibm.as400.access.AS400JDBCDriver;
 
 public class JT400
 {
@@ -40,6 +39,11 @@ public class JT400
 			throws Exception
 	{
 		return client.query(sql, paramsJson);
+	}
+
+	public int[] batchUpdate(String sql, String paramsListJson)
+			throws Exception {
+		return client.batchUpdate(sql, paramsListJson);
 	}
 
 	public StatementWrap execute(String sql, String paramsJson)

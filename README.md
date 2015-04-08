@@ -44,3 +44,17 @@ pool.insertList(tableName, idColumn, rows)
 });
 
 ```
+## SQL batch update
+
+```javascript
+//insert list in one statement
+var data = [
+        [1, 'a'],
+        [2, 'b']
+    ];
+pool.batchUpdate('INSERT INTO FOO (FIELD1, FIELD2) VALUES(?,?)', data)
+.then(function (result) {
+    //result is number of updated rows for each row. [1, 1] in this case.
+});
+
+```

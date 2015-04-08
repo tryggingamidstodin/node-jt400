@@ -86,6 +86,18 @@ describe('hsql in memory', function() {
         });
 
     });
+
+    describe('batch update', function () {
+        it('should insert batch', function (done) {
+            jt400.batchUpdate('insert into testtbl (NAME,START) values(?, ?)', [
+                ['foo', '2015-01-02'],
+                ['bar', '2015-03-04']
+            ])
+            .then(function (res) {
+                expect(res).to.eql([1, 1]);
+            }).then(done, done);
+        });
+    });
     it('should mock pgm call', function(done) {
         var callFoo = jt400.pgm('foo', {
                 name: 'bar',

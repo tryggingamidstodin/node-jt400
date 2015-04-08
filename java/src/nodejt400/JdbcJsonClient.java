@@ -29,8 +29,9 @@ public class JdbcJsonClient
 		JSONArray array = new JSONArray();
 		try
 		{
+			JSONArray params = parseParams(paramsJson);
 			st = c.prepareStatement(sql);
-			setParams(paramsJson, st);
+			setParams(params, st);
 			ResultSet rs = st.executeQuery();
 			ResultSetMetaData metaData = rs.getMetaData();
 			while (rs.next())
@@ -43,7 +44,6 @@ public class JdbcJsonClient
 				}
 				array.add(json);
 			}
-
 		}
 		catch (Exception e)
 		{
@@ -66,8 +66,9 @@ public class JdbcJsonClient
 		PreparedStatement st = null;
 		try
 		{
+			JSONArray params = parseParams(paramsJson);
 			st = c.prepareStatement(sql);
-			setParams(paramsJson, st);
+			setParams(params, st);
 			return new StatementWrap(pool, c, st);
 		}
 		catch (Exception e)
@@ -166,8 +167,9 @@ public class JdbcJsonClient
 		int result = 0;
 		try
 		{
+			JSONArray params = parseParams(paramsJson);
 			st = c.prepareStatement(sql);
-			setParams(paramsJson, st);
+			setParams(params, st);
 			result = st.executeUpdate();
 		}
 		catch (Exception e)
@@ -184,6 +186,32 @@ public class JdbcJsonClient
 		return result;
 	}
 
+	public int[] batchUpdate(String sql, String paramsListJson)
+			throws Exception {
+		Connection c = pool.getConnection();
+		PreparedStatement st = null;
+		int[] result = null;
+		try {
+			st = c.prepareStatement(sql);
+			JSONArray jsonArray = (JSONArray) JSONValue.parse(paramsListJson);
+			int n = jsonArray.size();
+			for (int i = 0; i < n; i++) {
+				JSONArray params = (JSONArray) jsonArray.get(i);
+				setParams(params, st);
+				st.addBatch();
+			}
+			result = st.executeBatch();
+		} catch (Exception e) {
+			System.err.println(sql + " params: " + paramsListJson);
+			throw e;
+		} finally {
+			if (st != null)
+				st.close();
+			pool.returnConnection(c);
+		}
+		return result;
+	}
+
 	public double insertAndGetId(String sql, String paramsJson)
 			throws Exception
 	{
@@ -192,8 +220,9 @@ public class JdbcJsonClient
 		double result = 0;
 		try
 		{
+			JSONArray params = parseParams(paramsJson);
 			st = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-			setParams(paramsJson, st);
+			setParams(params, st);
 			st.executeUpdate();
 			ResultSet keys = st.getGeneratedKeys();
 			if (keys.next())
@@ -215,12 +244,13 @@ public class JdbcJsonClient
 		return result;
 	}
 
-	private void setParams(String paramsJson, PreparedStatement st) throws SQLException
+	private void setParams(JSONArray params, PreparedStatement st)
+			throws SQLException
 	{
-		Object[] params = parseParams(paramsJson);
-		for (int i = 0; i < params.length; i++)
+		int n = params.size();
+		for (int i = 0; i < n; i++)
 		{
-			Object value = params[i];
+			Object value = params.get(i);
 			try
 			{
 				if (value instanceof Long)
@@ -248,15 +278,8 @@ public class JdbcJsonClient
 		}
 	}
 
-	private Object[] parseParams(String paramsJson)
+	private JSONArray parseParams(String paramsJson)
 	{
-		JSONArray jsonArray = (JSONArray) JSONValue.parse(paramsJson);
-		int n = jsonArray.size();
-		Object[] params = new Object[n];
-		for (int i = 0; i < n; i++)
-		{
-			params[i] = jsonArray.get(i);
-		}
-		return params;
+		return (JSONArray) JSONValue.parse(paramsJson);
 	}
 }
