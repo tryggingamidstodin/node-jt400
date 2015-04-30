@@ -26,7 +26,7 @@ describe('hsql in memory', function() {
     });
 
     describe('query', function() {
-        it('should be in memory', function () {
+        it('should be in memory', function() {
             expect(jt400.isInMemory()).to.be.true();
         });
         it('should select form testtbl', function(done) {
@@ -87,42 +87,58 @@ describe('hsql in memory', function() {
 
     });
 
-    describe('batch update', function () {
-        it('should insert batch', function (done) {
+    describe('batch update', function() {
+        it('should insert batch', function(done) {
             jt400.batchUpdate('insert into testtbl (NAME,START) values(?, ?)', [
-                ['foo', '2015-01-02'],
-                ['bar', '2015-03-04']
-            ])
-            .then(function (res) {
-                expect(res).to.eql([1, 1]);
-            }).then(done, done);
+                    ['foo', '2015-01-02'],
+                    ['bar', '2015-03-04']
+                ])
+                .then(function(res) {
+                    expect(res).to.eql([1, 1]);
+                }).then(done, done);
         });
     });
-    it('should mock pgm call', function(done) {
-        var callFoo = jt400.pgm('foo', {
+    describe('pgm call mock', function() {
+        var callFoo, input;
+
+        beforeEach(function() {
+            callFoo = jt400.pgm('foo', {
                 name: 'bar',
                 size: 10
             }, {
                 name: 'baz',
                 size: 9,
                 decimals: 2
-            }),
+            });
             input = {
                 bar: 'a',
                 baz: 10
             };
-        callFoo(input).then(function(res) {
+
+        });
+
+        it('should return input by default', function() {
+            return callFoo(input).then(function(res) {
                 expect(res).to.eql(input);
-                done();
-            })
-            .fail(done);
+            });
+        });
+
+        it('should register mock', function () {
+            jt400.mockPgm('foo', function (input) {
+                input.baz = 20;
+                return input;
+            });
+            return callFoo(input).then(function (res) {
+                expect(res.baz).to.equal(20);
+            });
+        });
     });
 
-    describe('execute', function () {
-        it('should get metadata', function (done) {
-            jt400.execute('select * from testtbl').then(function (statement) {
+    describe('execute', function() {
+        it('should get metadata', function(done) {
+            jt400.execute('select * from testtbl').then(function(statement) {
                 return statement.metadata();
-            }).then(function (metadata) {
+            }).then(function(metadata) {
                 expect(metadata).to.eql([{
                     name: 'ID',
                     typeName: 'DECIMAL',
@@ -148,15 +164,15 @@ describe('hsql in memory', function() {
         });
 
         it('should get result as stream', function(done) {
-            jt400.execute('select * from testtbl').then(function (statement) {
+            jt400.execute('select * from testtbl').then(function(statement) {
                 var stream = statement.asStream(),
                     data = '';
                 expect(statement.isQuery()).to.be.true();
-                stream.on('data', function (chunk) {
+                stream.on('data', function(chunk) {
                     data += chunk;
                 });
 
-                stream.on('end', function () {
+                stream.on('end', function() {
                     expect(data).to.equal('[["1234567891234","Foo bar baz",null,null]]');
                     done();
                 });
@@ -175,9 +191,9 @@ describe('hsql in memory', function() {
                         return jt400.update('insert into testtbl (NAME) values(?)', ['n' + item]);
                     });
                 }, q()).then(function() {
-                    jt400.execute('select NAME from testtbl order by ID').then(function (statement) {
+                    jt400.execute('select NAME from testtbl order by ID').then(function(statement) {
                         return statement.asStream().pipe(JSONStream.parse([true]));
-                    }).then(function (stream) {
+                    }).then(function(stream) {
                         var res = [];
                         stream.on('data', function(row) {
                             res.push(row);
@@ -199,10 +215,10 @@ describe('hsql in memory', function() {
 
         it('should get update count', function(done) {
             jt400.execute('update testtbl set NAME=?', ['testing']).then(function(statement) {
-              expect(statement.isQuery()).to.be.false();
-              return statement.updated();
+                expect(statement.isQuery()).to.be.false();
+                return statement.updated();
             }).then(function(updated) {
-              expect(updated).to.equal(1);
+                expect(updated).to.equal(1);
             }).then(done, done);
         });
 
@@ -216,8 +232,10 @@ describe('hsql in memory', function() {
                     return jt400.update('insert into testtbl (NAME) values(?)', ['n' + item]);
                 })).then(function() {
                     var res = [];
-                    return jt400.execute('select NAME from testtbl').then(function (statement) {
-                        var stream = statement.asStream({bufferSize: 10}).pipe(JSONStream.parse([true]));
+                    return jt400.execute('select NAME from testtbl').then(function(statement) {
+                        var stream = statement.asStream({
+                            bufferSize: 10
+                        }).pipe(JSONStream.parse([true]));
                         stream.on('data', function(row) {
                             res.push(row);
                             if (res.length >= 10) {
@@ -286,8 +304,10 @@ describe('hsql in memory', function() {
                 }).fail(done);
         });
 
-        it('should return primary key', function (done) {
-            jt400.getPrimaryKeys({table: 'TESTTBL'}).then(function (res) {
+        it('should return primary key', function(done) {
+            jt400.getPrimaryKeys({
+                table: 'TESTTBL'
+            }).then(function(res) {
                 expect(res.length).to.equal(1);
                 expect(res[0].name).to.equal('ID');
             }).then(done, done);
