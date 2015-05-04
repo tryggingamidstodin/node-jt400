@@ -67,6 +67,12 @@ public class Transaction implements ConnectionProvider
 		return client.insertAndGetId(sql, paramsJson);
 	}
 
+	public int[] batchUpdate(String sql, String paramsListJson)
+			throws Exception 
+	{
+		return client.batchUpdate(sql, paramsListJson);
+	}
+
 	@Override
 	public Connection getConnection() throws Exception
 	{
