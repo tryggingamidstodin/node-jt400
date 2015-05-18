@@ -96,6 +96,10 @@ public class JT400
 		return new KeyedDataQ(connectionProvider, name);
 	}
 
+	public IfsReadStream createIfsReadStream(String fileName) throws Exception {
+		return new IfsReadStream(connectionProvider, fileName);
+	}
+
 	public void close()
 	{
 		connectionProvider.close();

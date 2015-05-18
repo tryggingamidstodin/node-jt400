@@ -58,3 +58,10 @@ pool.batchUpdate('INSERT INTO FOO (FIELD1, FIELD2) VALUES(?,?)', data)
 });
 
 ```
+
+## IFS read
+```javascript
+var ifs = pool.ifs();
+ifs.createReadStream('/foo/bar.txt');
+
+```

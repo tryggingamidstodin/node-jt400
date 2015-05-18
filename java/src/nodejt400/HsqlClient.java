@@ -85,6 +85,10 @@ public class HsqlClient implements ConnectionProvider
 		return null;
 	}
 
+	public IfsReadStream createIfsReadStream(String fileName) throws Exception {
+		return null;
+	}
+
 	/**
 	 * Mock program call
 	 * @param programName
