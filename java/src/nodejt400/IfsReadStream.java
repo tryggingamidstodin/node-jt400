@@ -12,7 +12,7 @@ public class IfsReadStream {
 
 	private ConnectionProvider connectionProvider;
 	private final Connection connection;
-	private int bufferSize = 100;
+	private int bufferSize = 10000;
 	byte[] buffer = new byte[bufferSize];
 	private final IFSFileInputStream fis;
 
