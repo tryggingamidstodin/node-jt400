@@ -360,7 +360,7 @@ describe('hsql in memory', function() {
 
         it('should batch update', function() {
             return jt400.transaction(function (transaction) {
-                return transaction.batchUpdate('insert into testtbl (NAME) values(?)', [['Foo'], ['Bar']])
+                return transaction.batchUpdate('insert into testtbl (NAME) values(?)', [['Foo'], ['Bar']]);
             });
         });
     });
