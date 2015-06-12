@@ -151,8 +151,6 @@ class Pool implements ConnectionProvider
 {
 	private final AS400JDBCConnectionPool sqlPool;
 
-	private final JdbcJsonClient client;
-
 	public Pool(JSONObject jsonConf)
 	{
 		Props conf = new Props(jsonConf);
@@ -186,7 +184,6 @@ class Pool implements ConnectionProvider
 			ds.setLibraries(value);
 		}
 		this.sqlPool = new AS400JDBCConnectionPool(ds);
-		this.client = new JdbcJsonClient(this);
 		Runtime.getRuntime().addShutdownHook(new Thread()
 		{
 			@Override
