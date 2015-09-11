@@ -52,6 +52,15 @@ public class KeyedDataQ
 		}
 	}
 
+	public KeyedDataQueueResponse readResponse(final String key, int wait,
+			int writeKeyLength)
+			throws Exception {
+		String allData = read(key, wait);
+		String writeKey = allData.substring(0, writeKeyLength);
+		String data = allData.substring(writeKeyLength);
+		return new KeyedDataQueueResponse(writeKey, data, this);
+	}
+
 	public void write(String key, String data) throws Exception
 	{
 		Connection c = connectionProvider.getConnection();
