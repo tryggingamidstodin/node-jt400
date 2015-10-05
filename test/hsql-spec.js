@@ -180,6 +180,24 @@ describe('hsql in memory', function() {
             });
         });
 
+        it('should query as stream', function(done) {
+            var stream = jt400.queryAsStream('select * from testtbl');
+            var jsonStream = stream.pipe(JSONStream.parse([true]));
+            var data = [];
+            jsonStream.on('data', function(row) {
+                data.push(row);
+            });
+            jsonStream.on('end', function() {
+                try {
+                    expect(data.length).to.equal(1);
+                    done();
+                } catch (e) {
+                    done(e);
+                }
+            });
+            stream.on('error', done);
+        });
+
         it('should pipe to JSONStream', function(done) {
             var i = 1,
                 data = [];

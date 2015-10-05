@@ -37,6 +37,11 @@ public class HsqlClient implements ConnectionProvider
 		return client.query(sql, paramsJson);
 	}
 
+	public ResultStream queryAsStream(String sql, String paramsJson,
+			int bufferSize) throws Exception {
+		return client.queryAsStream(sql, paramsJson, bufferSize);
+	}
+
 	public int[] batchUpdate(String sql, String paramsListJson)
 			throws Exception {
 		return client.batchUpdate(sql, paramsListJson);

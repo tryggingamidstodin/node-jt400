@@ -19,6 +19,13 @@ pool.query('SELECT FIELD1, FIELD2 FROM FOO WHERE BAR=? AND BAZ=?', [1, 'a'])
 });
 
 ```
+## SQL stream
+
+```javascript
+pool.queryAsStream('SELECT FIELD1, FIELD2 FROM FOO WHERE BAR=? AND BAZ=?', [1, 'a'])
+.pipe(fs.createWriteStream(jsonFileName));
+
+```
 ## SQL update
 
 ```javascript

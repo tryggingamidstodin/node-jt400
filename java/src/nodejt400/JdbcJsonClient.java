@@ -59,6 +59,22 @@ public class JdbcJsonClient
 		return array.toJSONString();
 	}
 
+	public ResultStream queryAsStream(String sql, String paramsJson, int bufferSize)
+			throws Exception {
+		Connection c = pool.getConnection();
+		PreparedStatement st = null;
+		try {
+			JSONArray params = parseParams(paramsJson);
+			st = c.prepareStatement(sql);
+			setParams(params, st);
+			ResultSet rs = st.executeQuery();
+			return new ResultStream(pool, c, st, rs, bufferSize);
+		} catch (Exception e) {
+			System.err.println(sql + " params: " + paramsJson);
+			throw e;
+		}
+	}
+
 	public StatementWrap execute(String sql, String paramsJson)
 		throws Exception
 	{
