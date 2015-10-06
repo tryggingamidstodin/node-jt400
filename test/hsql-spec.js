@@ -1,6 +1,7 @@
 'use strict';
 var jt400 = require('../lib/jt400').useInMemoryDb(),
     JSONStream = require('JSONStream'),
+    Readable = require('stream').Readable,
     q = require('q'),
     expect = require('chai').expect;
 
@@ -45,6 +46,24 @@ describe('hsql in memory', function() {
                 });
         });
 
+        it('should query as stream', function(done) {
+            var stream = jt400.createReadStream('select * from testtbl');
+            var jsonStream = stream.pipe(JSONStream.parse([true]));
+            var data = [];
+            jsonStream.on('data', function(row) {
+                data.push(row);
+            });
+            jsonStream.on('end', function() {
+                try {
+                    expect(data.length).to.equal(1);
+                    done();
+                } catch (e) {
+                    done(e);
+                }
+            });
+            stream.on('error', done);
+        });
+
     });
 
     describe('insert', function() {
@@ -83,6 +102,23 @@ describe('hsql in memory', function() {
                     done();
                 })
                 .fail(done);
+        });
+
+        it('should create write stream', function(done) {
+            var dataStream = new Readable({objectMode: true});
+            var c = 97;
+            dataStream._read = function () {
+                dataStream.push([String.fromCharCode(c++)]);
+                if (c > 'z'.charCodeAt(0)) {
+                    dataStream.push(null);
+                }
+            };
+            var ws = jt400.createWriteStream('insert into testtbl (NAME) VALUES(?)', {bufferSize: 10});
+            dataStream.pipe(ws).on('finish', function() {
+                jt400.query('select name from testtbl').then(function(res) {
+                    expect(res.length).to.equal(27);
+                }).then(done, done);
+            }).on('error', done);
         });
 
     });
@@ -178,24 +214,6 @@ describe('hsql in memory', function() {
                 });
                 stream.on('error', done);
             });
-        });
-
-        it('should query as stream', function(done) {
-            var stream = jt400.queryAsStream('select * from testtbl');
-            var jsonStream = stream.pipe(JSONStream.parse([true]));
-            var data = [];
-            jsonStream.on('data', function(row) {
-                data.push(row);
-            });
-            jsonStream.on('end', function() {
-                try {
-                    expect(data.length).to.equal(1);
-                    done();
-                } catch (e) {
-                    done(e);
-                }
-            });
-            stream.on('error', done);
         });
 
         it('should pipe to JSONStream', function(done) {

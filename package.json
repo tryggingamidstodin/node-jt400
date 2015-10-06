@@ -23,10 +23,11 @@
     "url": "https://github.com/tryggingamidstodin/node-jt400/issues"
   },
   "dependencies": {
-    "q": "~1.0.0",
-    "underscore": "~1.5.2",
     "JSONStream": "~0.8.0",
-    "java": "0.4.2"
+    "flushwritable": "^1.0.0",
+    "java": "0.4.2",
+    "q": "~1.0.0",
+    "underscore": "~1.5.2"
   },
   "devDependencies": {
     "chai": "^1.10.0",
