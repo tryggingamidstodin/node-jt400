@@ -26,8 +26,7 @@
     "JSONStream": "~0.8.0",
     "flushwritable": "^1.0.0",
     "java": "0.4.2",
-    "q": "~1.0.0",
-    "underscore": "~1.5.2"
+    "q": "~1.0.0"
   },
   "devDependencies": {
     "chai": "^1.10.0",
