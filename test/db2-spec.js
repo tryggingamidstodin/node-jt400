@@ -44,7 +44,7 @@ describe('jt400 pool', function () {
 	});
 
   it('should not be in memory', function () {
-      expect(pool.isInMemory()).to.not.be.ok();
+      expect(pool.isInMemory()).to.equal(false);
   });
 
 	it('should not return same instance in configure', function () {

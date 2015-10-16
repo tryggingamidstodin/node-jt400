@@ -28,7 +28,7 @@ describe('hsql in memory', function() {
 
     describe('query', function() {
         it('should be in memory', function() {
-            expect(jt400.isInMemory()).to.be.true();
+            expect(jt400.isInMemory()).to.equal(true);
         });
         it('should select form testtbl', function(done) {
             jt400.query('select * from testtbl')
@@ -203,17 +203,21 @@ describe('hsql in memory', function() {
             jt400.execute('select * from testtbl').then(function(statement) {
                 var stream = statement.asStream(),
                     data = '';
-                expect(statement.isQuery()).to.be.true();
+                expect(statement.isQuery()).to.equal(true);
                 stream.on('data', function(chunk) {
                     data += chunk;
                 });
 
                 stream.on('end', function() {
-                    expect(data).to.equal('[["1234567891234","Foo bar baz",null,null]]');
-                    done();
+                    try{
+                        expect(data).to.equal('[["1234567891234","Foo bar baz",null,null]]');
+                        done();
+                    } catch(err) {
+                        done(err);
+                    }
                 });
                 stream.on('error', done);
-            });
+            }).fail(done);
         });
 
         it('should pipe to JSONStream', function(done) {
@@ -251,7 +255,7 @@ describe('hsql in memory', function() {
 
         it('should get update count', function(done) {
             jt400.execute('update testtbl set NAME=?', ['testing']).then(function(statement) {
-                expect(statement.isQuery()).to.be.false();
+                expect(statement.isQuery()).to.equal(false);
                 return statement.updated();
             }).then(function(updated) {
                 expect(updated).to.equal(1);
