@@ -158,36 +158,17 @@ class Pool implements ConnectionProvider
 
 	public Pool(JSONObject jsonConf)
 	{
-		Props conf = new Props(jsonConf);
+		Properties connectionProps = new Properties();
+		connectionProps.putAll(jsonConf);
+		connectionProps.remove("host");
+		connectionProps.remove("user");
+		connectionProps.remove("password");
+
 		AS400JDBCConnectionPoolDataSource ds = new AS400JDBCConnectionPoolDataSource();
-		ds.setServerName(conf.get("host"));
-		ds.setUser(conf.get("user"));
-		ds.setPassword(conf.get("password"));
-		String naming = conf.get("naming", "system");
-		ds.setNaming(naming);
-		ds.setDateFormat(conf.get("dateFormat", "iso"));
-		ds.setTransactionIsolation(conf.get("transactionIsolation", "repeatable read"));
-		ds.setMetaDataSource(0);
-		String value = conf.get("sort");
-		if (value != null)
-		{
-			ds.setSort(value);
-		}
-		value = conf.get("sortTable");
-		if (value != null)
-		{
-			ds.setSortTable(value);
-		}
-		value = conf.get("sortLanguage");
-		if (value != null)
-		{
-			ds.setSortLanguage(value);
-		}
-		value = conf.get("libraries");
-		if (value != null)
-		{
-			ds.setLibraries(value);
-		}
+		ds.setServerName((String) jsonConf.get("host"));
+		ds.setUser((String) jsonConf.get("user"));
+		ds.setPassword((String) jsonConf.get("password"));
+		ds.setProperties(connectionProps);
 		this.sqlPool = new AS400JDBCConnectionPool(ds);
 		Runtime.getRuntime().addShutdownHook(new Thread()
 		{

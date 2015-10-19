@@ -1,6 +1,8 @@
 'use strict';
 var jt400 = require('../lib/jt400'),
-	pool = jt400.pool(),
+	pool = jt400.pool({
+		'date format': 'iso'
+	}),
 	expect = require('chai').expect;
 
 describe('connect', function () {
