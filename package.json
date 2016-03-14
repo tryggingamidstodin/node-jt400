@@ -1,6 +1,6 @@
 {
   "name": "node-jt400",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "jt400 wrapper for nodejs",
   "main": "index.js",
   "repository": {
