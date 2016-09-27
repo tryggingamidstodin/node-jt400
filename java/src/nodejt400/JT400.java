@@ -155,6 +155,7 @@ class SimpleConnection implements ConnectionProvider
 class Pool implements ConnectionProvider
 {
 	private final AS400JDBCConnectionPool sqlPool;
+	private final long logConnectionTimeThreshold;
 
 	public Pool(JSONObject jsonConf)
 	{
@@ -163,6 +164,13 @@ class Pool implements ConnectionProvider
 		connectionProps.remove("host");
 		connectionProps.remove("user");
 		connectionProps.remove("password");
+		
+		String conTimeThresshold = System.getenv("LOG_CONNECTION_TIME_THRESHOLD");
+		if(conTimeThresshold == null) {
+			conTimeThresshold = "10000";
+		}
+		logConnectionTimeThreshold = Long.parseLong(conTimeThresshold);
+		
 
 		AS400JDBCConnectionPoolDataSource ds = new AS400JDBCConnectionPoolDataSource();
 		ds.setServerName((String) jsonConf.get("host"));
@@ -184,7 +192,13 @@ class Pool implements ConnectionProvider
 	@Override
 	public Connection getConnection() throws Exception
 	{
-		return sqlPool.getConnection();
+		long t = System.currentTimeMillis();
+		Connection c = sqlPool.getConnection();
+		t = System.currentTimeMillis() - t;
+		if(t >= logConnectionTimeThreshold) {
+			System.out.println("Connect time: " + t);
+		}
+		return c;
 	}
 
 	@Override
