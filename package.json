@@ -1,6 +1,6 @@
 {
   "name": "node-jt400",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "jt400 wrapper for nodejs",
   "main": "index.js",
   "repository": {
@@ -25,7 +25,7 @@
   "dependencies": {
     "JSONStream": "~1.0.6",
     "flushwritable": "^1.0.0",
-    "java": "0.6.0",
+    "java": "0.7.2",
     "q": "~1.4.1"
   },
   "devDependencies": {
