@@ -73,7 +73,7 @@ pool.transaction(function(transaction) {
 	var fooId = 1;
 
 	//transaction object has the same api as the pool object.
-	//The transaction is commit on success and rolled back on failure.
+	//The transaction is commited on success and rolled back on failure.
 	return transaction.update('INSERT INTO FOO (FOOID, FIELD2) VALUES(?,?)', [fooId, 'a']).then(function() {
 		return transaction.update('update BAR (NAME) set FOOID=? where BARID=?)', [fooId , 2])
 	});
