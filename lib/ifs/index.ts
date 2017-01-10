@@ -1,8 +1,8 @@
 'use strict';
-var IfsReadStream = require('./read_stream'),
-    q = require('q');
+import { IfsReadStream } from './read_stream'
+import q = require('q')
 
-function ifs(connection) {
+export function ifs(connection) {
     return {
         createReadStream: function(fileName) {
             var javaStream = q.when(fileName).then(function (file) {
@@ -14,5 +14,3 @@ function ifs(connection) {
         }
     };
 }
-
-module.exports = ifs;

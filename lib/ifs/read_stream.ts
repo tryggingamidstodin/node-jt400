@@ -1,9 +1,8 @@
-'use strict';
-var util = require('util'),
-    Readable = require('stream').Readable;
+import util = require('util')
+import { Readable } from 'stream'
 
 
-function IfsReadStream(opt) {
+export function IfsReadStream(opt) {
     Readable.call(this, {
         objectMode: false
     });
@@ -27,5 +26,3 @@ IfsReadStream.prototype._read = function() {
         _this.emit('error', err);
     });
 };
-
-module.exports = IfsReadStream;

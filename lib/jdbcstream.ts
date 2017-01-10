@@ -1,15 +1,14 @@
-'use strict';
-var util = require('util'),
-	Readable = require('stream').Readable;
+import { inherits } from 'util'
+import { Readable } from 'stream'
 
 
-function JdbcStream (opt) {
+export function JdbcStream (opt) {
 	Readable.call(this, {objectMode: false});
 	this._jdbcStream = opt.jdbcStream;
 	this._jdbcStreamPromise = opt.jdbcStreamPromise;
 }
 
-util.inherits(JdbcStream, Readable);
+inherits(JdbcStream, Readable);
 
 function read(context) {
 	if(context._closed) {
@@ -47,5 +46,3 @@ JdbcStream.prototype._read = function () {
 		read(this);
 	}
 };
-
-module.exports = JdbcStream;

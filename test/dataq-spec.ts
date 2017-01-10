@@ -1,6 +1,6 @@
-'use strict';
-var jt400 = require('../').pool(),
-    expect = require('chai').expect;
+import { pool } from '../lib/jt400'
+import { expect } from 'chai'
+const jt400 = pool()
 
 describe('keyed dataQ', function () {
     it('should read and write', function (done) {
@@ -16,7 +16,7 @@ describe('keyed dataQ', function () {
 
     it('should fail on timeout', function (done) {
         var dataQ = jt400.createKeyedDataQ({name: 'SDQS1'});
-        dataQ.read({key: 'mytestkey', wait: 1 /*sec*/}).fail(function (err) {
+        dataQ.read({key: 'mytestkey', wait: 1 /*sec*/}).catch(function (err) {
             expect(err.message).to.contain('timeout, key: mytestkey');
         }).then(done, done);
     });

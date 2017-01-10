@@ -2,13 +2,19 @@
   "name": "node-jt400",
   "version": "1.1.2",
   "description": "jt400 wrapper for nodejs",
-  "main": "index.js",
+  "main": "dist/lib/jt400.js",
+  "types": "dist/lib/jt400.d.ts",
   "repository": {
     "type": "git",
     "url": "git://github.com/tryggingamidstodin/node-jt400.git"
   },
+  "files": [
+    "dist/lib",
+    "java/lib"
+  ],
   "scripts": {
-    "test": "mocha -w"
+    "test": "mocha dist/test",
+    "build": "tsc"
   },
   "keywords": [
     "as400",
@@ -29,11 +35,12 @@
     "q": "~1.4.1"
   },
   "devDependencies": {
+    "@types/chai": "^3.4.34",
+    "@types/mocha": "^2.2.37",
+    "@types/node": "^6.0.59",
     "chai": "^3.3.0",
-    "gulp": "^3.8.10",
-    "gulp-jshint": "^1.9.0",
-    "gulp-mocha": "^2.0.0",
     "matcha": "^0.6.0",
-    "mocha": "^2.1.0"
+    "mocha": "^2.1.0",
+    "typescript": "^2.1.4"
   }
 }

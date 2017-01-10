@@ -1,7 +1,7 @@
-'use strict';
-var jt400 = require('../lib/jt400').pool(),
-	q = require('q'),
-	expect = require('chai').expect;
+import { pool } from '../lib/jt400'
+import	q = require('q')
+import { expect } from 'chai'
+const jt400 = pool()
 
 describe('PGM', function () {
 	it('should run rpg program', function (done) {

@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "noUnusedLocals": true,
+        "declaration": true,
+        "noUnusedParameters": true,
+        "strictNullChecks": true,
+        "target": "ES6",
+        "noImplicitAny": false,
+        "removeComments": true,
+        "preserveConstEnums": true,
+        "outDir": "dist",
+        "sourceMap": true
+    },
+    "exclude": [
+        "node_modules",
+        "java",
+        "dist"
+    ],
+    "compileOnSave": true
+}

@@ -1,7 +1,8 @@
 'use strict';
-var jt400 = require('../lib/jt400').pool(),
-    expect = require('chai').expect,
-    q = require('q');
+import { pool } from '../lib/jt400'
+import { expect } from 'chai'
+import q = require('q')
+const jt400 = pool()
 
 describe('ifs', function () {
     it('should read file', function (done) {

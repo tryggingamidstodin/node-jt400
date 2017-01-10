@@ -1,25 +1,26 @@
-'use strict';
-var jvm = require('java'),
-	sqlutil = require('./sqlutil'),
-	JdbcStream = require('./jdbcstream'),
-	createJdbcWriteStream = require('./jdbcwritestream'),
-	createIfs = require('./ifs'),
-	JSONStream = require('JSONStream'),
-	defaults = require('./defaults'),
-	Q = require('q'),
-	defaultConfig = {
-		host: process.env.AS400_HOST,
-		user: process.env.AS400_USERNAME,
-		password: process.env.AS400_PASSWORD,
-		naming: 'system'
-	};
+import { Readable, Writable } from 'stream'
+import { JdbcStream } from './jdbcstream'
+import { ifs as createIfs } from './ifs'
+import { toInsertSql } from './sqlutil'
+import { createJdbcWriteStream } from './jdbcwritestream'
+import jvm = require('java')
+import JSONStream = require('JSONStream')
+import { defaults } from './defaults'
+import Q = require('q')
+
+const defaultConfig = {
+	host: process.env.AS400_HOST,
+	user: process.env.AS400_USERNAME,
+	password: process.env.AS400_PASSWORD,
+	naming: 'system'
+}
 
 jvm.options.push('-Xrs'); // fixing the signal handling issues (for exmaple ctrl-c)
 
-jvm.classpath.push(__dirname + '/../java/lib/jt400.jar');
-jvm.classpath.push(__dirname + '/../java/lib/jt400wrap.jar');
-jvm.classpath.push(__dirname + '/../java/lib/json-simple-1.1.1.jar');
-jvm.classpath.push(__dirname + '/../java/lib/hsqldb.jar');
+jvm.classpath.push(__dirname + '/../../java/lib/jt400.jar');
+jvm.classpath.push(__dirname + '/../../java/lib/jt400wrap.jar');
+jvm.classpath.push(__dirname + '/../../java/lib/json-simple-1.1.1.jar');
+jvm.classpath.push(__dirname + '/../../java/lib/hsqldb.jar');
 
 process.on('exit', function(code) {
     jvm.import('java.lang.System').exit(code);
@@ -50,7 +51,7 @@ function insertListInOneStatment(jt400, tableName, idColumn, list) {
 	if(!list || list.length===0) {
 		return new Q([]);
 	}
-	var sql = 'SELECT ' + idColumn + ' FROM NEW TABLE(' + sqlutil.toInsertSql(tableName, list) + ')',
+	var sql = 'SELECT ' + idColumn + ' FROM NEW TABLE(' + toInsertSql(tableName, list) + ')',
 		params = list.map(values).reduce(function(arr, valueArr) {
 		    return arr.concat(valueArr);
 		}, []);
@@ -61,12 +62,12 @@ function insertListInOneStatment(jt400, tableName, idColumn, list) {
 	});
 }
 
-function standardInsertList(jt400, tableName, idColumn, list) {
+function standardInsertList(jt400, tableName, _, list) {
 	var idList = [],
 		pushToIdList = idList.push.bind(idList);
 	return list.map(function (record) {
 		return {
-			sql: sqlutil.toInsertSql(tableName, [record]),
+			sql: toInsertSql(tableName, [record]),
 			values: values(record)
 		};
 	}).reduce(function (soFar, sqlObj) {
@@ -87,7 +88,7 @@ function paramsToJson(params) {
 }
 
 function createInstance(connection, insertListFun, inMemory) {
-	var mixinConnection = function (obj, newConn) {
+	var mixinConnection = function (obj, newConn?) {
 		var thisConn = newConn || connection;
 		obj.query = function (sql, params) {
 			var jsonParams = paramsToJson(params || []);
@@ -165,7 +166,7 @@ function createInstance(connection, insertListFun, inMemory) {
 		return obj;
 	};
 
-	var jt400 = mixinConnection({
+	const jt400 = mixinConnection({
 		transaction: function (transactionFunction) {
 			var t = connection.connection.createTransactionSync(),
 				c = {
@@ -252,39 +253,111 @@ function createInstance(connection, insertListFun, inMemory) {
 	return jt400;
 }
 
-module.exports = {
-	pool: function (config) {
-		var javaCon = jvm.import('nodejt400.JT400').createPoolSync(JSON.stringify(defaults(config || {}, defaultConfig)));
-		return createInstance(createConFrom(javaCon), insertListInOneStatment, false);
-	},
-	connect: function (config) {
-		var jt = jvm.import('nodejt400.JT400'),
-				createConnection = jt.createConnection.bind(jt);
-		return Q.nfcall(createConnection, JSON.stringify(defaults(config || {}, defaultConfig))).then(function (javaCon) {
-			return createInstance(createConFrom(javaCon), insertListInOneStatment, false);
-		});
-	},
-	useInMemoryDb: function () {
-		var javaCon = jvm.newInstanceSync('nodejt400.HsqlClient');
-		var instance = createInstance(createConFrom(javaCon), standardInsertList, true);
-		var pgmMockRegistry = {};
-		instance.mockPgm = function (programName, func) {
-			pgmMockRegistry[programName] = func;
-			return instance;
-		};
+export interface WriteStreamOptions {
+	bufferSize: number
+}
 
-		var defaultPgm = instance.pgm;
-		instance.pgm = function (programName, paramsSchema) {
-			var defaultFunc = defaultPgm(programName, paramsSchema);
-			return function (params) {
-				var mockFunc = pgmMockRegistry[programName];
-				if(mockFunc) {
-					var res = mockFunc(params);
-					return res.then ? res : Q.when(res);
-				}
-				return defaultFunc(params);
-			};
-		};
-		return instance;
+export interface PgmParamType1 {
+	name: string
+	size: number
+	type?: string
+	decimals?: number
+}
+
+export interface PgmParamType2 {
+	name: string
+	precision: number
+	typeName?: string
+	scale?: number
+}
+
+export interface PgmParamStructType {
+	[key: string]: PgmParamType[]
+}
+
+export type PgmParamType = PgmParamType1 | PgmParamType2 | PgmParamStructType
+
+export type Param = string | number | Date | null
+
+export interface DataQOptions {
+	name: string
+}
+
+export interface DataQReadOptions {
+	key: string
+	wait?: number
+	writeKeyLength?: number
+}
+export interface KeyedDataQ {
+	write: (key: string, data: string) => void
+	read: (params: DataQReadOptions | string) => Promise<any>
+}
+
+export interface Ifs {
+	createReadStream: (fileName: string | Promise<string>) => Readable
+}
+
+export interface BaseConnection {
+	query: <T>(sql: string, params?: Param[]) => Promise<T[]>
+	update: (sql: string, params?: Param[]) => Promise<number>
+	isInMemory: () => boolean
+	createReadStream: (sql: string, params?: Param[]) => Readable
+	insertAndGetId: (sql: string, params?: Param[]) => Promise<number>
+	insertList: (tableName: string, idColumn: string, rows: any[]) => Promise<number[]>
+	createWriteStream: (sql: string, options?: WriteStreamOptions) => Writable
+	batchUpdate: (sql: string, params?: Param[][]) => Promise<number[]>
+	execute: (sql: string, params?: Param[]) => Promise<any>
+
+}
+
+export type TransactionFun = (transaction: BaseConnection) => Promise<any>
+
+export interface Connection extends BaseConnection {
+	pgm: (programName: string, paramsSchema: PgmParamType[]) => any
+	getTablesAsStream: (params: any) => Readable
+	getColumns: (params: any) => any
+	getPrimaryKeys: (params: any) => any
+	transaction: (fn: TransactionFun) => Promise<any>
+	createKeyedDataQ: (params: DataQOptions) => KeyedDataQ
+	ifs: () => Ifs
+}
+
+export interface InMemoryConnection extends Connection {
+	mockPgm: (programName: string, fn: (input: any) => any) => InMemoryConnection
+}
+
+export function pool(config?): Connection {
+	var javaCon = jvm.import('nodejt400.JT400').createPoolSync(JSON.stringify(defaults(config || {}, defaultConfig)));
+	return createInstance(createConFrom(javaCon), insertListInOneStatment, false)
+}
+export function connect(config?) {
+	var jt = jvm.import('nodejt400.JT400'),
+			createConnection = jt.createConnection.bind(jt)
+	return Q.nfcall(createConnection, JSON.stringify(defaults(config || {}, defaultConfig))).then(function (javaCon) {
+		return createInstance(createConFrom(javaCon), insertListInOneStatment, false)
+	})
+}
+	
+export function useInMemoryDb(): InMemoryConnection {
+	var javaCon = jvm.newInstanceSync('nodejt400.HsqlClient')
+	var instance = createInstance(createConFrom(javaCon), standardInsertList, true)
+	var pgmMockRegistry = {}
+	instance.mockPgm = function (programName, func) {
+		pgmMockRegistry[programName] = func
+		return instance
 	}
-};
+
+	var defaultPgm = instance.pgm
+	instance.pgm = function (programName, paramsSchema) {
+		var defaultFunc = defaultPgm(programName, paramsSchema)
+		return function (params) {
+			var mockFunc = pgmMockRegistry[programName]
+			if(mockFunc) {
+				var res = mockFunc(params)
+				return res.then ? res : Q.when(res)
+			}
+			return defaultFunc(params)
+		}
+	}
+	return instance
+}
