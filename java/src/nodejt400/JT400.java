@@ -7,9 +7,12 @@ import java.util.Properties;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
+import com.ibm.as400.access.AS400;
+import com.ibm.as400.access.AS400JDBCConnectionHandle;
 import com.ibm.as400.access.AS400JDBCConnectionPool;
 import com.ibm.as400.access.AS400JDBCConnectionPoolDataSource;
 import com.ibm.as400.access.AS400JDBCDriver;
+import com.ibm.as400.access.IFSFile;
 
 public class JT400
 {
@@ -103,6 +106,20 @@ public class JT400
 
 	public IfsReadStream createIfsReadStream(String fileName) throws Exception {
 		return new IfsReadStream(connectionProvider, fileName);
+	}
+
+	public IfsWriteStream createIfsWriteStream(String fileName, boolean append) throws Exception {
+		return new IfsWriteStream(connectionProvider, fileName, append);
+	}
+	
+	public boolean deleteIfsFile(String fileName) throws Exception {
+		Connection connection = connectionProvider.getConnection();
+		AS400JDBCConnectionHandle handle = (AS400JDBCConnectionHandle) connection;
+		AS400 as400 = handle.getSystem();
+		IFSFile file = new IFSFile(as400, fileName);
+		boolean res = file.delete();
+		connectionProvider.returnConnection(connection);
+		return res;
 	}
 
 	public void close()

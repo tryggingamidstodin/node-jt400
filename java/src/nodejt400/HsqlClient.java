@@ -93,7 +93,12 @@ public class HsqlClient implements ConnectionProvider
 	public IfsReadStream createIfsReadStream(String fileName) throws Exception {
 		return null;
 	}
-
+	public IfsWriteStream createIfsWriteStream(String fileName, boolean append) throws Exception {
+		return null;
+	}
+	public boolean deleteIfsFile(String fileName) throws Exception {
+		return false;
+	}
 	/**
 	 * Mock program call
 	 * @param programName

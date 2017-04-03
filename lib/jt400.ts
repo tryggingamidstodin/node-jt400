@@ -23,7 +23,7 @@ jvm.classpath.push(__dirname + '/../../java/lib/json-simple-1.1.1.jar');
 jvm.classpath.push(__dirname + '/../../java/lib/hsqldb.jar');
 
 process.on('exit', function(code) {
-    jvm.import('java.lang.System').exit(code);
+	jvm.import('java.lang.System').exit(code);
 });
 
 function createConFrom(con) {
@@ -42,21 +42,21 @@ function createConFrom(con) {
 }
 
 function values(list) {
-    return Object.keys(list).map(function(k) {
-        return list[k];
-    });
+	return Object.keys(list).map(function(k) {
+		return list[k];
+	});
 }
 
 function insertListInOneStatment(jt400, tableName, idColumn, list) {
-	if(!list || list.length===0) {
+	if (!list || list.length === 0) {
 		return new Q([]);
 	}
 	var sql = 'SELECT ' + idColumn + ' FROM NEW TABLE(' + toInsertSql(tableName, list) + ')',
 		params = list.map(values).reduce(function(arr, valueArr) {
-		    return arr.concat(valueArr);
+			return arr.concat(valueArr);
 		}, []);
-	return jt400.query(sql, params).then(function (idList) {
-		return idList.map(function (idObj) {
+	return jt400.query(sql, params).then(function(idList) {
+		return idList.map(function(idObj) {
 			return idObj[idColumn.toUpperCase()];
 		});
 	});
@@ -65,22 +65,22 @@ function insertListInOneStatment(jt400, tableName, idColumn, list) {
 function standardInsertList(jt400, tableName, _, list) {
 	var idList = [],
 		pushToIdList = idList.push.bind(idList);
-	return list.map(function (record) {
+	return list.map(function(record) {
 		return {
 			sql: toInsertSql(tableName, [record]),
 			values: values(record)
 		};
-	}).reduce(function (soFar, sqlObj) {
-		return soFar.then(function () {
+	}).reduce(function(soFar, sqlObj) {
+		return soFar.then(function() {
 			return jt400.insertAndGetId(sqlObj.sql, sqlObj.values);
 		})
-		.then(pushToIdList);
+			.then(pushToIdList);
 	}, new Q())
-	.then(function () {return idList;});
+		.then(function() { return idList; });
 }
 
 function convertDateValues(v) {
-		return (v instanceof Date) ? v.toISOString().replace('T', ' ').replace('Z', '') : v;
+	return (v instanceof Date) ? v.toISOString().replace('T', ' ').replace('Z', '') : v;
 }
 
 function paramsToJson(params) {
@@ -88,9 +88,9 @@ function paramsToJson(params) {
 }
 
 function createInstance(connection, insertListFun, inMemory) {
-	var mixinConnection = function (obj, newConn?) {
+	var mixinConnection = function(obj, newConn?) {
 		var thisConn = newConn || connection;
-		obj.query = function (sql, params) {
+		obj.query = function(sql, params) {
 			var jsonParams = paramsToJson(params || []);
 			return Q.nfcall(thisConn.query, sql, jsonParams).then(JSON.parse);
 		};
@@ -101,36 +101,36 @@ function createInstance(connection, insertListFun, inMemory) {
 			});
 		};
 		obj.queryAsStream = obj.createReadStream;
-		obj.execute = function (sql, params) {
+		obj.execute = function(sql, params) {
 			var jsonParams = paramsToJson(params || []);
-			return Q.nfcall(thisConn.execute, sql, jsonParams).then(function (statement) {
+			return Q.nfcall(thisConn.execute, sql, jsonParams).then(function(statement) {
 				var isQuery = statement.isQuerySync(),
 					metadata = statement.getMetaData.bind(statement),
 					updated = statement.updated.bind(statement),
 					stream;
 				var stWrap = {
-					isQuery: function () {
+					isQuery: function() {
 						return isQuery;
 					},
-					metadata: function () {
+					metadata: function() {
 						return Q.nfcall(metadata).then(JSON.parse);
 					},
-					asStream: function (options) {
+					asStream: function(options) {
 						options = options || {};
 						stream = new JdbcStream({
 							jdbcStream: statement.asStreamSync(options.bufferSize || 100)
 						});
 						return stream;
 					},
-					updated: function () {
+					updated: function() {
 						return Q.nfcall(updated);
 					},
-					close: function () {
-						if(stream) {
+					close: function() {
+						if (stream) {
 							stream.close();
 						} else {
-							statement.close(function (err) {
-								if(err) {
+							statement.close(function(err) {
+								if (err) {
 									console.log('close error', err);
 								}
 							});
@@ -140,34 +140,34 @@ function createInstance(connection, insertListFun, inMemory) {
 				return stWrap;
 			});
 		};
-		obj.update = function (sql, params) {
+		obj.update = function(sql, params) {
 			var jsonParams = paramsToJson(params || []);
 			return Q.nfcall(thisConn.update, sql, jsonParams);
 		};
 		obj.createWriteStream = function(sql, options) {
-		    return createJdbcWriteStream(obj.batchUpdate, sql, options && options.bufferSize);
+			return createJdbcWriteStream(obj.batchUpdate, sql, options && options.bufferSize);
 		};
-		obj.batchUpdate = function (sql, paramsList) {
-			var jsonParams = JSON.stringify((paramsList || []).map(function (row) {
+		obj.batchUpdate = function(sql, paramsList) {
+			var jsonParams = JSON.stringify((paramsList || []).map(function(row) {
 				return row.map(convertDateValues);
 			}));
 			return Q.nfcall(thisConn.batchUpdate, sql, jsonParams);
 		};
-		obj.insertAndGetId = function (sql, params) {
+		obj.insertAndGetId = function(sql, params) {
 			var jsonParams = paramsToJson(params || []);
 			return Q.nfcall(thisConn.insertAndGetId, sql, jsonParams);
 		};
-		obj.insertList = function (tableName, idColumn, list) {
+		obj.insertList = function(tableName, idColumn, list) {
 			return insertListFun(obj, tableName, idColumn, list);
 		};
-		obj.isInMemory = function () {
+		obj.isInMemory = function() {
 			return inMemory;
 		};
 		return obj;
 	};
 
 	const jt400 = mixinConnection({
-		transaction: function (transactionFunction) {
+		transaction: function(transactionFunction) {
 			var t = connection.connection.createTransactionSync(),
 				c = {
 					update: t.update.bind(t),
@@ -177,54 +177,54 @@ function createInstance(connection, insertListFun, inMemory) {
 					query: t.query.bind(t)
 				},
 				transaction = mixinConnection({
-					commit: function () {
+					commit: function() {
 						t.commitSync();
 					},
-					rollback: function () {
+					rollback: function() {
 						t.rollbackSync();
 					}
 				}, c);
 			return transactionFunction(transaction)
-			.then(function (res) {
-				t.commitSync();
-				t.endSync();
-				return res;
-			})
-			.fail(function (err) {
-				t.rollbackSync();
-				t.endSync();
-				throw err;
-			});
+				.then(function(res) {
+					t.commitSync();
+					t.endSync();
+					return res;
+				})
+				.fail(function(err) {
+					t.rollbackSync();
+					t.endSync();
+					throw err;
+				});
 		},
-		getTablesAsStream: function (opt) {
+		getTablesAsStream: function(opt) {
 			return new JdbcStream({
 				jdbcStream: connection.connection.getTablesAsStreamSync(opt.catalog, opt.schema, opt.table || '%')
 			}).pipe(JSONStream.parse([true]));
 		},
-		getColumns: function (opt) {
+		getColumns: function(opt) {
 			return Q.nfcall(connection.getColumns, opt.catalog, opt.schema, opt.table, opt.columns || '%').then(JSON.parse);
 		},
-		getPrimaryKeys: function (opt) {
+		getPrimaryKeys: function(opt) {
 			return Q.nfcall(connection.getPrimaryKeys, opt.catalog, opt.schema, opt.table).then(JSON.parse);
 		},
-		createKeyedDataQ: function (opt) {
+		createKeyedDataQ: function(opt) {
 			var dq = connection.createKeyedDataQ(opt.name),
 				read = dq.read.bind(dq),
 				readRes = function(key, wait, writeKeyLength) {
-				     return Q.nfcall(dq.readResponse.bind(dq), key, wait, writeKeyLength).then(function(res) {
-				         return {
-							 data: res.getDataSync(),
-							 write: res.writeSync.bind(res)
-						 };
-				     });
+					return Q.nfcall(dq.readResponse.bind(dq), key, wait, writeKeyLength).then(function(res) {
+						return {
+							data: res.getDataSync(),
+							write: res.writeSync.bind(res)
+						};
+					});
 				};
 			return {
-				write: function (key, data) {
+				write: function(key, data) {
 					dq.writeSync(key, data);
 				},
-				read: function () {
+				read: function() {
 					var wait = -1, key, writeKeyLength;
-					if(arguments[0] === Object(arguments[0])){
+					if (arguments[0] === Object(arguments[0])) {
 						key = arguments[0].key;
 						wait = arguments[0].wait || wait;
 						writeKeyLength = arguments[0].writeKeyLength;
@@ -235,17 +235,17 @@ function createInstance(connection, insertListFun, inMemory) {
 				}
 			};
 		},
-		ifs: function () {
+		ifs: function() {
 			return createIfs(connection.connection);
 		},
-		pgm: function (programName, paramsSchema) {
+		pgm: function(programName, paramsSchema) {
 			var pgm = connection.connection.pgmSync(programName, JSON.stringify(paramsSchema)),
 				pgmFunc = pgm.run.bind(pgm);
-			return function (params) {
+			return function(params) {
 				return Q.nfcall(pgmFunc, JSON.stringify(params)).then(JSON.parse);
 			};
 		},
-		close: function () {
+		close: function() {
 			var cl = connection.connection.close.bind(connection.connection);
 			return Q.nfcall(cl);
 		}
@@ -295,6 +295,8 @@ export interface KeyedDataQ {
 
 export interface Ifs {
 	createReadStream: (fileName: string | Promise<string>) => Readable
+	createWriteStream: (fileName: string | Promise<string>, options?: { append: boolean }) => Writable
+	deleteFile: (fileName: string) => Promise<boolean>
 }
 
 export interface BaseConnection {
@@ -332,27 +334,27 @@ export function pool(config?): Connection {
 }
 export function connect(config?) {
 	var jt = jvm.import('nodejt400.JT400'),
-			createConnection = jt.createConnection.bind(jt)
-	return Q.nfcall(createConnection, JSON.stringify(defaults(config || {}, defaultConfig))).then(function (javaCon) {
+		createConnection = jt.createConnection.bind(jt)
+	return Q.nfcall(createConnection, JSON.stringify(defaults(config || {}, defaultConfig))).then(function(javaCon) {
 		return createInstance(createConFrom(javaCon), insertListInOneStatment, false)
 	})
 }
-	
+
 export function useInMemoryDb(): InMemoryConnection {
 	var javaCon = jvm.newInstanceSync('nodejt400.HsqlClient')
 	var instance = createInstance(createConFrom(javaCon), standardInsertList, true)
 	var pgmMockRegistry = {}
-	instance.mockPgm = function (programName, func) {
+	instance.mockPgm = function(programName, func) {
 		pgmMockRegistry[programName] = func
 		return instance
 	}
 
 	var defaultPgm = instance.pgm
-	instance.pgm = function (programName, paramsSchema) {
+	instance.pgm = function(programName, paramsSchema) {
 		var defaultFunc = defaultPgm(programName, paramsSchema)
-		return function (params) {
+		return function(params) {
 			var mockFunc = pgmMockRegistry[programName]
-			if(mockFunc) {
+			if (mockFunc) {
 				var res = mockFunc(params)
 				return res.then ? res : Q.when(res)
 			}

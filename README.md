@@ -6,7 +6,7 @@ nodejs jt400 wrapper
 ## Configure
 
 ```javascript
-var pool = require('node-jt400').pool({host: 'myhost', user: 'myuser', password: 'xxx'});
+const pool = require('node-jt400').pool({host: 'myhost', user: 'myuser', password: 'xxx'});
 ```
 
 ## SQL query
@@ -14,7 +14,7 @@ var pool = require('node-jt400').pool({host: 'myhost', user: 'myuser', password:
 ```javascript
 pool.query('SELECT FIELD1, FIELD2 FROM FOO WHERE BAR=? AND BAZ=?', [1, 'a'])
 .then(function (result) {
-	var field1 = result[0].FIELD1;
+	const field1 = result[0].FIELD1;
 	...
 });
 
@@ -40,7 +40,7 @@ pool.update('update FOO set BAR=? WHERE BAZ=?', [1, 'a'])
 
 ```javascript
 //insert list in one statement
-var tableName = 'foo',
+const tableName = 'foo',
     idColumn  = 'fooid',
     rows = [
         {FIELD1: 1, FIELD2: 'a'},
@@ -56,7 +56,7 @@ pool.insertList(tableName, idColumn, rows)
 
 ```javascript
 //insert list in one statement
-var data = [
+const data = [
         [1, 'a'],
         [2, 'b']
     ];
@@ -70,7 +70,7 @@ pool.batchUpdate('INSERT INTO FOO (FIELD1, FIELD2) VALUES(?,?)', data)
 ## Transactions
 ```javascript
 pool.transaction(function(transaction) {
-	var fooId = 1;
+	const fooId = 1;
 
 	//transaction object has the same api as the pool object.
 	//The transaction is commited on success and rolled back on failure.
@@ -83,7 +83,8 @@ pool.transaction(function(transaction) {
 
 ## IFS read
 ```javascript
-var ifs = pool.ifs();
-ifs.createReadStream('/foo/bar.txt');
+const ifs = pool.ifs();
+ifs.createReadStream('/foo/bar.txt').pipe(ifs.createWriteStream('/foo/bar2.txt'));
+ifs.deleteFile('/foo/bar.txt.old').then(console.log); // true or false
 
 ```
