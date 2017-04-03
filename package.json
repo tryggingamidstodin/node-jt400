@@ -14,7 +14,8 @@
   ],
   "scripts": {
     "test": "mocha dist/test",
-    "build": "tsc"
+    "build": "tsc",
+    "prepublish": "npm run build && npm run build"
   },
   "keywords": [
     "as400",
