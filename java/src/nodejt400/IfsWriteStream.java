@@ -10,9 +10,7 @@ import com.ibm.as400.access.IFSFileOutputStream;
 public class IfsWriteStream {
 
 	private ConnectionProvider connectionProvider;
-	private final Connection connection;
-	private int bufferSize = 10000;
-	byte[] buffer = new byte[bufferSize];
+	private final Connection connection;	
 	private final IFSFileOutputStream fos;
 
 	public IfsWriteStream(ConnectionProvider connectionProvider, String fileName, boolean append)
@@ -29,7 +27,7 @@ public class IfsWriteStream {
 		fos.write(data.getBytes());
 		fos.flush();
 	}
-	
+
 	public void flush() throws Exception {
 		fos.flush();
 		fos.close();
