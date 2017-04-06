@@ -108,8 +108,8 @@ public class JT400
 		return new IfsReadStream(connectionProvider, fileName);
 	}
 
-	public IfsWriteStream createIfsWriteStream(String fileName, boolean append) throws Exception {
-		return new IfsWriteStream(connectionProvider, fileName, append);
+	public IfsWriteStream createIfsWriteStream(String folderPath, String fileName, boolean append) throws Exception {
+		return new IfsWriteStream(connectionProvider, folderPath, fileName, append);
 	}
 	
 	public boolean deleteIfsFile(String fileName) throws Exception {

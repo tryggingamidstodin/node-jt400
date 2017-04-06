@@ -13,13 +13,19 @@ public class IfsWriteStream {
 	private final Connection connection;	
 	private final IFSFileOutputStream fos;
 
-	public IfsWriteStream(ConnectionProvider connectionProvider, String fileName, boolean append)
+	public IfsWriteStream(ConnectionProvider connectionProvider, String folderPath, String fileName, boolean append)
 			throws Exception {
 		this.connectionProvider = connectionProvider;
 		connection = connectionProvider.getConnection();
 		AS400JDBCConnectionHandle handle = (AS400JDBCConnectionHandle) connection;
 		AS400 as400 = handle.getSystem();
-		IFSFile file = new IFSFile(as400, fileName);
+		IFSFile folder = new IFSFile(as400,folderPath);
+		if (!folder.exists()) {
+			folder.mkdirs();			
+		}
+		
+		IFSFile file = new IFSFile(as400, folder, fileName);		
+		
 		fos = new IFSFileOutputStream(file, IFSFileOutputStream.SHARE_ALL, append);
 	}
 

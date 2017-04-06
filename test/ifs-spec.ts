@@ -41,10 +41,10 @@ describe('ifs', function() {
         this.timeout(50000);
         const rs = ifs().createReadStream('/atm/test/hello_world.txt');
 
-        const ws = ifs().createWriteStream('/atm/test/new_file.txt', { append: false });
+        const ws = ifs().createWriteStream('/atm/test2/new_file.txt', { append: false });
 
         rs.pipe(ws).on('finish', function() {
-            var stream = ifs().createReadStream('/atm/test/new_file.txt');
+            var stream = ifs().createReadStream('/atm/test2/new_file.txt');
             var data = '';
             stream.on('data', function(chunk) {
                 data += chunk;
@@ -52,7 +52,7 @@ describe('ifs', function() {
 
             stream.on('end', function() {
                 expect(data).to.equal('Halló heimur!\n');
-                ifs().deleteFile('/atm/test/new_file.txt')
+                ifs().deleteFile('/atm/test2/new_file.txt')
                     .then((res) => {
                         expect(res).to.equal(true);
                         done();
