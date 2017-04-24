@@ -42,6 +42,7 @@
     "chai": "^3.3.0",
     "matcha": "^0.6.0",
     "mocha": "^2.1.0",
+    "stream-equal": "^1.0.0",
     "typescript": "^2.1.4"
   }
 }

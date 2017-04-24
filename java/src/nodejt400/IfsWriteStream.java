@@ -29,12 +29,12 @@ public class IfsWriteStream {
 		fos = new IFSFileOutputStream(file, IFSFileOutputStream.SHARE_ALL, append);
 	}
 
-	public void write(String data) throws Exception {
-		fos.write(data.getBytes());
+	public void write(byte[] data) throws Exception {				
+		fos.write(data);				
 		fos.flush();
 	}
 
-	public void flush() throws Exception {
+	public void flush() throws Exception {		
 		fos.flush();
 		fos.close();
 		this.connectionProvider.returnConnection(this.connection);
