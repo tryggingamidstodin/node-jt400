@@ -115,6 +115,7 @@ function createInstance(connection, insertListFun, inMemory) {
 					metadata: function() {
 						return Q.nfcall(metadata).then(JSON.parse);
 					},
+					asArray: () => Q.nfcall(statement.asArray.bind(statement)).then(JSON.parse),
 					asStream: function(options) {
 						options = options || {};
 						stream = new JdbcStream({

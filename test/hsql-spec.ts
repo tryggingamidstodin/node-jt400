@@ -69,10 +69,10 @@ describe('hsql in memory', function() {
 
         it('should insert list', function() {
             return jt400.insertList('testtbl', 'ID', [{
-                    NAME: 'foo'
-                }, {
-                    NAME: 'bar'
-                }])
+                NAME: 'foo'
+            }, {
+                NAME: 'bar'
+            }])
                 .then(function(res) {
                     expect(res).to.eql([1234567891235, 1234567891236]);
                     return jt400.query('select * from testtbl');
@@ -91,15 +91,15 @@ describe('hsql in memory', function() {
         });
 
         it('should create write stream', function(done) {
-            var dataStream = new Readable({objectMode: true});
+            var dataStream = new Readable({ objectMode: true });
             var c = 97;
-            dataStream._read = function () {
+            dataStream._read = function() {
                 dataStream.push([String.fromCharCode(c++)]);
                 if (c > 'z'.charCodeAt(0)) {
                     dataStream.push(null);
                 }
             };
-            var ws = jt400.createWriteStream('insert into testtbl (NAME) VALUES(?)', {bufferSize: 10});
+            var ws = jt400.createWriteStream('insert into testtbl (NAME) VALUES(?)', { bufferSize: 10 });
             dataStream.pipe(ws).on('finish', function() {
                 jt400.query('select name from testtbl').then(function(res) {
                     expect(res.length).to.equal(27);
@@ -112,9 +112,9 @@ describe('hsql in memory', function() {
     describe('batch update', function() {
         it('should insert batch', function() {
             jt400.batchUpdate('insert into testtbl (NAME,START) values(?, ?)', [
-                    ['foo', '2015-01-02'],
-                    ['bar', '2015-03-04']
-                ])
+                ['foo', '2015-01-02'],
+                ['bar', '2015-03-04']
+            ])
                 .then(function(res) {
                     expect(res).to.eql([1, 1]);
                 })
@@ -145,12 +145,12 @@ describe('hsql in memory', function() {
             });
         });
 
-        it('should register mock', function () {
-            jt400.mockPgm('foo', function (input) {
+        it('should register mock', function() {
+            jt400.mockPgm('foo', function(input) {
                 input.baz = 20;
                 return input;
             });
-            return callFoo(input).then(function (res) {
+            return callFoo(input).then(function(res) {
                 expect(res.baz).to.equal(20);
             });
         });
@@ -195,16 +195,23 @@ describe('hsql in memory', function() {
                 });
 
                 stream.on('end', function() {
-                    try{
+                    try {
                         expect(data).to.equal('[["1234567891234","Foo bar baz",null,null]]');
                         done();
-                    } catch(err) {
+                    } catch (err) {
                         done(err);
                     }
                 });
                 stream.on('error', done);
             }).catch(done);
         });
+
+        it('should get result as array', () => jt400.execute('select * from testtbl')
+            .then(statement => statement.asArray())
+            .then(data => {
+                expect(data).to.eql([['1234567891234', 'Foo bar baz', null, null]])
+            })
+        )
 
         it('should pipe to JSONStream', function(done) {
             var i = 1,
@@ -213,29 +220,29 @@ describe('hsql in memory', function() {
                 data.push(i++);
             }
             data.reduce(function(memo, item) {
-                    return memo.then(function() {
-                        return jt400.update('insert into testtbl (NAME) values(?)', ['n' + item]);
+                return memo.then(function() {
+                    return jt400.update('insert into testtbl (NAME) values(?)', ['n' + item]);
+                });
+            }, q()).then(function() {
+                jt400.execute('select NAME from testtbl order by ID').then(function(statement) {
+                    return statement.asStream().pipe(JSONStream.parse([true]));
+                }).then(function(stream) {
+                    var res: any[] = [];
+                    stream.on('data', function(row) {
+                        res.push(row);
                     });
-                }, q()).then(function() {
-                    jt400.execute('select NAME from testtbl order by ID').then(function(statement) {
-                        return statement.asStream().pipe(JSONStream.parse([true]));
-                    }).then(function(stream) {
-                        var res: any[] = [];
-                        stream.on('data', function(row) {
-                            res.push(row);
+                    stream.on('end', function() {
+                        expect(res.length).to.equal(110);
+                        res.forEach(function(row, index) {
+                            if (index > 0) {
+                                expect(row[0]).to.eql('n' + index);
+                            }
                         });
-                        stream.on('end', function() {
-                            expect(res.length).to.equal(110);
-                            res.forEach(function(row, index) {
-                                if (index > 0) {
-                                    expect(row[0]).to.eql('n' + index);
-                                }
-                            });
-                            done();
-                        });
-                        stream.on('error', done);
+                        done();
                     });
-                })
+                    stream.on('error', done);
+                });
+            })
                 .fail(done);
         });
 
@@ -255,26 +262,26 @@ describe('hsql in memory', function() {
                 data.push(i++);
             }
             q.all(data.map(function(item) {
-                    return jt400.update('insert into testtbl (NAME) values(?)', ['n' + item]);
-                })).then(function() {
-                    var res: any[] = [];
-                    return jt400.execute('select NAME from testtbl').then(function(statement) {
-                        var stream = statement.asStream({
-                            bufferSize: 10
-                        }).pipe(JSONStream.parse([true]));
-                        stream.on('data', function(row) {
-                            res.push(row);
-                            if (res.length >= 10) {
-                                statement.close();
-                            }
-                        });
-                        stream.on('end', function() {
-                            expect(res.length).to.be.below(21);
-                            done();
-                        });
-                        stream.on('error', done);
+                return jt400.update('insert into testtbl (NAME) values(?)', ['n' + item]);
+            })).then(function() {
+                var res: any[] = [];
+                return jt400.execute('select NAME from testtbl').then(function(statement) {
+                    var stream = statement.asStream({
+                        bufferSize: 10
+                    }).pipe(JSONStream.parse([true]));
+                    stream.on('data', function(row) {
+                        res.push(row);
+                        if (res.length >= 10) {
+                            statement.close();
+                        }
                     });
-                })
+                    stream.on('end', function() {
+                        expect(res.length).to.be.below(21);
+                        done();
+                    });
+                    stream.on('error', done);
+                });
+            })
                 .fail(done);
         });
     });
@@ -282,8 +289,8 @@ describe('hsql in memory', function() {
     describe('metadata', function() {
         it('should return table metadata as stream', function(done) {
             var stream = jt400.getTablesAsStream({
-                    schema: 'PUBLIC'
-                }),
+                schema: 'PUBLIC'
+            }),
                 schema: any[] = [];
             stream.on('data', function(data) {
                 schema.push(data);
@@ -301,9 +308,9 @@ describe('hsql in memory', function() {
 
         it('should return columns', function(done) {
             jt400.getColumns({
-                    schema: 'PUBLIC',
-                    table: 'TESTTBL'
-                })
+                schema: 'PUBLIC',
+                table: 'TESTTBL'
+            })
                 .then(function(res) {
                     expect(res).to.eql([{
                         name: 'ID',
@@ -344,14 +351,14 @@ describe('hsql in memory', function() {
         it('should commit', function() {
             var rowId;
             return jt400.transaction(function(transaction) {
-                    return transaction.insertAndGetId("insert into testtbl (NAME) values('Transaction 1')")
-                        .then(function(res) {
-                            rowId = res;
-                            return transaction.update("update testtbl set NAME='Transaction 2' where id=?", [rowId]);
-                        });
-                })
+                return transaction.insertAndGetId("insert into testtbl (NAME) values('Transaction 1')")
+                    .then(function(res) {
+                        rowId = res;
+                        return transaction.update("update testtbl set NAME='Transaction 2' where id=?", [rowId]);
+                    });
+            })
                 .then(function() {
-                    return jt400.query('select NAME from testtbl where id=?', [rowId]);
+                    return jt400.query<any>('select NAME from testtbl where id=?', [rowId]);
                 })
                 .then(function(res) {
                     expect(res[0].NAME).to.eql('Transaction 2');
@@ -363,12 +370,12 @@ describe('hsql in memory', function() {
             var fakeError = new Error('fake error'),
                 rowId;
             jt400.transaction(function(transaction) {
-                    return transaction.insertAndGetId("insert into testtbl (NAME) values('Transaction 1')")
-                        .then(function(res) {
-                            rowId = res;
-                            throw fakeError;
-                        });
-                })
+                return transaction.insertAndGetId("insert into testtbl (NAME) values('Transaction 1')")
+                    .then(function(res) {
+                        rowId = res;
+                        throw fakeError;
+                    });
+            })
                 .catch(function(err) {
                     expect(err).to.equal(fakeError);
                 })
@@ -381,7 +388,7 @@ describe('hsql in memory', function() {
         });
 
         it('should batch update', function() {
-            return jt400.transaction(function (transaction) {
+            return jt400.transaction(function(transaction) {
                 return transaction.batchUpdate('insert into testtbl (NAME) values(?)', [['Foo'], ['Bar']]);
             });
         });
