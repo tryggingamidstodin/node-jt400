@@ -81,10 +81,36 @@ pool.transaction(function(transaction) {
 
 ```
 
-## IFS read
+## IFS read/write
 ```javascript
 const ifs = pool.ifs();
 ifs.createReadStream('/foo/bar.txt').pipe(ifs.createWriteStream('/foo/bar2.txt'));
 ifs.deleteFile('/foo/bar.txt.old').then(console.log); // true or false
 
 ```
+
+## Programs
+```javascript
+const myProgram = pool.pgm('MYPROGRAM', [
+            { type: 'DECIMAL', precision: 10, scale: 0, name: 'myId'},
+            { type: 'NUMERIC', precision: 8, scale: 0, name: 'myDate'},
+            { type: 'NUMERIC', precision: 12, scale: 2, name: 'myTotalValue' },
+            { type: 'CHAR', precision: 32, scale: 0, name: 'myString'}
+]);
+
+
+myProgram({
+  myId: 123
+  myDate: '20170608',
+  myTotalValue: 88450.57,
+  myString: 'This is a test'
+}).then(function(result) {
+  console.log(result)
+});
+```
+
+The Decimal type maps to com.ibm.as400.access.AS400PackedDecimal
+The Numeric type maps to com.ibm.as400.access.AS400ZonedDecimal
+Everything else (char) maps to com.ibm.as400.access.AS400Text
+
+Precision is the size and scale is the decimals. 
