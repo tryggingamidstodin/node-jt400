@@ -191,7 +191,7 @@ function createInstance(connection, insertListFun, inMemory) {
 					t.endSync();
 					return res;
 				})
-				.fail(function(err) {
+				.catch(function(err) {
 					t.rollbackSync();
 					t.endSync();
 					throw err;
