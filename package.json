@@ -1,6 +1,6 @@
 {
   "name": "node-jt400",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "jt400 wrapper for nodejs",
   "main": "dist/lib/jt400.js",
   "types": "dist/lib/jt400.d.ts",
