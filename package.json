@@ -1,7 +1,8 @@
 {
   "name": "node-jt400",
-  "version": "1.4.1",
-  "description": "jt400 wrapper for nodejs",
+  "author": "Tryggingamiðstöðin <bt.hugbunadargerd@tm.is>",
+  "version": "1.5.0",
+  "description": "JT400 (IBM Toolbox) for NodeJS",
   "main": "dist/lib/jt400.js",
   "types": "dist/lib/jt400.d.ts",
   "repository": {
@@ -25,7 +26,7 @@
     "jdbc",
     "jt400"
   ],
-  "license": "mit",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/tryggingamidstodin/node-jt400/issues"
   },

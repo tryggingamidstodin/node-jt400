@@ -278,7 +278,12 @@ export interface PgmParamStructType {
 
 export type PgmParamType = PgmParamType1 | PgmParamType2 | PgmParamStructType
 
-export type Param = string | number | Date | null
+export interface CLOB {
+	type: 'CLOB',
+	value: string
+}
+
+export type Param = string | number | Date | null | CLOB
 
 export interface DataQOptions {
 	name: string

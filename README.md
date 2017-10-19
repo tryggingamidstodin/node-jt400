@@ -1,95 +1,126 @@
-node-jt400
-=====
+# node-jt400
+NodeJS JT400 wrapper to connect to IBM AS/400 system (OS400 operating ystem, database like DB2, programs and filesystem)
 
-nodejs jt400 wrapper
+[![Version](https://img.shields.io/npm/v/node-jt400.svg)](https://npmjs.org/package/node-jt400)
 
 ## Configure
-
 ```javascript
-const pool = require('node-jt400').pool({host: 'myhost', user: 'myuser', password: 'xxx'});
+const config = {
+    host: 'myhost',
+    user: 'myuser',
+    password: 'xxx'
+}
+const pool = require('node-jt400').pool(config);
+```
+## SQL / Database
+
+### Query
+```javascript
+pool.query('SELECT field1, field2 FROM foo WHERE bar=? AND baz=?', [1, 'a'])
+  .then(function (result) {
+    console.log('result');
+    const field1 = result[0].FIELD1;	    
+  })
+  .fail(function (error) {
+    console.log('error');
+    console.log(error);
+  });
 ```
 
-## SQL query
-
+### Update
 ```javascript
-pool.query('SELECT FIELD1, FIELD2 FROM FOO WHERE BAR=? AND BAZ=?', [1, 'a'])
-.then(function (result) {
-	const field1 = result[0].FIELD1;
-	...
+pool.update('UPDATE foo SET bar=? WHERE baz=?', [1, 'a']).then(function (nUpdated) {
+    console.log('Updated ' + nUpdated + ' rows');
 });
-
 ```
-## SQL stream
 
+### Delete
 ```javascript
-pool.createReadStream('SELECT FIELD1, FIELD2 FROM FOO WHERE BAR=? AND BAZ=?', [1, 'a'])
-.pipe(JSONStream.parse([true]))
-.pipe(pool.createWriteStream('INSERT INTO FOO2 (F1, F2) VALUES(?, ?)'));
-
-```
-## SQL update
-
-```javascript
-pool.update('update FOO set BAR=? WHERE BAZ=?', [1, 'a'])
-.then(function (nUpdated) {
-    ...
+pool.update('DELETE FROM foo WHERE bar=?', [1]).then(function (nUpdated) {
+    console.log('Deleted + ' nUpdated + ' rows');
 });
-
 ```
-## SQL insert
 
+### Insert
 ```javascript
-//insert list in one statement
-const tableName = 'foo',
-    idColumn  = 'fooid',
-    rows = [
-        {FIELD1: 1, FIELD2: 'a'},
-        {FIELD1: 1, FIELD2: 'a'}
-    ];
-pool.insertList(tableName, idColumn, rows)
-.then(function (listOfGeneratedIds) {
-    ...
+pool.insertAndGetId('INSERT INTO foo (bar, baz) VALUES(?,?)',[2,'b']).then(function(id) {
+    console.log('Inserted new row with id ' + id);
 });
-
 ```
-## SQL batch update
 
+### Insert list
+```javascript
+const tableName = 'foo';
+const idColumn  = 'fooid';
+const rows = [
+    {FIELD1: 1, FIELD2: 'a'},
+    {FIELD1: 2, FIELD2: 'b'}
+];
+
+pool.insertList(tableName, idColumn, rows).then(function (listOfGeneratedIds) {
+    console.log(listOfGeneratedIds);
+});
+```
+
+### Batch update
 ```javascript
 //insert list in one statement
 const data = [
-        [1, 'a'],
-        [2, 'b']
-    ];
-pool.batchUpdate('INSERT INTO FOO (FIELD1, FIELD2) VALUES(?,?)', data)
-.then(function (result) {
+    [1, 'a'],
+    [2, 'b']
+];
+
+pool.batchUpdate('INSERT INTO FOO (FIELD1, FIELD2) VALUES(?,?)', data).then(function (result) {
+    console.log(result);
     //result is number of updated rows for each row. [1, 1] in this case.
 });
-
 ```
 
-## Transactions
+# SQL stream
+```javascript
+pool.createReadStream('SELECT FIELD1, FIELD2 FROM FOO WHERE BAR=? AND BAZ=?', [1, 'a'])
+  .pipe(JSONStream.parse([true]))
+  .pipe(pool.createWriteStream('INSERT INTO FOO2 (F1, F2) VALUES(?, ?)'));
+```
+
+### Transactions
+Transaction is commited on success and rolled back on failure.
+The transaction object has the same api as the pool object.
+
 ```javascript
 pool.transaction(function(transaction) {
 	const fooId = 1;
-
-	//transaction object has the same api as the pool object.
-	//The transaction is commited on success and rolled back on failure.
+	
 	return transaction.update('INSERT INTO FOO (FOOID, FIELD2) VALUES(?,?)', [fooId, 'a']).then(function() {
 		return transaction.update('update BAR set FOOID=? where BARID=?', [fooId , 2])
 	});
 });
+```
+
+### Complex types
+The node-jt400 module handles strings, longs, doubles and nulls automatically as types. When using other types like CLOB you need to specify the type specifically.
+```javascript
+pool.update('INSERT INTO foo (fooid, textfield, clobfield) VALUES(?,?)', [1, 'text', {type:'CLOB',value:'A really long text'}]).then(function() {
+    console.log('updated');
+});
 
 ```
+
+## Filesystem
 
 ## IFS read/write
 ```javascript
 const ifs = pool.ifs();
 ifs.createReadStream('/foo/bar.txt').pipe(ifs.createWriteStream('/foo/bar2.txt'));
-ifs.deleteFile('/foo/bar.txt.old').then(console.log); // true or false
-
 ```
 
-## Programs
+## IFS delete
+```javascript
+const ifs = pool.ifs();
+ifs.deleteFile('/foo/bar.txt.old').then(console.log); // true or false
+```
+
+### Programs
 ```javascript
 const myProgram = pool.pgm('MYPROGRAM', [
             { type: 'DECIMAL', precision: 10, scale: 0, name: 'myId'},

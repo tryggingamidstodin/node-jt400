@@ -103,5 +103,10 @@ describe('jt400 pool', function() {
 			}).then(done, done);
 	});
 
+	it('should insert clob', async () => {		
+		await connection.update('update tsttbl set clob=?', [{type: 'CLOB', value: 'TEEEEXTI'}]);
 
+		const res = await connection.query('select clob from tsttbl', []);		
+		expect(res[0]).to.have.property('CLOB','TEEEEXTI');		
+	});
 });

@@ -1,5 +1,6 @@
 package nodejt400;
 
+import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,6 +12,8 @@ import java.sql.Types;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
+
+import java.io.StringReader;
 
 public class JdbcJsonClient
 {
@@ -267,9 +270,21 @@ public class JdbcJsonClient
 		for (int i = 0; i < n; i++)
 		{
 			Object value = params.get(i);
+						
 			try
-			{
-				if (value instanceof Long)
+			{			
+				if (value instanceof JSONObject) {
+					JSONObject obj = (JSONObject)value;
+
+					String objType = (String) obj.get("type");
+					String objValue = (String) obj.get("value");
+
+					if ("CLOB".equals(objType)) {						
+						StringReader reader = new StringReader(objValue);
+						st.setClob(i + 1, reader);
+					}
+				}
+				else if (value instanceof Long)
 				{
 					st.setLong(i + 1, (Long) value);
 				}
