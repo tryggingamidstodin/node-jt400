@@ -76,7 +76,7 @@ pool.batchUpdate('INSERT INTO FOO (FIELD1, FIELD2) VALUES(?,?)', data).then(func
 });
 ```
 
-# SQL stream
+### SQL stream
 ```javascript
 pool.createReadStream('SELECT FIELD1, FIELD2 FROM FOO WHERE BAR=? AND BAZ=?', [1, 'a'])
   .pipe(JSONStream.parse([true]))
@@ -108,19 +108,19 @@ pool.update('INSERT INTO foo (fooid, textfield, clobfield) VALUES(?,?)', [1, 'te
 
 ## Filesystem
 
-## IFS read/write
+### IFS read/write
 ```javascript
 const ifs = pool.ifs();
 ifs.createReadStream('/foo/bar.txt').pipe(ifs.createWriteStream('/foo/bar2.txt'));
 ```
 
-## IFS delete
+### IFS delete
 ```javascript
 const ifs = pool.ifs();
 ifs.deleteFile('/foo/bar.txt.old').then(console.log); // true or false
 ```
 
-### Programs
+## Programs
 ```javascript
 const myProgram = pool.pgm('MYPROGRAM', [
             { type: 'DECIMAL', precision: 10, scale: 0, name: 'myId'},
