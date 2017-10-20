@@ -1,6 +1,7 @@
 import { jt400 as connection } from './db'
 import { pool, connect } from '../lib/jt400'
 import { expect } from 'chai'
+import { readFileSync } from 'fs'
 
 describe('connect', function() {
 	it('should connect', function() {
@@ -103,10 +104,10 @@ describe('jt400 pool', function() {
 			}).then(done, done);
 	});
 
-	it('should insert clob', async () => {		
-		await connection.update('update tsttbl set clob=?', [{type: 'CLOB', value: 'TEEEEXTI'}]);
-
-		const res = await connection.query('select clob from tsttbl', []);		
-		expect(res[0]).to.have.property('CLOB','TEEEEXTI');		
+	it('should insert clob', async () => {	
+		const clobFile = readFileSync(__dirname  + '/../../test-data/clob.txt');
+			
+		const res = await connection.update('update tsttbl set clob=CAST(? as CLOB)', [{type: 'CLOB', value: clobFile.toString()}]);
+		expect(res).to.equal(2);
 	});
 });

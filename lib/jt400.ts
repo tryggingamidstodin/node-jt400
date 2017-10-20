@@ -154,7 +154,7 @@ function createInstance(connection, insertListFun, inMemory) {
 			}));
 			return Q.nfcall(thisConn.batchUpdate, sql, jsonParams);
 		};
-		obj.insertAndGetId = function(sql, params) {
+		obj.insertAndGetId = function(sql, params) {			
 			var jsonParams = paramsToJson(params || []);
 			return Q.nfcall(thisConn.insertAndGetId, sql, jsonParams);
 		};

@@ -8,6 +8,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
+import com.ibm.as400.access.jdbcClient.Lob;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -264,9 +265,11 @@ public class JdbcJsonClient
 	}
 
 	private void setParams(JSONArray params, PreparedStatement st)
-			throws SQLException
+			throws Exception
 	{
 		int n = params.size();
+		Connection c = pool.getConnection();
+		
 		for (int i = 0; i < n; i++)
 		{
 			Object value = params.get(i);
@@ -279,7 +282,7 @@ public class JdbcJsonClient
 					String objType = (String) obj.get("type");
 					String objValue = (String) obj.get("value");
 
-					if ("CLOB".equals(objType)) {						
+					if ("CLOB".equals(objType)) {
 						StringReader reader = new StringReader(objValue);
 						st.setClob(i + 1, reader);
 					}

@@ -100,7 +100,7 @@ pool.transaction(function(transaction) {
 ### Complex types
 The node-jt400 module handles strings, longs, doubles and nulls automatically as types. When using other types like CLOB you need to specify the type specifically.
 ```javascript
-pool.update('INSERT INTO foo (fooid, textfield, clobfield) VALUES(?,?)', [1, 'text', {type:'CLOB',value:'A really long text'}]).then(function() {
+pool.update('INSERT INTO foo (fooid, textfield, clobfield) VALUES(?, CAST(? as CLOB))', [1, 'text', {type:'CLOB',value:'A really long text'}]).then(function() {
     console.log('updated');
 });
 
