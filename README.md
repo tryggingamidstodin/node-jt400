@@ -1,5 +1,5 @@
 # node-jt400
-NodeJS JT400 wrapper to connect to IBM AS/400 system (OS400 operating ystem, database like DB2, programs and filesystem)
+NodeJS JT400 wrapper to connect to IBM iSeries and AS/400 systems (OS400 operating system, database like DB2, programs and filesystem)
 
 [![Version](https://img.shields.io/npm/v/node-jt400.svg)](https://npmjs.org/package/node-jt400)
 
@@ -100,7 +100,7 @@ pool.transaction(function(transaction) {
 ### Complex types
 The node-jt400 module handles strings, longs, doubles and nulls automatically as types. When using other types like CLOB you need to specify the type specifically.
 ```javascript
-pool.update('INSERT INTO foo (fooid, textfield, clobfield) VALUES(?, CAST(? as CLOB))', [1, 'text', {type:'CLOB',value:'A really long text'}]).then(function() {
+pool.update('INSERT INTO foo (fooid, textfield, clobfield) VALUES(?, ?)', [1, 'text', {type:'CLOB',value:'A really long string'}]).then(function() {
     console.log('updated');
 });
 

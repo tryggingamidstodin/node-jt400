@@ -8,13 +8,14 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
-import com.ibm.as400.access.jdbcClient.Lob;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 import java.io.StringReader;
+import java.io.Reader;
+import java.io.Writer;
 
 public class JdbcJsonClient
 {
@@ -267,8 +268,7 @@ public class JdbcJsonClient
 	private void setParams(JSONArray params, PreparedStatement st)
 			throws Exception
 	{
-		int n = params.size();
-		Connection c = pool.getConnection();
+		int n = params.size();		
 		
 		for (int i = 0; i < n; i++)
 		{
@@ -280,11 +280,11 @@ public class JdbcJsonClient
 					JSONObject obj = (JSONObject)value;
 
 					String objType = (String) obj.get("type");
-					String objValue = (String) obj.get("value");
+					String objValue = (String) obj.get("value");					
 
 					if ("CLOB".equals(objType)) {
-						StringReader reader = new StringReader(objValue);
-						st.setClob(i + 1, reader);
+						StringReader reader = new StringReader(objValue);												
+						st.setClob(i+1, reader, objValue.length());
 					}
 				}
 				else if (value instanceof Long)

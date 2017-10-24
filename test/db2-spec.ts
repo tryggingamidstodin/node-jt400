@@ -105,9 +105,12 @@ describe('jt400 pool', function() {
 	});
 
 	it('should insert clob', async () => {	
-		const clobFile = readFileSync(__dirname  + '/../../test-data/clob.txt');
-			
-		const res = await connection.update('update tsttbl set clob=CAST(? as CLOB)', [{type: 'CLOB', value: clobFile.toString()}]);
-		expect(res).to.equal(2);
+		const largeText = readFileSync(__dirname  + '/../../test-data/clob.txt').toString();		
+		
+		await connection.update('update tsttbl set clob=?', [{type: 'CLOB', value: largeText}]);
+
+		const res: any = await connection.query('SELECT clob from tsttbl');
+		
+		expect(res[0].CLOB.length).to.equal(largeText.length);		
 	});
 });
