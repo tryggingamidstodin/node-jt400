@@ -5,13 +5,15 @@ import java.sql.Connection;
 public class Transaction implements ConnectionProvider
 {
 
+	private final ConnectionProvider connectionProvider;
 	private final Connection connection;
 
 	private final JdbcJsonClient client;
 
-	public Transaction(Connection connection) throws Exception
+	public Transaction(ConnectionProvider connectionProvider) throws Exception
 	{
-		this.connection = connection;
+		this.connectionProvider = connectionProvider;
+		this.connection = connectionProvider.getConnection();
 		this.connection.setAutoCommit(false);
 		this.client = new JdbcJsonClient(this);
 	}
@@ -29,7 +31,7 @@ public class Transaction implements ConnectionProvider
 	public void end() throws Exception
 	{
 		this.connection.setAutoCommit(true);
-		this.connection.close();
+		this.connectionProvider.returnConnection(this.connection);
 	}
 
 	public String query(String sql, String paramsJson)
@@ -82,13 +84,13 @@ public class Transaction implements ConnectionProvider
 	@Override
 	public void returnConnection(Connection c) throws Exception
 	{
-
+		connectionProvider.returnConnection(connection);
 	}
 
 	@Override
 	public void close(){
 		try{
-			connection.close();
+			connectionProvider.returnConnection(connection);
 		}catch(Exception ex){
 			ex.printStackTrace();
 		}

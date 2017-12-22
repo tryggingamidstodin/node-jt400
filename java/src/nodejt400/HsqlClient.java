@@ -24,7 +24,6 @@ public class HsqlClient implements ConnectionProvider
 	@Override
 	public void returnConnection(Connection c) throws Exception
 	{
-		c.close();
 	}
 
 	@Override
@@ -82,7 +81,7 @@ public class HsqlClient implements ConnectionProvider
 
 	public Transaction createTransaction() throws Exception
 	{
-		return new Transaction(getConnection());
+		return new Transaction(this);
 	}
 
 	public KeyedDataQ createKeyedDataQ(String name)throws Exception

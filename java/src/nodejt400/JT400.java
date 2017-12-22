@@ -91,7 +91,7 @@ public class JT400
 
 	public Transaction createTransaction() throws Exception
 	{
-		return new Transaction(connectionProvider.getConnection());
+		return new Transaction(connectionProvider);
 	}
 
 	public Pgm pgm(String programName, String paramsSchemaJsonStr)
