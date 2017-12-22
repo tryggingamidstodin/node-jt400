@@ -28,7 +28,7 @@ public class Transaction implements ConnectionProvider
 
 	public void end() throws Exception
 	{
-		this.connection.setAutoCommit(false);
+		this.connection.setAutoCommit(true);
 		this.connection.close();
 	}
 
