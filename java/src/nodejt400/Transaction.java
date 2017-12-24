@@ -84,7 +84,6 @@ public class Transaction implements ConnectionProvider
 	@Override
 	public void returnConnection(Connection c) throws Exception
 	{
-		connectionProvider.returnConnection(connection);
 	}
 
 	@Override

@@ -14,7 +14,7 @@
     "java/lib"
   ],
   "scripts": {
-    "test": "mocha dist/test",
+    "test": "mocha dist/test -t 10000",
     "build": "tsc",
     "prepublish": "npm run build && npm run test"
   },
