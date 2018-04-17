@@ -3,16 +3,37 @@ NodeJS JT400 wrapper to connect to IBM iSeries and AS/400 systems (OS400 operati
 
 [![Version](https://img.shields.io/npm/v/node-jt400.svg)](https://npmjs.org/package/node-jt400)
 
+## Install
+
+```sh
+npm install node-jt400 --save
+```
+
 ## Configure
+
 ```javascript
 const config = {
     host: 'myhost',
     user: 'myuser',
-    password: 'xxx'
+    password: 'xxx',
 }
 const pool = require('node-jt400').pool(config);
 ```
-## SQL / Database
+It will also accept [JT400 JDBC Properties](https://www.ibm.com/support/knowledgecenter/en/ssw_ibm_i_73/rzahh/javadoc/com/ibm/as400/access/doc-files/JDBCProperties.html).
+```javascript
+const config = {
+    host: 'myhost',
+    user: 'myuser',
+    password: 'xxx',
+    'translate binary': 'true',
+    trace: 'true',
+}
+const pool = require('node-jt400').pool(config);
+```
+
+# SQL / Database
+
+## Promises
 
 ### Query
 ```javascript
@@ -104,6 +125,96 @@ pool.update('INSERT INTO foo (fooid, textfield, clobfield) VALUES(?, ?)', [1, 't
     console.log('updated');
 });
 
+```
+## async / await
+
+### Query
+```javascript
+try {
+    const results = await pool.query('SELECT field1, field2 FROM foo WHERE bar=? AND baz=?', [1, 'a']);
+    const field1 = result[0].FIELD1;
+    console.log('result');
+    console.log(field1);
+}
+catch (error) {
+    console.log('error');
+    console.log(error);
+}
+```
+
+### Update
+```javascript
+try {
+    const rowsUpdated = await pool.update('UPDATE foo SET bar=? WHERE baz=?', [1, 'a']);
+    console.log('rows updated');
+    console.log(rowsUpdated);
+}
+catch (error) {
+    console.log('error');
+    console.log(error);
+}
+```
+
+### Delete
+```javascript
+try {
+    const rowsDeleted = await pool.update('DELETE FROM foo WHERE bar=?', [1]);
+    console.log('Deleted + ' rowsDeleted + ' rows');
+}
+catch (error) {
+    console.log('error');
+    console.log(error);
+}
+```
+
+### Insert
+```javascript
+try {
+    const id = await pool.insertAndGetId('INSERT INTO foo (bar, baz) VALUES(?,?)',[2,'b']);
+    console.log('Inserted new row with id ' + id);
+}
+catch (error) {
+    console.log('error');
+    console.log(error);
+}
+```
+
+### Insert list
+```javascript
+const tableName = 'foo';
+const idColumn  = 'fooid';
+const rows = [
+    {FIELD1: 1, FIELD2: 'a'},
+    {FIELD1: 2, FIELD2: 'b'}
+];
+
+try {
+    const idList = await pool.insertList(tableName, idColumn, rows);
+    console.log(idList);
+}
+catch (error) {
+    console.log('error');
+    console.log(error);
+}
+```
+
+### Batch update
+```javascript
+// insert a list in one statement
+const data = [
+    [1, 'a'],
+    [2, 'b']
+];
+
+try {
+    const result = await pool.batchUpdate('INSERT INTO FOO (FIELD1, FIELD2) VALUES(?,?)', data);
+    console.log(result);
+    // result is the number of updated rows for each row. [1, 1] in this case.
+}
+catch (error) {
+    console.log('error');
+    console.log(error);
+}
 ```
 
 ## Filesystem
