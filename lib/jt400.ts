@@ -152,7 +152,7 @@ function createInstance(connection, insertListFun, inMemory) {
 			var jsonParams = JSON.stringify((paramsList || []).map(function(row) {
 				return row.map(convertDateValues);
 			}));
-			return Q.nfcall(thisConn.batchUpdate, sql, jsonParams);
+			return Q.nfcall(thisConn.batchUpdate, sql, jsonParams).then(res => Array.from(res));			
 		};
 		obj.insertAndGetId = function(sql, params) {			
 			var jsonParams = paramsToJson(params || []);

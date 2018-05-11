@@ -1,55 +1,51 @@
 import { jt400 } from './db'
 import { expect } from 'chai'
 import * as streamEqual from 'stream-equal'
-import q = require('q')
 const { ifs } = jt400
 
-describe('ifs', function() {
-    it('should read file', function(done) {
-        this.timeout(50000);
-        var stream = ifs().createReadStream('/atm/test/hello_world.txt');
-        var data = '';
-        stream.on('data', function(chunk) {
+describe('ifs', () => {
+    it('should read file', done => {        
+        const stream = ifs().createReadStream('/atm/test/hello_world.txt');
+        let data = '';
+        stream.on('data', chunk => {
             data += chunk;
         });
 
-        stream.on('end', function() {
+        stream.on('end', () => {
             expect(data).to.equal('Halló heimur!\n');
             done();
         });
 
         stream.on('error', done);
-    });
+    }).timeout(50000);
 
-    it('should read filename promise', function(done) {
-        this.timeout(50000);
-        var stream = ifs().createReadStream(q('/atm/test/hello_world.txt'));
-        var data = '';
-        stream.on('data', function(chunk) {
+    it('should read filename promise', done => {        
+        const stream = ifs().createReadStream(Promise.resolve('/atm/test/hello_world.txt'));
+        let data = '';
+        stream.on('data', chunk => {
             data += chunk;
         });
 
-        stream.on('end', function() {
+        stream.on('end', () => {
             expect(data).to.equal('Halló heimur!\n');
             done();
         });
 
         stream.on('error', done);
-    });
+    }).timeout(50000);
 
-    it('should write file', function(done) {
-        this.timeout(50000);
+    it('should write file', done => {        
         const rs = ifs().createReadStream('/atm/test/hello_world.txt');
         const ws = ifs().createWriteStream('/atm/test2/new_file.txt', { append: false });
 
-        rs.pipe(ws).on('finish', function() {
+        rs.pipe(ws).on('finish', () => {
             const stream = ifs().createReadStream('/atm/test2/new_file.txt');
             let data = '';
-            stream.on('data', function(chunk) {
+            stream.on('data', chunk => {
                 data += chunk;
             });
 
-            stream.on('end', function() {
+            stream.on('end', () => {
                 expect(data).to.equal('Halló heimur!\n');
                 done();
                 /*  
@@ -64,14 +60,13 @@ describe('ifs', function() {
 
             stream.on('error', done);
         }).on('error', done);
-    });
+    }).timeout(50000);
 
-    it('should pipe image', function(done) {
-        this.timeout(50000);
+    it('should pipe image', done => {        
         const rs = ifs().createReadStream('/atm/test/image.jpg');
         const ws = ifs().createWriteStream('/atm/test2/image.jpg', { append: false });
 
-        rs.pipe(ws).on('finish', function() {
+        rs.pipe(ws).on('finish', () => {
             const oldImage = ifs().createReadStream('/atm/test/image.jpg');
             const newImage = ifs().createReadStream('/atm/test2/image.jpg');
 
@@ -83,5 +78,5 @@ describe('ifs', function() {
 
 
         });
-    });
+    }).timeout(50000);
 });
