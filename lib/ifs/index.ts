@@ -26,6 +26,13 @@ export function ifs(connection) {
                 ifsWriteStream: javaStream
             });
         },
-        deleteFile: (fileName) => q.nfcall(connection.deleteIfsFile.bind(connection), fileName)
+        deleteFile: (fileName) => q.nfcall(connection.deleteIfsFile.bind(connection), fileName),
+        fileMetadata: fileName =>
+            q
+                .nfcall(
+                    connection.getIfsFileMetadata.bind(connection),
+                    fileName
+                )
+                .then(JSON.parse),
     };
 }

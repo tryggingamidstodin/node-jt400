@@ -24,7 +24,13 @@ IfsWriteStream.prototype._write = function(chunk, _, next) {
 };
 
 IfsWriteStream.prototype._flush = function(done) {
-    this._ifsWriteStream.then((stream) => {
-        stream.flush();
-    }).then(done).catch(done);
+    this._ifsWriteStream.then(stream =>
+        stream.flush(err => {
+            if (err) {
+                done(err)
+            } else {
+                done()
+            }
+        })
+    )
 };

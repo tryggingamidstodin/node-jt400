@@ -122,6 +122,18 @@ public class JT400
 		return res;
 	}
 
+	public String getIfsFileMetadata(String fileName) throws Exception {
+		Connection connection = connectionProvider.getConnection();
+		AS400JDBCConnectionHandle handle = (AS400JDBCConnectionHandle) connection;
+		AS400 as400 = handle.getSystem();
+		IFSFile file = new IFSFile(as400, fileName);
+		JSONObject metadata = new JSONObject();
+		metadata.put("length", file.length());
+		metadata.put("exists", file.exists());
+		connectionProvider.returnConnection(connection);
+		return metadata.toJSONString();
+	}
+
 	public void close()
 	{
 		connectionProvider.close();

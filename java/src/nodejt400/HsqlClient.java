@@ -2,6 +2,7 @@ package nodejt400;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import org.json.simple.JSONObject;
 
 import org.hsqldb.jdbc.JDBCDriver;
 
@@ -98,6 +99,14 @@ public class HsqlClient implements ConnectionProvider
 	public boolean deleteIfsFile(String fileName) throws Exception {
 		return false;
 	}
+
+	public String getIfsFileMetadata(String fileName) throws Exception {
+		JSONObject metadata = new JSONObject();
+		metadata.put("exists", false);
+		metadata.put("length", 0);
+		return metadata.toJSONString();
+	}
+
 	/**
 	 * Mock program call
 	 * @param programName

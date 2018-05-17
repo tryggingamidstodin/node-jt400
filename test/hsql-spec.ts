@@ -148,6 +148,16 @@ describe('hsql in memory', () => {
             expect(res.baz).to.equal(20);            
         });
     });
+    
+    describe('should mock ifs', () => {
+        it('should get metadata', async () => {
+            const metadata = await jt400.ifs().fileMetadata('/foo/bar.txt')
+            expect(metadata).to.deep.equal({
+                exists: false,
+                length: 0,
+            })
+        })
+    })
 
     describe('execute', () => {
         

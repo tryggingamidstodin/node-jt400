@@ -19,6 +19,24 @@ describe('ifs', () => {
         stream.on('error', done);
     }).timeout(50000);
 
+    it('should get file metadata', async () => {
+        const metadata = await ifs().fileMetadata('/atm/test/hello_world.txt')
+        expect(metadata).to.deep.equal({
+            exists: true,
+            length: 15,
+        })
+    })
+
+    it('should get metadata for file that does not exists', async () => {
+        const metadata = await ifs().fileMetadata(
+            '/atm/test/___file_that_does_not_exists____.txt'
+        )
+        expect(metadata).to.deep.equal({
+            exists: false,
+            length: 0,
+        })
+    })
+
     it('should read filename promise', done => {        
         const stream = ifs().createReadStream(Promise.resolve('/atm/test/hello_world.txt'));
         let data = '';

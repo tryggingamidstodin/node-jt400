@@ -299,10 +299,16 @@ export interface KeyedDataQ {
 	read: (params: DataQReadOptions | string) => Promise<any>
 }
 
+export interface IfsFileMetadata {
+    exists: boolean
+    length: number
+}
+
 export interface Ifs {
 	createReadStream: (fileName: string | Promise<string>) => Readable
 	createWriteStream: (fileName: string | Promise<string>, options?: { append: boolean }) => Writable
 	deleteFile: (fileName: string) => Promise<boolean>
+	fileMetadata: (fileName: string) => Promise<IfsFileMetadata>
 }
 
 export interface BaseConnection {
