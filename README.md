@@ -251,6 +251,18 @@ myProgram({
 });
 ```
 
+## Message Files
+IBM AS400Message Reference:
+
+https://javadoc.midrange.com/jtopen/index.html?com/ibm/as400/access/MessageFile.html
+
+```javascript
+const file = await pool.openMessageFile({path:"/QSYS.LIB/YOURLIB.LIB/YOURMSGF.MSGF"});
+let msg = await file.read({messageId:"AMX0051"}); // an IBM AS400Message Object
+console.log('msg',msg.getTextSync());
+console.log('msg',await msg.getTextPromise());
+```
+
 The Decimal type maps to com.ibm.as400.access.AS400PackedDecimal
 The Numeric type maps to com.ibm.as400.access.AS400ZonedDecimal
 Everything else (char) maps to com.ibm.as400.access.AS400Text
