@@ -16,7 +16,6 @@ public class MessageFileHandler {
     public MessageFileHandler(ConnectionProvider connectionProvider, String path) throws Exception {
         this.connectionProvider = connectionProvider;
         this.path = path;
-        // this.path = QSYSObjectPathName.toPath("*LIBL", path, "MSGF");
     }
     private MessageFile openMessageFile(Connection c) throws Exception
     {

@@ -331,8 +331,15 @@ export interface KeyedDataQ {
 	read: (params: DataQReadOptions | string) => Promise<any>
 }
 
+
+export interface AS400Message {
+	getText: (cb:(err:any,data:string)=>void) => void
+	getTextSync: () => string
+	getTextPromise: () => Promise<string>
+}
+
 export interface MessageFileHandler {
-	read: (params: MessageFileReadOptions) => Promise<any>
+	read: (params: MessageFileReadOptions) => AS400Message
 }
 
 export interface IfsFileMetadata {
