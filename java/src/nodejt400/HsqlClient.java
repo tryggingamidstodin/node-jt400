@@ -85,8 +85,12 @@ public class HsqlClient implements ConnectionProvider
 		return new Transaction(this);
 	}
 
-	public KeyedDataQ createKeyedDataQ(String name)throws Exception
+	public KeyedDataQ createKeyedDataQ(String name) throws Exception
 	{
+		return null;
+	}
+	
+	public MessageFileHandler openMessageFile(String name) throws Exception {
 		return null;
 	}
 

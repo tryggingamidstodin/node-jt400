@@ -15,6 +15,14 @@ const defaultConfig = {
 	naming: 'system'
 }
 
+const { promisify } = require('util');
+
+jvm.asyncOptions = {
+	asyncSuffix: "",
+	syncSuffix: "Sync",              
+	promiseSuffix: "Promise",   // Generate methods returning promises, using the suffix Promise.
+	promisify:promisify
+};
 jvm.options.push('-Xrs'); // fixing the signal handling issues (for exmaple ctrl-c)
 
 jvm.classpath.push(__dirname + '/../../java/lib/jt400.jar');
@@ -26,6 +34,10 @@ process.on('exit', function(code) {
 	jvm.import('java.lang.System').exit(code);
 });
 
+/**
+ * Creates a new simplified javascript object from the imported (Java Class) javascript object.
+ * @param con The imported Java Connection Class
+ */
 function createConFrom(con) {
 	return {
 		connection: con,
@@ -37,7 +49,8 @@ function createConFrom(con) {
 		insertAndGetId: con.insertAndGetId.bind(con),
 		getColumns: con.getColumns.bind(con),
 		getPrimaryKeys: con.getPrimaryKeys.bind(con),
-		createKeyedDataQ: con.createKeyedDataQSync.bind(con)
+		createKeyedDataQ: con.createKeyedDataQSync.bind(con),
+		openMessageFile: con.openMessageFileSync.bind(con)
 	};
 }
 
@@ -236,6 +249,16 @@ function createInstance(connection, insertListFun, inMemory) {
 				}
 			};
 		},
+		openMessageFile: function (opt: MessageFileHandlerOptions) {
+			var f : MessageFileHandler = connection.openMessageFile(opt.path);
+			var read = f.read.bind(f);
+			return { 
+				read: function(){
+					var messageId = arguments[0].messageId;
+					return Q.nfcall(read, messageId);
+				}
+			};
+		},
 		ifs: function() {
 			return createIfs(connection.connection);
 		},
@@ -294,9 +317,29 @@ export interface DataQReadOptions {
 	wait?: number
 	writeKeyLength?: number
 }
+export interface MessageFileHandlerOptions{
+	/** Message File Location, e.g. /QSYS.LIB/YOURLIBRARY.LIB/YOURMSGFILE.MSGF */
+	path: string
+}
+export interface MessageFileReadOptions{
+	/** Message Key */
+	messageId: string[7]
+}
+
 export interface KeyedDataQ {
 	write: (key: string, data: string) => void
 	read: (params: DataQReadOptions | string) => Promise<any>
+}
+
+
+export interface AS400Message {
+	getText: (cb:(err:any,data:string)=>void) => void
+	getTextSync: () => string
+	getTextPromise: () => Promise<string>
+}
+
+export interface MessageFileHandler {
+	read: (params: MessageFileReadOptions) => AS400Message
 }
 
 export interface IfsFileMetadata {
@@ -333,6 +376,7 @@ export interface Connection extends BaseConnection {
 	getPrimaryKeys: (params: any) => any
 	transaction: (fn: TransactionFun) => Promise<any>
 	createKeyedDataQ: (params: DataQOptions) => KeyedDataQ
+	openMessageFile: (params: MessageFileHandlerOptions) => MessageFileHandler
 	ifs: () => Ifs
 }
 

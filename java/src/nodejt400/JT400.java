@@ -13,6 +13,7 @@ import com.ibm.as400.access.AS400JDBCConnectionPool;
 import com.ibm.as400.access.AS400JDBCConnectionPoolDataSource;
 import com.ibm.as400.access.AS400JDBCDriver;
 import com.ibm.as400.access.IFSFile;
+import com.ibm.as400.access.MessageFile;
 
 public class JT400
 {
@@ -99,9 +100,14 @@ public class JT400
 		return new Pgm(connectionProvider, programName, paramsSchemaJsonStr);
 	}
 
-	public KeyedDataQ createKeyedDataQ(String name)throws Exception
+	public KeyedDataQ createKeyedDataQ(String name) throws Exception
 	{
 		return new KeyedDataQ(connectionProvider, name);
+	}
+	
+	public MessageFileHandler openMessageFile(String path) throws Exception
+	{
+		return new MessageFileHandler(connectionProvider,path);
 	}
 
 	public IfsReadStream createIfsReadStream(String fileName) throws Exception {
