@@ -3,10 +3,10 @@ import { JdbcStream } from './jdbcstream'
 import { ifs as createIfs } from './ifs'
 import { toInsertSql } from './sqlutil'
 import { createJdbcWriteStream } from './jdbcwritestream'
-import jvm = require('java')
 import JSONStream = require('JSONStream')
 import { defaults } from './defaults'
 import Q = require('q')
+const { promisify } = require('util');
 
 const defaultConfig = {
 	host: process.env.AS400_HOST,
@@ -14,25 +14,6 @@ const defaultConfig = {
 	password: process.env.AS400_PASSWORD,
 	naming: 'system'
 }
-
-const { promisify } = require('util');
-
-jvm.asyncOptions = {
-	asyncSuffix: "",
-	syncSuffix: "Sync",              
-	promiseSuffix: "Promise",   // Generate methods returning promises, using the suffix Promise.
-	promisify:promisify
-};
-jvm.options.push('-Xrs'); // fixing the signal handling issues (for exmaple ctrl-c)
-
-jvm.classpath.push(__dirname + '/../../java/lib/jt400.jar');
-jvm.classpath.push(__dirname + '/../../java/lib/jt400wrap.jar');
-jvm.classpath.push(__dirname + '/../../java/lib/json-simple-1.1.1.jar');
-jvm.classpath.push(__dirname + '/../../java/lib/hsqldb.jar');
-
-process.on('exit', function(code) {
-	jvm.import('java.lang.System').exit(code);
-});
 
 /**
  * Creates a new simplified javascript object from the imported (Java Class) javascript object.
@@ -384,38 +365,78 @@ export interface InMemoryConnection extends Connection {
 	mockPgm: (programName: string, fn: (input: any) => any) => InMemoryConnection
 }
 
-export function pool(config?): Connection {
-	var javaCon = jvm.import('nodejt400.JT400').createPoolSync(JSON.stringify(defaults(config || {}, defaultConfig)));
-	return createInstance(createConFrom(javaCon), insertListInOneStatment, false)
-}
-export function connect(config?) {
-	var jt = jvm.import('nodejt400.JT400'),
-		createConnection = jt.createConnection.bind(jt)
-	return Q.nfcall(createConnection, JSON.stringify(defaults(config || {}, defaultConfig))).then(function(javaCon) {
-		return createInstance(createConFrom(javaCon), insertListInOneStatment, false)
-	})
-}
+export interface nodeJava {
+	classpath: Array<string>,
+	options: Array<string>,
+	nativeBindingLocation: string,
+	asyncOptions: object,
+	isJvmCreated: Function,
+	registerClient: Function,
+	registerClientP: Function,
+	ensureJvm: Function,
+	onJvmCreated: Function,
+	import: Function,
+};
 
-export function useInMemoryDb(): InMemoryConnection {
-	var javaCon = jvm.newInstanceSync('nodejt400.HsqlClient')
-	var instance = createInstance(createConFrom(javaCon), standardInsertList, true)
-	var pgmMockRegistry = {}
-	instance.mockPgm = function(programName, func) {
-		pgmMockRegistry[programName] = func
+export function initialize(java?: nodeJava) {
+	const jvm = java ? java : require('java');
+
+	jvm.options.push('-Xrs'); // fixing the signal handling issues (for exmaple ctrl-c)
+
+	jvm.classpath.push(__dirname + '/../../java/lib/jt400.jar');
+	jvm.classpath.push(__dirname + '/../../java/lib/jt400wrap.jar');
+	jvm.classpath.push(__dirname + '/../../java/lib/json-simple-1.1.1.jar');
+	jvm.classpath.push(__dirname + '/../../java/lib/hsqldb.jar');
+
+	jvm.asyncOptions = {
+		asyncSuffix: "",
+		syncSuffix: "Sync",
+		promiseSuffix: "Promise", // Generate methods returning promises, using the suffix Promise.
+		promisify: promisify
+	};
+	
+	process.on('exit', function(code) {
+		jvm.import('java.lang.System').exit(code);
+	});
+
+	function pool(config?): Connection {
+		var javaCon = jvm.import('nodejt400.JT400').createPoolSync(JSON.stringify(defaults(config || {}, defaultConfig)));
+		return createInstance(createConFrom(javaCon), insertListInOneStatment, false)
+	}
+	function connect(config?) {
+		var jt = jvm.import('nodejt400.JT400'),
+			createConnection = jt.createConnection.bind(jt)
+		return Q.nfcall(createConnection, JSON.stringify(defaults(config || {}, defaultConfig))).then(function(javaCon) {
+			return createInstance(createConFrom(javaCon), insertListInOneStatment, false)
+		})
+	}
+
+	function useInMemoryDb(): InMemoryConnection {
+		var javaCon = jvm.newInstanceSync('nodejt400.HsqlClient')
+		var instance = createInstance(createConFrom(javaCon), standardInsertList, true)
+		var pgmMockRegistry = {}
+		instance.mockPgm = function(programName, func) {
+			pgmMockRegistry[programName] = func
+			return instance
+		}
+
+		var defaultPgm = instance.pgm
+		instance.pgm = function(programName, paramsSchema) {
+			var defaultFunc = defaultPgm(programName, paramsSchema)
+			return function(params) {
+				var mockFunc = pgmMockRegistry[programName]
+				if (mockFunc) {
+					var res = mockFunc(params)
+					return res.then ? res : Q.when(res)
+				}
+				return defaultFunc(params)
+			}
+		}
 		return instance
 	}
-
-	var defaultPgm = instance.pgm
-	instance.pgm = function(programName, paramsSchema) {
-		var defaultFunc = defaultPgm(programName, paramsSchema)
-		return function(params) {
-			var mockFunc = pgmMockRegistry[programName]
-			if (mockFunc) {
-				var res = mockFunc(params)
-				return res.then ? res : Q.when(res)
-			}
-			return defaultFunc(params)
-		}
+	return {
+		pool,
+		connect,
+		useInMemoryDb,
 	}
-	return instance
 }

@@ -1,4 +1,4 @@
-import { pool, Connection } from '../lib/jt400'
-export const jt400: Connection = pool({
+import { initialize, Connection } from '../lib/jt400'
+export const jt400: Connection = initialize().pool({
     'date format': 'iso'
 })

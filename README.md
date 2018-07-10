@@ -17,7 +17,8 @@ const config = {
     user: 'myuser',
     password: 'xxx',
 }
-const pool = require('node-jt400').pool(config);
+const jt400 = require('node-jt400').initialize();
+const pool = jt400.pool(config);
 ```
 It will also accept [JT400 JDBC Properties](https://www.ibm.com/support/knowledgecenter/en/ssw_ibm_i_73/rzahh/javadoc/com/ibm/as400/access/doc-files/JDBCProperties.html).
 ```javascript
@@ -28,7 +29,28 @@ const config = {
     'translate binary': 'true',
     trace: 'true',
 }
-const pool = require('node-jt400').pool(config);
+const jt400 = require('node-jt400').initialize();
+const pool = jt400.pool(config);
+```
+
+## Using custom node-java programs along side node-jt400
+Because node-java requires that you set any classpath before any functions are called, the order of the calls are very specific.
+```javascript
+const config = {
+    host: 'myhost',
+    user: 'myuser',
+    password: 'xxx',
+}
+// require node-java
+const java = require('java');
+// You must add custom classes to the classpath before node-jt400 is initialized
+java.classpath.push(`directory/to/your/classes`);
+// Initialize node-jt400
+const jt400 = require('node-jt400').initialize(java);
+// Import any classes before you call any functions
+java.import('import.class.here');
+// Then you can call any functions
+const pool = jt400.pool(config);
 ```
 
 # SQL / Database

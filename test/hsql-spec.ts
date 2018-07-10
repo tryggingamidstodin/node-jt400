@@ -1,10 +1,10 @@
 'use strict';
-import { useInMemoryDb } from '../lib/jt400'
+import { initialize } from '../lib/jt400'
 import { Readable } from 'stream';
 import { parse } from 'JSONStream';
 import { expect } from 'chai';
 
-const jt400 = useInMemoryDb();
+const jt400 = initialize().useInMemoryDb();
 describe('hsql in memory', () => {
 
     beforeEach(() => {
