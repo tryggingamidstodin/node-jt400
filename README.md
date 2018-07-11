@@ -17,7 +17,7 @@ const config = {
     user: 'myuser',
     password: 'xxx',
 }
-const jt400 = require('node-jt400').initialize();
+const jt400 = require('node-jt400');
 const pool = jt400.pool(config);
 ```
 It will also accept [JT400 JDBC Properties](https://www.ibm.com/support/knowledgecenter/en/ssw_ibm_i_73/rzahh/javadoc/com/ibm/as400/access/doc-files/JDBCProperties.html).
@@ -29,7 +29,7 @@ const config = {
     'translate binary': 'true',
     trace: 'true',
 }
-const jt400 = require('node-jt400').initialize();
+const jt400 = require('node-jt400');
 const pool = jt400.pool(config);
 ```
 
@@ -41,16 +41,16 @@ const config = {
     user: 'myuser',
     password: 'xxx',
 }
-// require node-java
+// require node-java and node-jt400
 const java = require('java');
-// You must add custom classes to the classpath before node-jt400 is initialized
+const jt400 = require('node-jt400');
+// Add your custom classes before initializing the pool
 java.classpath.push(`directory/to/your/classes`);
-// Initialize node-jt400
-const jt400 = require('node-jt400').initialize(java);
-// Import any classes before you call any functions
+// Because node-jt400 sets certain options you must
+// initialize it first and pass your java instance to the pool
+const pool = jt400.pool(config, java);
+// Import any custom classes after you initialize the pool
 java.import('import.class.here');
-// Then you can call any functions
-const pool = jt400.pool(config);
 ```
 
 # SQL / Database

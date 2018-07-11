@@ -381,6 +381,13 @@ export interface nodeJava {
 export function initialize(java?: nodeJava) {
 	const jvm = java ? java : require('java');
 
+	jvm.asyncOptions = {
+		asyncSuffix: "",
+		syncSuffix: "Sync",
+		promiseSuffix: "Promise", // Generate methods returning promises, using the suffix Promise.
+		promisify: promisify
+	};
+
 	jvm.options.push('-Xrs'); // fixing the signal handling issues (for exmaple ctrl-c)
 
 	jvm.classpath.push(__dirname + '/../../java/lib/jt400.jar');
@@ -388,55 +395,49 @@ export function initialize(java?: nodeJava) {
 	jvm.classpath.push(__dirname + '/../../java/lib/json-simple-1.1.1.jar');
 	jvm.classpath.push(__dirname + '/../../java/lib/hsqldb.jar');
 
-	jvm.asyncOptions = {
-		asyncSuffix: "",
-		syncSuffix: "Sync",
-		promiseSuffix: "Promise", // Generate methods returning promises, using the suffix Promise.
-		promisify: promisify
-	};
-	
 	process.on('exit', function(code) {
 		jvm.import('java.lang.System').exit(code);
 	});
 
-	function pool(config?): Connection {
-		var javaCon = jvm.import('nodejt400.JT400').createPoolSync(JSON.stringify(defaults(config || {}, defaultConfig)));
+	return jvm;
+}
+
+export function pool(config?, java?: nodeJava): Connection {
+	const jvm = initialize(java);
+	var javaCon = jvm.import('nodejt400.JT400').createPoolSync(JSON.stringify(defaults(config || {}, defaultConfig)));
+	return createInstance(createConFrom(javaCon), insertListInOneStatment, false)
+}
+
+export function connect(config?, java?: nodeJava) {
+	const jvm = initialize(java);
+	var jt = jvm.import('nodejt400.JT400'),
+		createConnection = jt.createConnection.bind(jt)
+	return Q.nfcall(createConnection, JSON.stringify(defaults(config || {}, defaultConfig))).then(function(javaCon) {
 		return createInstance(createConFrom(javaCon), insertListInOneStatment, false)
-	}
-	function connect(config?) {
-		var jt = jvm.import('nodejt400.JT400'),
-			createConnection = jt.createConnection.bind(jt)
-		return Q.nfcall(createConnection, JSON.stringify(defaults(config || {}, defaultConfig))).then(function(javaCon) {
-			return createInstance(createConFrom(javaCon), insertListInOneStatment, false)
-		})
-	}
+	})
+}
 
-	function useInMemoryDb(): InMemoryConnection {
-		var javaCon = jvm.newInstanceSync('nodejt400.HsqlClient')
-		var instance = createInstance(createConFrom(javaCon), standardInsertList, true)
-		var pgmMockRegistry = {}
-		instance.mockPgm = function(programName, func) {
-			pgmMockRegistry[programName] = func
-			return instance
-		}
-
-		var defaultPgm = instance.pgm
-		instance.pgm = function(programName, paramsSchema) {
-			var defaultFunc = defaultPgm(programName, paramsSchema)
-			return function(params) {
-				var mockFunc = pgmMockRegistry[programName]
-				if (mockFunc) {
-					var res = mockFunc(params)
-					return res.then ? res : Q.when(res)
-				}
-				return defaultFunc(params)
-			}
-		}
+export function useInMemoryDb(java?: nodeJava): InMemoryConnection {
+	const jvm = initialize(java);
+	var javaCon = jvm.newInstanceSync('nodejt400.HsqlClient')
+	var instance = createInstance(createConFrom(javaCon), standardInsertList, true)
+	var pgmMockRegistry = {}
+	instance.mockPgm = function(programName, func) {
+		pgmMockRegistry[programName] = func
 		return instance
 	}
-	return {
-		pool,
-		connect,
-		useInMemoryDb,
+
+	var defaultPgm = instance.pgm
+	instance.pgm = function(programName, paramsSchema) {
+		var defaultFunc = defaultPgm(programName, paramsSchema)
+		return function(params) {
+			var mockFunc = pgmMockRegistry[programName]
+			if (mockFunc) {
+				var res = mockFunc(params)
+				return res.then ? res : Q.when(res)
+			}
+			return defaultFunc(params)
+		}
 	}
+	return instance
 }

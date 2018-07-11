@@ -1,20 +1,18 @@
 import { jt400 as connection } from './db'
-import { initialize } from '../lib/jt400'
+import { pool, connect } from '../lib/jt400'
 import { expect } from 'chai'
 import { readFileSync } from 'fs'
-
-const initializedJava = initialize();
 
 describe('connect', () => {
 
 	it('should connect', async () => {		
-		const db = await initializedJava.connect();		
+		const db = await connect();		
 		const nUpdated = await db.update('delete from tsttbl');
 		expect(nUpdated).to.be.least(0);			
 	}).timeout(10000);
 
 	it('should close', async () => {		
-		const db = await initializedJava.connect();
+		const db = await connect();
 		await db.close();			
 		
 		return db.update('delete from tsttbl').then(() => {			
@@ -45,11 +43,11 @@ describe('jt400 pool', function() {
 	});
 
 	it('should not return same instance in configure', () => {
-		expect(connection).to.not.equal(initializedJava.pool({ host: 'foo' }));
+		expect(connection).to.not.equal(pool({ host: 'foo' }));
 	});
 
 	it('should configure host', () => {		
-		const db = initializedJava.pool({ host: 'nohost' });
+		const db = pool({ host: 'nohost' });
 		return db.query('select * from tsttbl').then(() => {
 			throw new Error('should not return result from nohost')
 		}).catch(err => {
