@@ -49,6 +49,7 @@ function createConFrom(con) {
 		insertAndGetId: con.insertAndGetId.bind(con),
 		getColumns: con.getColumns.bind(con),
 		getPrimaryKeys: con.getPrimaryKeys.bind(con),
+		openMessageQ: con.openMessageQSync.bind(con),
 		createKeyedDataQ: con.createKeyedDataQSync.bind(con),
 		openMessageFile: con.openMessageFileSync.bind(con)
 	};
@@ -221,6 +222,24 @@ function createInstance(connection, insertListFun, inMemory) {
 		getPrimaryKeys: function(opt) {
 			return Q.nfcall(connection.getPrimaryKeys, opt.catalog, opt.schema, opt.table).then(JSON.parse);
 		},
+		openMessageQ: function (opt) {
+			const hasPath = typeof opt.path === "string";
+			const name = hasPath ? opt.path : opt.name;
+			var dq = connection.openMessageQ(name,hasPath),
+				read = dq.read.bind(dq)
+			return {
+				// write: function (key, data) {
+				// 	dq.writeSync(key, data);
+				// },
+				read: function () {
+					var wait = -1;
+					if (arguments[0] === Object(arguments[0])) {
+						wait = arguments[0].wait || wait;
+					}
+					return Q.nfcall(read,wait);
+				}
+			};
+		},
 		createKeyedDataQ: function(opt) {
 			var dq = connection.createKeyedDataQ(opt.name),
 				read = dq.read.bind(dq),
@@ -308,11 +327,20 @@ export interface CLOB {
 
 export type Param = string | number | Date | null | CLOB
 
-export interface DataQOptions {
-	name: string
+
+export interface JustNameMessageQ{
+	name:string
+}
+export interface JustMessageDataQ{
+	path:string
+}
+export type MessageQOptions = JustNameMessageQ | JustMessageDataQ
+
+export interface MessageQReadOptions {
+	wait?: number
 }
 
-export interface DataQReadOptions {
+export interface KeyedDataQReadOptions {
 	key: string
 	wait?: number
 	writeKeyLength?: number
@@ -326,9 +354,17 @@ export interface MessageFileReadOptions{
 	messageId: string[7]
 }
 
+export interface MessageQ {
+	write: (data: string) => void
+	read: (params?: MessageQReadOptions) => Promise<any> | Promise<null>
+}
+
+export interface KeyedDataQOptions {
+	name: string
+}
 export interface KeyedDataQ {
 	write: (key: string, data: string) => void
-	read: (params: DataQReadOptions | string) => Promise<any>
+	read: (params: KeyedDataQReadOptions | string) => Promise<any>
 }
 
 
@@ -375,7 +411,8 @@ export interface Connection extends BaseConnection {
 	getColumns: (params: any) => any
 	getPrimaryKeys: (params: any) => any
 	transaction: (fn: TransactionFun) => Promise<any>
-	createKeyedDataQ: (params: DataQOptions) => KeyedDataQ
+	openMessageQ: (params: MessageQOptions) => MessageQ
+	createKeyedDataQ: (params: KeyedDataQOptions) => KeyedDataQ
 	openMessageFile: (params: MessageFileHandlerOptions) => MessageFileHandler
 	ifs: () => Ifs
 }
