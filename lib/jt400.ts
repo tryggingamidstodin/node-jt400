@@ -201,14 +201,11 @@ function createInstance(connection, insertListFun, inMemory) {
 				}, c);
 			return transactionFunction(transaction)
 				.then(function(res) {
-					console.log('Committing');
 					t.commitSync();
 					t.endSync();
 					return res;
 				})
 				.catch(function(err) {
-					console.log('Err:',err);
-					console.log('Rolling back due to error');
 					t.rollbackSync();
 					t.endSync();
 					throw err;
