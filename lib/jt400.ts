@@ -380,14 +380,18 @@ export interface nodeJava {
 
 export function initialize(java?: nodeJava) {
 	const jvm = java ? java : require('java');
-
-	jvm.asyncOptions = {
+	
+	const asyncOptions = {
 		asyncSuffix: "",
 		syncSuffix: "Sync",
 		promiseSuffix: "Promise", // Generate methods returning promises, using the suffix Promise.
 		promisify: promisify
 	};
 
+	if (!jvm.asyncOptions) {
+		jvm.asyncOptions = asyncOptions;
+	}
+	
 	jvm.options.push('-Xrs'); // fixing the signal handling issues (for exmaple ctrl-c)
 
 	jvm.classpath.push(__dirname + '/../../java/lib/jt400.jar');
