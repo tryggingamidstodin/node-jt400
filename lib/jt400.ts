@@ -387,7 +387,8 @@ export function initialize(java?: nodeJava) {
 		promiseSuffix: "Promise", // Generate methods returning promises, using the suffix Promise.
 		promisify: promisify
 	};
-
+	// Do not set asyncOptions if it has already been set
+	// Allows for multiple instances to be started with passed java instance
 	if (!jvm.asyncOptions) {
 		jvm.asyncOptions = asyncOptions;
 	}
