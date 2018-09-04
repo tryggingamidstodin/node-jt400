@@ -226,7 +226,8 @@ function createInstance(connection, insertListFun, inMemory) {
 			const hasPath = typeof opt.path === "string";
 			const name = hasPath ? opt.path : opt.name;
 			var dq = connection.openMessageQ(name,hasPath),
-				read = dq.read.bind(dq)
+				read = dq.read.bind(dq),
+				sendInformational = dq.sendInformational.bind(dq)
 			return {
 				// write: function (key, data) {
 				// 	dq.writeSync(key, data);
@@ -237,6 +238,9 @@ function createInstance(connection, insertListFun, inMemory) {
 						wait = arguments[0].wait || wait;
 					}
 					return Q.nfcall(read,wait);
+				},
+				sendInformational: function (messageText){
+					return Q.nfcall(sendInformational, messageText);
 				}
 			};
 		},
@@ -355,7 +359,7 @@ export interface MessageFileReadOptions{
 }
 
 export interface MessageQ {
-	write: (data: string) => void
+	sendInformational: (messageText: string) => Promise<void>
 	read: (params?: MessageQReadOptions) => Promise<any> | Promise<null>
 }
 
