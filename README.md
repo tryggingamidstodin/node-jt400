@@ -251,10 +251,38 @@ myProgram({
 });
 ```
 
-## Message Files
-IBM AS400Message Reference:
+The `Decimal` type maps to `com.ibm.as400.access.AS400PackedDecimal`
+The `Numeric` type maps to `com.ibm.as400.access.AS400ZonedDecimal`
+Everything else (`char`) maps to `com.ibm.as400.access.AS400Text`
 
-https://javadoc.midrange.com/jtopen/index.html?com/ibm/as400/access/MessageFile.html
+Precision is the size and scale is the decimals. 
+
+## Keyed Data Queues
+
+[IBM KeyedDataQueue Reference](https://javadoc.midrange.com/jtopen/index.html?com/ibm/as400/access/KeyedDataQueue.html)
+
+```javascript
+    const jt400 = pool(jt400config);
+    // Open a keyed data queue for reading
+    let queue = jt400.createKeyedDataQ({name}); 
+    // -1 waits until a message exists. (MSGW)
+    let m = await queue.read({key:inboxKey,wait:2}); 
+```
+
+## Message Queues
+
+[IBM MessageQueue Reference](https://javadoc.midrange.com/jtopen/index.html?com/ibm/as400/access/MessageQueue.html)
+
+```javascript
+    const path = '/QSYS.LIB/'+process.env.AS400_USERNAME+'.MSGQ';
+    const msgq = await jt400.openMessageQ({ path: path });
+    const testMessage = 'Test Message';
+    await msgq.sendInformational(testMessage); // Writes a basic message
+    await msgq.read();
+```
+
+## Message Files
+[IBM AS400Message Reference](https://javadoc.midrange.com/jtopen/index.html?com/ibm/as400/access/MessageFile.html)
 
 ```javascript
 const file = await pool.openMessageFile({path:"/QSYS.LIB/YOURLIB.LIB/YOURMSGF.MSGF"});
@@ -263,8 +291,3 @@ console.log('msg',msg.getTextSync());
 console.log('msg',await msg.getTextPromise());
 ```
 
-The Decimal type maps to com.ibm.as400.access.AS400PackedDecimal
-The Numeric type maps to com.ibm.as400.access.AS400ZonedDecimal
-Everything else (char) maps to com.ibm.as400.access.AS400Text
-
-Precision is the size and scale is the decimals. 
