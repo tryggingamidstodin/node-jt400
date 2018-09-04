@@ -25,14 +25,15 @@ public class Pgm
 {
   private final ConnectionProvider connectionProvider;
 
-  private final String name;
-
+  private final String objectName;
+  private final String libraryName;
   private final String paramsSchemaJsonStr;
 
-  public Pgm(ConnectionProvider connectionProvider, String programName, String paramsSchemaJsonStr)
+  public Pgm(ConnectionProvider connectionProvider, String objectName, String paramsSchemaJsonStr, String libraryName)
   {
     this.connectionProvider = connectionProvider;
-    this.name = programName;
+    this.objectName = objectName; // programName
+    this.libraryName = libraryName != null ? libraryName : "*LIBL";
     this.paramsSchemaJsonStr = paramsSchemaJsonStr;
   }
 
@@ -62,7 +63,7 @@ public class Pgm
         }
         catch (Exception ex)
         {
-          System.err.println("Error set param value in pgm: " + name + " paramname: " + param.getName() + ", value: " + params.get(param.getName()));
+          System.err.println("Error set param value in pgm: " + objectName + " paramname: " + param.getName() + ", value: " + params.get(param.getName()));
           throw ex;
         }
       }
@@ -72,7 +73,8 @@ public class Pgm
       ProgramCall call = new ProgramCall(as400);
 
       //Run
-      call.setProgram(QSYSObjectPathName.toPath("*LIBL", name, "PGM"), pgmParamArray);
+      
+      call.setProgram(QSYSObjectPathName.toPath(libraryName, objectName, "PGM"), pgmParamArray);
       if (!call.run())
       {
         AS400Message[] ms = call.getMessageList();
