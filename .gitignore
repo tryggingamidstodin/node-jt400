@@ -3,6 +3,5 @@
 node_modules
 dist/test
 config.js
-java/build/*
 java/bin
 .vscode
