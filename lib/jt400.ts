@@ -349,7 +349,7 @@ export interface IfsFileMetadata {
 
 export interface Ifs {
 	createReadStream: (fileName: string | Promise<string>) => Readable
-	createWriteStream: (fileName: string | Promise<string>, options?: { append: boolean }) => Writable
+	createWriteStream: (fileName: string | Promise<string>, options?: { append: boolean, ccsid: 1252 }) => Writable
 	deleteFile: (fileName: string) => Promise<boolean>
 	fileMetadata: (fileName: string) => Promise<IfsFileMetadata>
 }

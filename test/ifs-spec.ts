@@ -54,7 +54,7 @@ describe('ifs', () => {
 
     it('should write file', done => {        
         const rs = ifs().createReadStream('/atm/test/hello_world.txt');
-        const ws = ifs().createWriteStream('/atm/test2/new_file.txt', { append: false });
+        const ws = ifs().createWriteStream('/atm/test2/new_file.txt', { append: false, ccsid: 1252 });
 
         rs.pipe(ws).on('finish', () => {
             const stream = ifs().createReadStream('/atm/test2/new_file.txt');
@@ -82,7 +82,7 @@ describe('ifs', () => {
 
     it('should pipe image', done => {        
         const rs = ifs().createReadStream('/atm/test/image.jpg');
-        const ws = ifs().createWriteStream('/atm/test2/image.jpg', { append: false });
+        const ws = ifs().createWriteStream('/atm/test2/image.jpg', { append: false, ccsid: 1252 });
 
         rs.pipe(ws).on('finish', () => {
             const oldImage = ifs().createReadStream('/atm/test/image.jpg');

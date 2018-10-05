@@ -15,12 +15,12 @@ export function ifs(connection) {
             });
         },
         createWriteStream: function(fileName, options) {
-            options = options || { append: false }
+            options = options || { append: false, ccsid: 1252 }
 
             var javaStream = q.when(fileName).then(function(file) {
                 const folderPath = dirname(file);
                 const fileName = basename(file);
-                return q.nfcall(connection.createIfsWriteStream.bind(connection), folderPath, fileName, options.append);
+                return q.nfcall(connection.createIfsWriteStream.bind(connection), folderPath, fileName, options.append, options.ccsid);
             });
             return new IfsWriteStream({
                 ifsWriteStream: javaStream
