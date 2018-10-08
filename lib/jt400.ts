@@ -262,8 +262,10 @@ function createInstance(connection, insertListFun, inMemory) {
 		ifs: function() {
 			return createIfs(connection.connection);
 		},
-		pgm: function(programName, paramsSchema) {
-			var pgm = connection.connection.pgmSync(programName, JSON.stringify(paramsSchema)),
+		pgm: function(programName, paramsSchema,libraryName) {
+			if(typeof libraryName !== "string")
+				libraryName = null;
+			var pgm = connection.connection.pgmSync(programName, JSON.stringify(paramsSchema),libraryName),
 				pgmFunc = pgm.run.bind(pgm);
 			return function(params) {
 				return Q.nfcall(pgmFunc, JSON.stringify(params)).then(JSON.parse);
@@ -370,7 +372,7 @@ export interface BaseConnection {
 export type TransactionFun = (transaction: BaseConnection) => Promise<any>
 
 export interface Connection extends BaseConnection {
-	pgm: (programName: string, paramsSchema: PgmParamType[]) => any
+	pgm: (programName: string, paramsSchema: PgmParamType[],libraryName?: string) => any
 	getTablesAsStream: (params: any) => Readable
 	getColumns: (params: any) => any
 	getPrimaryKeys: (params: any) => any
