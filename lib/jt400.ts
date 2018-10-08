@@ -30,10 +30,6 @@ jvm.classpath.push(__dirname + '/../../java/lib/jt400wrap.jar');
 jvm.classpath.push(__dirname + '/../../java/lib/json-simple-1.1.1.jar');
 jvm.classpath.push(__dirname + '/../../java/lib/hsqldb.jar');
 
-process.on('exit', function(code) {
-	jvm.import('java.lang.System').exit(code);
-});
-
 /**
  * Creates a new simplified javascript object from the imported (Java Class) javascript object.
  * @param con The imported Java Connection Class
