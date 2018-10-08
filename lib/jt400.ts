@@ -333,10 +333,10 @@ export type Param = string | number | Date | null | CLOB
 export interface JustNameMessageQ{
 	name:string
 }
-export interface JustMessageDataQ{
+export interface JustPathMessageQ{
 	path:string
 }
-export type MessageQOptions = JustNameMessageQ | JustMessageDataQ
+export type MessageQOptions = JustNameMessageQ | JustPathMessageQ
 
 export interface MessageQReadOptions {
 	wait?: number
