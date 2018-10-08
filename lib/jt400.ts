@@ -342,7 +342,7 @@ export interface MessageQReadOptions {
 	wait?: number
 }
 
-export interface KeyedDataQReadOptions {
+export interface DataQReadOptions {
 	key: string
 	wait?: number
 	writeKeyLength?: number
@@ -366,7 +366,7 @@ export interface KeyedDataQOptions {
 }
 export interface KeyedDataQ {
 	write: (key: string, data: string) => void
-	read: (params: KeyedDataQReadOptions | string) => Promise<any>
+	read: (params: DataQReadOptions | string) => Promise<any>
 }
 
 
