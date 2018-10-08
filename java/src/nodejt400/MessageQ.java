@@ -19,7 +19,7 @@ public class MessageQ
 		if(isPath){
 			this.path = name;
 		}else{
-			this.path = QSYSObjectPathName.toPath("*LIBL", name, "DTAQ");
+			this.path = QSYSObjectPathName.toPath("*LIBL", name, "MSGQ");
 		}
 	}
 
