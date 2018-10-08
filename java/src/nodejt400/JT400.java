@@ -95,9 +95,9 @@ public class JT400
 		return new Transaction(connectionProvider);
 	}
 
-	public Pgm pgm(String programName, String paramsSchemaJsonStr)
+	public Pgm pgm(String programName, String paramsSchemaJsonStr, String libraryName)
 	{
-		return new Pgm(connectionProvider, programName, paramsSchemaJsonStr);
+		return new Pgm(connectionProvider, programName, paramsSchemaJsonStr,libraryName);
 	}
 
 	public KeyedDataQ createKeyedDataQ(String name) throws Exception
