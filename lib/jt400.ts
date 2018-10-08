@@ -361,7 +361,7 @@ export interface MessageQ {
 	read: (params?: MessageQReadOptions) => Promise<any> | Promise<null>
 }
 
-export interface KeyedDataQOptions {
+export interface DataQOptions {
 	name: string
 }
 export interface KeyedDataQ {
@@ -414,7 +414,7 @@ export interface Connection extends BaseConnection {
 	getPrimaryKeys: (params: any) => any
 	transaction: (fn: TransactionFun) => Promise<any>
 	openMessageQ: (params: MessageQOptions) => MessageQ
-	createKeyedDataQ: (params: KeyedDataQOptions) => KeyedDataQ
+	createKeyedDataQ: (params: DataQOptions) => KeyedDataQ
 	openMessageFile: (params: MessageFileHandlerOptions) => MessageFileHandler
 	ifs: () => Ifs
 }
