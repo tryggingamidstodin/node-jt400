@@ -117,14 +117,14 @@ public class HsqlClient implements ConnectionProvider
 	 * @param paramsSchemaJsonStr
 	 * @return
 	 */
-	public Pgm pgm(String programName, String paramsSchemaJsonStr)
+	public Pgm pgm(String programName, String paramsSchemaJsonStr, String libraryName)
 	{
-		return new Pgm(programName, paramsSchemaJsonStr);
+		return new Pgm(programName, paramsSchemaJsonStr, libraryName);
 	}
 
 	public class Pgm
 	{
-		public Pgm(String programName, String paramsSchemaJsonStr)
+		public Pgm(String programName, String paramsSchemaJsonStr, String libraryName)
 		{
 		}
 
