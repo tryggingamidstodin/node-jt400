@@ -100,6 +100,10 @@ public class JT400
 		return new Pgm(connectionProvider, programName, paramsSchemaJsonStr,libraryName);
 	}
 
+	public MessageQ openMessageQ(String name , Boolean isPath) throws Exception {
+		return new MessageQ(connectionProvider, name, isPath);
+	}
+
 	public KeyedDataQ createKeyedDataQ(String name) throws Exception
 	{
 		return new KeyedDataQ(connectionProvider, name);
