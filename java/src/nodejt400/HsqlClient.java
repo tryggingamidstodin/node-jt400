@@ -85,6 +85,10 @@ public class HsqlClient implements ConnectionProvider
 		return new Transaction(this);
 	}
 
+	public MessageQ openMessageQ(String name , Boolean isPath) throws Exception {
+		return null;
+	}
+
 	public KeyedDataQ createKeyedDataQ(String name) throws Exception
 	{
 		return null;
