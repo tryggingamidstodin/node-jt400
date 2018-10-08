@@ -8,6 +8,7 @@
 		</fileset>
 	</path>
 	<target name="clean">
+		<mkdir dir="build"/>
 		<delete includeemptydirs="true">
 			<fileset dir="build" includes="**/*"/>
 		</delete>
