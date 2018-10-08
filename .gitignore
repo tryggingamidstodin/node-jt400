@@ -1,7 +1,8 @@
 *\#*
 *.bmk
 node_modules
-dist/test
+dist
 config.js
+java/build
 java/bin
 .vscode
