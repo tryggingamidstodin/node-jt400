@@ -10,7 +10,7 @@ npm install node-jt400 --save
 ```
 
 #### Windows
-Windows installations can be tricky because of node-java dependency. Make sure that that module works first. You can check out [the node-java documentation for windows installation](https://github.com/joeferner/node-java#installation-windows)
+Windows installations can be tricky because of node-java dependency. Make sure that the module works first. You can check out [the node-java documentation for windows installation](https://github.com/joeferner/node-java#installation-windows)
 
 We also have some solved issues you can take a look at like [#13](https://github.com/tryggingamidstodin/node-jt400/issues/13) and [#26](https://github.com/tryggingamidstodin/node-jt400/issues/26)
 
@@ -54,8 +54,10 @@ const jt400 = require('node-jt400');
 // Add your custom classes before initializing the pool
 java.classpath.push(`directory/to/your/classes`);
 // Because node-jt400 sets certain options you must
-// initialize it first and pass your java instance to the pool
-const pool = jt400.pool(config, java);
+// Initialize it first
+jt400.javaInit(java);
+// Then create your pool
+const pool = jt400.pool(config);
 // Import any custom classes after you initialize the pool
 java.import('import.class.here');
 ```

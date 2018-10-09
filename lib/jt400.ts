@@ -15,6 +15,8 @@ const defaultConfig = {
 	naming: 'system'
 }
 
+let javaInstance = {} as nodeJava;
+
 /**
  * Creates a new simplified javascript object from the imported (Java Class) javascript object.
  * @param con The imported Java Connection Class
@@ -378,45 +380,62 @@ export interface nodeJava {
 	ensureJvm: Function,
 	onJvmCreated: Function,
 	import: Function,
+	newInstanceSync: Function,
 };
 
-export function initialize(java?: nodeJava) {
-	const jvm = java ? java : require('java');
-	
-	const asyncOptions = {
-		asyncSuffix: "",
-		syncSuffix: "Sync",
-		promiseSuffix: "Promise", // Generate methods returning promises, using the suffix Promise.
-		promisify: promisify
-	};
-	// Do not set asyncOptions if it has already been set
-	// Allows for multiple instances to be started with passed java instance
-	if (!jvm.asyncOptions) {
-		jvm.asyncOptions = asyncOptions;
+function getJavaInstance(): nodeJava {
+	if (Object.keys(javaInstance).length) {
+		return javaInstance;
 	}
-	
-	jvm.options.push('-Xrs'); // fixing the signal handling issues (for exmaple ctrl-c)
-
-	jvm.classpath.push(__dirname + '/../../java/lib/jt400.jar');
-	jvm.classpath.push(__dirname + '/../../java/lib/jt400wrap.jar');
-	jvm.classpath.push(__dirname + '/../../java/lib/json-simple-1.1.1.jar');
-	jvm.classpath.push(__dirname + '/../../java/lib/hsqldb.jar');
-
-	process.on('exit', function(code) {
-		jvm.import('java.lang.System').exit(code);
-	});
-
-	return jvm;
+	else {
+		javaInit();
+		return javaInstance;
+	}
 }
 
-export function pool(config?, java?: nodeJava): Connection {
-	const jvm = initialize(java);
+export function javaInit(java?: nodeJava) {
+	if (Object.keys(javaInstance).length) {
+		const err = new Error('Java is already initialized.');
+		throw err;
+	}
+	else {
+		const jvm = java ? java : require('java');
+	
+		const asyncOptions = {
+			asyncSuffix: "",
+			syncSuffix: "Sync",
+			promiseSuffix: "Promise", // Generate methods returning promises, using the suffix Promise.
+			promisify: promisify
+		};
+		// Do not set asyncOptions if it has already been set
+		// Allows for multiple instances to be started with passed java instance
+		if (!jvm.asyncOptions) {
+			jvm.asyncOptions = asyncOptions;
+		}
+		
+		jvm.options.push('-Xrs'); // fixing the signal handling issues (for exmaple ctrl-c)
+	
+		jvm.classpath.push(__dirname + '/../../java/lib/jt400.jar');
+		jvm.classpath.push(__dirname + '/../../java/lib/jt400wrap.jar');
+		jvm.classpath.push(__dirname + '/../../java/lib/json-simple-1.1.1.jar');
+		jvm.classpath.push(__dirname + '/../../java/lib/hsqldb.jar');
+	
+		process.on('exit', function(code) {
+			jvm.import('java.lang.System').exit(code);
+		});
+	
+		javaInstance = jvm;
+	}
+}
+
+export function pool(config?): Connection {
+	const jvm = getJavaInstance();
 	var javaCon = jvm.import('nodejt400.JT400').createPoolSync(JSON.stringify(defaults(config || {}, defaultConfig)));
 	return createInstance(createConFrom(javaCon), insertListInOneStatment, false)
 }
 
-export function connect(config?, java?: nodeJava) {
-	const jvm = initialize(java);
+export function connect(config?) {
+	const jvm = getJavaInstance();
 	var jt = jvm.import('nodejt400.JT400'),
 		createConnection = jt.createConnection.bind(jt)
 	return Q.nfcall(createConnection, JSON.stringify(defaults(config || {}, defaultConfig))).then(function(javaCon) {
@@ -424,8 +443,8 @@ export function connect(config?, java?: nodeJava) {
 	})
 }
 
-export function useInMemoryDb(java?: nodeJava): InMemoryConnection {
-	const jvm = initialize(java);
+export function useInMemoryDb(): InMemoryConnection {
+	const jvm = getJavaInstance();
 	var javaCon = jvm.newInstanceSync('nodejt400.HsqlClient')
 	var instance = createInstance(createConFrom(javaCon), standardInsertList, true)
 	var pgmMockRegistry = {}
