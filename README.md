@@ -10,7 +10,7 @@ npm install node-jt400 --save
 ```
 
 #### Windows
-Windows installations can be tricky because of node-java dependency. Make sure that that module works first. You can check out [the node-java documentation for windows installation](https://github.com/joeferner/node-java#installation-windows)
+Windows installations can be tricky because of node-java dependency. Make sure that the module works first. You can check out [the node-java documentation for windows installation](https://github.com/joeferner/node-java#installation-windows)
 
 We also have some solved issues you can take a look at like [#13](https://github.com/tryggingamidstodin/node-jt400/issues/13) and [#26](https://github.com/tryggingamidstodin/node-jt400/issues/26)
 
@@ -24,7 +24,8 @@ const config = {
     user: 'myuser',
     password: 'xxx',
 }
-const pool = require('node-jt400').pool(config);
+const jt400 = require('node-jt400');
+const pool = jt400.pool(config);
 ```
 But the config accepts all [JT400 JDBC Properties](https://www.ibm.com/support/knowledgecenter/en/ssw_ibm_i_73/rzahh/javadoc/com/ibm/as400/access/doc-files/JDBCProperties.html) so you can add other options like `translate binary`
 ```javascript
@@ -35,7 +36,30 @@ const config = {
     'translate binary': 'true',
     trace: 'true',
 }
-const pool = require('node-jt400').pool(config);
+const jt400 = require('node-jt400');
+const pool = jt400.pool(config);
+```
+
+## Using custom node-java programs along side node-jt400
+Because node-java requires that you set any classpath before any functions are called, the order of the calls are very specific.
+```javascript
+const config = {
+    host: 'myhost',
+    user: 'myuser',
+    password: 'xxx',
+}
+// require node-java and node-jt400
+const java = require('java');
+const jt400 = require('node-jt400');
+// Add your custom classes before initializing the pool
+java.classpath.push(`directory/to/your/classes`);
+// Because node-jt400 sets certain options you must
+// Initialize it first
+jt400.javaInit(java);
+// Then create your pool
+const pool = jt400.pool(config);
+// Import any custom classes after you initialize the pool
+java.import('import.class.here');
 ```
 
 # SQL / Database
