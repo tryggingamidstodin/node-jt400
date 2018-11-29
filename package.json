@@ -1,7 +1,7 @@
 {
   "name": "node-jt400",
   "author": "Tryggingamiðstöðin <bt.hugbunadargerd@tm.is>",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "JT400 (IBM Toolbox) for NodeJS",
   "main": "dist/lib/jt400.js",
   "types": "dist/lib/jt400.d.ts",
@@ -14,6 +14,9 @@
     "java/lib"
   ],
   "scripts": {
+    "format-verify": "prettier -l ./{lib,test}/**",
+    "format": "prettier --write ./{lib,test}/**",
+    "lint": "tslint --project .",
     "test": "mocha dist/test -t 10000",
     "build": "tsc",
     "build-dev": "tsc --watch",
@@ -48,8 +51,18 @@
     "@types/mocha": "^5.2.0",
     "@types/node": "^8.10.20",
     "chai": "^4.1.2",
+    "husky": "^1.2.0",
     "mocha": "^5.1.1",
+    "prettier": "^1.15.2",
     "stream-equal": "^1.1.1",
+    "tslint": "^5.11.0",
+    "tslint-config-standard": "^8.0.1",
     "typescript": "^2.7.2"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run lint && npm run format-verify",
+      "pre-push": "npm run buid && npm run test"
+    }
   }
 }
