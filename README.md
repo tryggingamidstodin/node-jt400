@@ -271,15 +271,15 @@ ifs.deleteFile('/foo/bar.txt.old').then(console.log); // true or false
 ## Programs
 With programs it is neccesary to define your input parameters first. These must match your program defination in AS.
 ```javascript
-const myProgram = pool.defineProgram(
-  'ProgramName',
-  [
+const myProgram = pool.defineProgram({
+  programName: 'MYPGM',
+  paramsSchema: [
     { type: 'DECIMAL', precision: 10, scale: 0, name: 'myId'},
-    { type: 'NUMERIC', precision: 8, scale: 0, name: 'myDate'},
+    { type: 'NUMERIC', precision: 8,  scale: 0, name: 'myDate'},
     { type: 'NUMERIC', precision: 12, scale: 2, name: 'myTotalValue' },
-    { type: 'CHAR', precision: 32, scale: 0, name: 'myString'}
-  ]
-  'LibraryName' // Optional. Defaults to *LIBL
+    { type: 'CHAR',    precision: 32, scale: 0, name: 'myString'}
+  ],
+  libraryName: 'WTMEXC' // Optional. Defaults to *LIBL
 );
 ```
 
