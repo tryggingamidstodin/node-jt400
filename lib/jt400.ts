@@ -377,9 +377,9 @@ function createInstance(connection, insertListFun, inMemory) {
 }
 
 export interface ProgramDefinationOptions {
-  libraryName?: string
   programName: string
   paramsSchema: PgmParamType[]
+  libraryName?: string
 }
 
 export interface WriteStreamOptions {
@@ -501,6 +501,7 @@ export interface Connection extends BaseConnection {
     paramsSchema: PgmParamType[],
     libraryName?: string
   ) => any
+  defineProgram: (ProgramDefinationOptions) => any
   getTablesAsStream: (params: any) => Readable
   getColumns: (params: any) => any
   getPrimaryKeys: (params: any) => any
@@ -551,18 +552,18 @@ export function useInMemoryDb(): InMemoryConnection {
     return instance
   }
 
-  const defaultPgm = instance.pgm
-  instance.pgm = function(programName, paramsSchema) {
-    const defaultFunc = defaultPgm(programName, paramsSchema)
-    return function(params) {
-      const mockFunc = pgmMockRegistry[programName]
+  const defaultPgm = instance.defineProgram
+  instance.defineProgram = function(opt) {
+    const defaultFunc = defaultPgm(opt.programName, opt.paramsSchema)
+    return function(params, timeout = 3) {
+      const mockFunc = pgmMockRegistry[opt.programName]
 
       if (mockFunc) {
-        const res = mockFunc(params)
+        const res = mockFunc(params, timeout)
         return res.then ? res : Q.when(res)
       }
 
-      return defaultFunc(params)
+      return defaultFunc(params, timeout)
     }
   }
   return instance

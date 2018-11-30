@@ -138,17 +138,20 @@ describe('hsql in memory', () => {
     let input
 
     beforeEach(() => {
-      callFoo = jt400.pgm('foo', [
-        {
-          name: 'bar',
-          size: 10
-        },
-        {
-          name: 'baz',
-          size: 9,
-          decimals: 2
-        }
-      ])
+      callFoo = jt400.defineProgram({
+        programName: 'foo',
+        paramsSchema: [
+          {
+            name: 'bar',
+            size: 10
+          },
+          {
+            name: 'baz',
+            size: 9,
+            decimals: 2
+          }
+        ]
+      })
 
       input = {
         bar: 'a',
