@@ -26,24 +26,23 @@ public class Pgm
   private final ConnectionProvider connectionProvider;
 
   private final String objectName;
-  private final String libraryName;
-  private final String paramsSchemaJsonStr;
+  private final String libraryName;  
+  private final JSONArray paramsSchema;  
 
   public Pgm(ConnectionProvider connectionProvider, String objectName, String paramsSchemaJsonStr, String libraryName)
   {
     this.connectionProvider = connectionProvider;
     this.objectName = objectName; // programName
-    this.libraryName = libraryName != null ? libraryName : "*LIBL";
-    this.paramsSchemaJsonStr = paramsSchemaJsonStr;
+    this.libraryName = libraryName;
+    this.paramsSchema = (JSONArray) JSONValue.parse(paramsSchemaJsonStr);
   }
 
-  public String run(String paramsJsonStr) throws Exception
+  public String run(String paramsJsonStr, int timeout) throws Exception
   {
     Connection c = connectionProvider.getConnection();
     JSONObject result = new JSONObject();
     try
     {
-      JSONArray paramsSchema = (JSONArray) JSONValue.parse(paramsSchemaJsonStr);
       int n = paramsSchema.size();
       PgmParam[] paramArray = new PgmParam[n];
       ProgramParameter[] pgmParamArray = new ProgramParameter[n];
@@ -73,7 +72,7 @@ public class Pgm
       ProgramCall call = new ProgramCall(as400);
 
       //Run
-      
+      call.setTimeOut(timeout);
       call.setProgram(QSYSObjectPathName.toPath(libraryName, objectName, "PGM"), pgmParamArray);
       if (!call.run())
       {

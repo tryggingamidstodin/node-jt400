@@ -7,6 +7,7 @@ import jvm = require('java')
 import JSONStream = require('JSONStream')
 import { defaults } from './defaults'
 import Q = require('q')
+import { deprecate } from 'util'
 
 const defaultConfig = {
   host: process.env.AS400_HOST,
@@ -346,20 +347,26 @@ function createInstance(connection, insertListFun, inMemory) {
     ifs() {
       return createIfs(connection.connection)
     },
-    pgm(programName, paramsSchema, libraryName) {
-      if (typeof libraryName !== 'string') {
-        libraryName = null
-      }
+    defineProgram(opt: ProgramDefinationOptions) {
       const pgm = connection.connection.pgmSync(
-        programName,
-        JSON.stringify(paramsSchema),
-        libraryName
+        opt.programName,
+        JSON.stringify(opt.paramsSchema),
+        opt.libraryName || '*LIBL'
       )
       const pgmFunc = pgm.run.bind(pgm)
-      return function(params) {
-        return Q.nfcall(pgmFunc, JSON.stringify(params)).then(JSON.parse)
+      return function run(params, timeout = 3) {
+        return Q.nfcall(pgmFunc, JSON.stringify(params), timeout).then(
+          JSON.parse
+        )
       }
     },
+    pgm: deprecate(function(programName, paramsSchema, libraryName) {
+      return this.defineProgram({
+        programName,
+        paramsSchema,
+        libraryName
+      })
+    }, 'pgm function is depricated, please use defineProgram'),
     close() {
       const cl = connection.connection.close.bind(connection.connection)
       return Q.nfcall(cl)
@@ -367,6 +374,12 @@ function createInstance(connection, insertListFun, inMemory) {
   })
 
   return jt400
+}
+
+export interface ProgramDefinationOptions {
+  libraryName?: string
+  programName: string
+  paramsSchema: PgmParamType[]
 }
 
 export interface WriteStreamOptions {

@@ -55,4 +55,21 @@ describe('PGM', () => {
     expect(result.p1.num1).to.equal(401)
     expect(result.p1.num2).to.equal(8)
   })
+
+  it('should run timeout', () => {
+    const brokenProgram = jt400.pgm(
+      'DTQHANG',
+      [{ name: 'strengur', size: 7 }],
+      'WTMEXC'
+    )
+
+    return brokenProgram({ strengur: 'abcd123' })
+      .then(() => {
+        throw new Error('Not the correct error')
+      })
+      .catch(e => {
+        expect(e).not.to.equal(null)
+        expect(e.message).to.contain('Connection was dropped unexpectedly.')
+      })
+  })
 })
