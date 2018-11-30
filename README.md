@@ -282,9 +282,16 @@ const myProgram = pool.defineProgram(
   'LibraryName' // Optional. Defaults to *LIBL
 );
 ```
+
+The Decimal type maps to com.ibm.as400.access.AS400PackedDecimal
+The Numeric type maps to com.ibm.as400.access.AS400ZonedDecimal
+Everything else (char) maps to com.ibm.as400.access.AS400Text
+Precision is the size and scale is the decimals. 
+
+
 > ATTENTION: To make the API clearer we renamed .pgm to .defineProgram. The pgm function is depricated in v3.0
 
-When you have defined your program, you can call it (inovke it) with the parameters you defined.
+When you have defined your program, you can call/invoke it with the parameters you defined.
 
 ```javascript
 myProgram(
@@ -301,12 +308,7 @@ myProgram(
 });
 ```
 
-> ATTENTION: In version 3.0 we added a optional timeout parameter for program calls. This defaults to 3 sec. This is a breaking change since your programs will no longer halt or hang for extended period and never give a response. If you have complicated programs that run for longer than 3 sec you need to adjuts the timeout parameter for those specific calls. Setting it as 0 will ignore the timeout limit.
-
-The Decimal type maps to com.ibm.as400.access.AS400PackedDecimal
-The Numeric type maps to com.ibm.as400.access.AS400ZonedDecimal
-Everything else (char) maps to com.ibm.as400.access.AS400Text
-Precision is the size and scale is the decimals. 
+> ATTENTION: In version 3.0 we added a optional timeout parameter for program calls. This defaults to 3 sec. This is a breaking change since your programs will no longer halt or hang for extended period and therefore never give a response. If you have complicated programs that run for longer than 3 sec then you need to adjust the timeout parameter for those specific calls. Setting it to 0 will ignore the timeout limit.
 
 ## Keyed Data Queues
 
