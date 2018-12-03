@@ -366,7 +366,7 @@ function createInstance(connection, insertListFun, inMemory) {
         paramsSchema,
         libraryName
       })
-    }, 'pgm function is depricated, please use defineProgram'),
+    }, 'pgm function is deprecated, we recommend using defineProgram which has an added timeout feature for program calls'),
     close() {
       const cl = connection.connection.close.bind(connection.connection)
       return Q.nfcall(cl)
