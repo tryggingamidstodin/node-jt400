@@ -1,33 +1,36 @@
-import FlushWritable = require('flushwritable');
+import FlushWritable = require('flushwritable')
 
 export function createJdbcWriteStream(batchUpdate, statement, bufferSize) {
-    bufferSize = bufferSize || 100;
-    var ws = new FlushWritable({objectMode: true});
-    var dataBuffer: any[] = [];
+  bufferSize = bufferSize || 100
+  let ws = new FlushWritable({ objectMode: true })
+  let dataBuffer: any[] = []
 
-    function flush(done) {
-        var d = dataBuffer;
-        dataBuffer = [];
-        batchUpdate(statement, d).then(function() {
-            done();
-        }).fail(done);
+  function flush(done) {
+    const d = dataBuffer
+    dataBuffer = []
+    batchUpdate(statement, d)
+      .then(() => {
+        done()
+      })
+      .fail(done)
+  }
+
+  ws._write = function(chunck, _, next) {
+    dataBuffer.push(chunck)
+    if (dataBuffer.length >= bufferSize) {
+      flush(next)
+    } else {
+      next()
     }
+  }
 
-    ws._write = function(chunck, _, next) {
-        dataBuffer.push(chunck);
-        if(dataBuffer.length >= bufferSize) {
-            flush(next);
-        } else {
-            next();
-        }
-    };
+  ws._flush = function(done) {
+    if (dataBuffer.length) {
+      flush(done)
+    } else {
+      done()
+    }
+  }
 
-    ws._flush = function(done) {
-        if(dataBuffer.length) {
-            flush(done);
-        } else {
-            done();
-        }
-    };
-    return ws;
+  return ws
 }

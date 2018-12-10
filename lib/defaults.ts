@@ -1,12 +1,11 @@
-
 export function defaults(options, defaults) {
-  options = options || {};
+  options = options || {}
 
-  Object.keys(defaults).forEach(function (key) {
+  Object.keys(defaults).forEach(key => {
     if (typeof options[key] === 'undefined') {
-      options[key] = defaults[key];
+      options[key] = defaults[key]
     }
   })
 
-  return options;
+  return options
 }

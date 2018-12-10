@@ -1,21 +1,18 @@
-
 function recordToValues(record) {
-	var str = Object.keys(record).map(function () {
-			return '?';
-		}).join(', ');
-	return '('+ str + ')';
+  const str = Object.keys(record)
+    .map(() => '?')
+    .join(', ')
+  return '(' + str + ')'
 }
 
 /**
  * Returns insert statement for records
  */
-export const toInsertSql = function (tableName: string, records: any[]): string {
-	var first = records[0],
-		keys = Object.keys(first),
-		sql = 'INSERT INTO ' +
-				tableName +
-				' (' + keys.join(', ') +
-				') VALUES' +
-				records.map(recordToValues).join(', ');
-	return sql;
+export function toInsertSql(tableName: string, records: any[]): string {
+  const first = records[0]
+  const keys = Object.keys(first)
+  const sql = `INSERT INTO ${tableName} (${keys.join(
+    ', '
+  )}) VALUES${records.map(recordToValues).join(', ')}`
+  return sql
 }

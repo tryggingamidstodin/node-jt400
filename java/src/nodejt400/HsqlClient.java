@@ -132,7 +132,7 @@ public class HsqlClient implements ConnectionProvider
 		{
 		}
 
-		public String run(String paramsJsonStr)
+		public String run(String paramsJsonStr, int timeout)
 		{
 			return paramsJsonStr;
 		}

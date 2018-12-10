@@ -10,7 +10,7 @@ npm install node-jt400 --save
 ```
 
 #### Windows
-Windows installations can be tricky because of node-java dependency. Make sure that that module works first. You can check out [the node-java documentation for windows installation](https://github.com/joeferner/node-java#installation-windows)
+Windows installations can be tricky because of node-java dependency. Make sure that that module works first. You can [check out the node-java documentation for windows installation](https://github.com/joeferner/node-java#installation-windows)
 
 We also have some solved issues you can take a look at like [#13](https://github.com/tryggingamidstodin/node-jt400/issues/13) and [#26](https://github.com/tryggingamidstodin/node-jt400/issues/26)
 
@@ -269,38 +269,46 @@ ifs.deleteFile('/foo/bar.txt.old').then(console.log); // true or false
 ```
 
 ## Programs
-With programs it is neccesary to define your input parameters first. Make sure that these match your program defination in AS
+With programs it is neccesary to define your input parameters first. These must match your program defination in AS.
 ```javascript
-const myProgram = pool.pgm('MYPROGRAM', [
-            { type: 'DECIMAL', precision: 10, scale: 0, name: 'myId'},
-            { type: 'NUMERIC', precision: 8, scale: 0, name: 'myDate'},
-            { type: 'NUMERIC', precision: 12, scale: 2, name: 'myTotalValue' },
-            { type: 'CHAR', precision: 32, scale: 0, name: 'myString'}
-]);
+const myProgram = pool.defineProgram({
+  programName: 'MYPGM',
+  paramsSchema: [
+    { type: 'DECIMAL', precision: 10, scale: 0, name: 'myId'},
+    { type: 'NUMERIC', precision: 8,  scale: 0, name: 'myDate'},
+    { type: 'NUMERIC', precision: 12, scale: 2, name: 'myTotalValue' },
+    { type: 'CHAR',    precision: 32, scale: 0, name: 'myString'}
+  ],
+  libraryName: 'WTMEXC' // Optional. Defaults to *LIBL
+);
 ```
-You can then call it like a promise function with the parameters you defined.
+
+The Decimal type maps to com.ibm.as400.access.AS400PackedDecimal
+The Numeric type maps to com.ibm.as400.access.AS400ZonedDecimal
+Everything else (char) maps to com.ibm.as400.access.AS400Text
+Precision is the size and scale is the decimals. 
+
+
+> ATTENTION: To make the API clearer we renamed .pgm to .defineProgram. The pgm function is depricated in v3.0
+
+When you have defined your program, you can call/invoke it with the parameters you defined.
+
 ```javascript
-myProgram({
-  myId: 123
-  myDate: '20170608',
-  myTotalValue: 88450.57,
-  myString: 'This is a test'
-})
+myProgram(
+  {
+    myId: 123
+    myDate: '20170608',
+    myTotalValue: 88450.57,
+    myString: 'This is a test'
+  },
+  10 // Optional timeout in sec
+)
 .then(result => {
   console.log(result)
 });
 ```
-The Decimal type maps to com.ibm.as400.access.AS400PackedDecimal
-The Numeric type maps to com.ibm.as400.access.AS400ZonedDecimal
-Everything else (char) maps to com.ibm.as400.access.AS400Text
 
-Precision is the size and scale is the decimals. 
-
-The `Decimal` type maps to `com.ibm.as400.access.AS400PackedDecimal`
-The `Numeric` type maps to `com.ibm.as400.access.AS400ZonedDecimal`
-Everything else (`char`) maps to `com.ibm.as400.access.AS400Text`
-
-Precision is the size and scale is the decimals. 
+> ATTENTION: In version 3.0 we added a optional timeout parameter for program calls. This defaults to 3 sec. This is a breaking change since your programs will no longer halt or hang for extended period and therefore never give a response. If you have complicated programs that run for longer than 3 sec then you need to adjust the timeout parameter for those specific calls. Setting it to 0 will ignore the timeout limit.
 
 ## Keyed Data Queues
 
