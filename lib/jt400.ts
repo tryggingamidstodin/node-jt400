@@ -347,7 +347,7 @@ function createInstance(connection, insertListFun, inMemory) {
     ifs() {
       return createIfs(connection.connection)
     },
-    defineProgram(opt: ProgramDefinationOptions) {
+    defineProgram(opt: ProgramDefinitionOptions) {
       const pgm = connection.connection.pgmSync(
         opt.programName,
         JSON.stringify(opt.paramsSchema),
@@ -376,7 +376,7 @@ function createInstance(connection, insertListFun, inMemory) {
   return jt400
 }
 
-export interface ProgramDefinationOptions {
+export interface ProgramDefinitionOptions {
   programName: string
   paramsSchema: PgmParamType[]
   libraryName?: string
@@ -501,7 +501,7 @@ export interface Connection extends BaseConnection {
     paramsSchema: PgmParamType[],
     libraryName?: string
   ) => any
-  defineProgram: (ProgramDefinationOptions) => any
+  defineProgram: (options: ProgramDefinitionOptions) => any
   getTablesAsStream: (params: any) => Readable
   getColumns: (params: any) => any
   getPrimaryKeys: (params: any) => any
