@@ -19,11 +19,13 @@
     "lint": "tslint --project .",
     "test": "mocha dist/test -t 10000",
     "build": "tsc",
+    "clean": "rm -rf dist/",
     "build-dev": "tsc --watch",
     "test-dev": "mocha dist/test --watch",
-    "prepublishOnly": "npm run build && npm run test",
+    "prepublishOnly": "npm run ci",
     "build-all": "npm run build && npm run build-java",
-    "build-java": "ant archive -buildfile ./java"
+    "build-java": "ant archive -buildfile ./java",
+    "ci": "npm run clean && npm run build && npm run test"
   },
   "keywords": [
     "typescript",
