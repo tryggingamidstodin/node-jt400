@@ -19,7 +19,7 @@ IfsReadStream.prototype._read = function() {
         if (err) {
           _this.emit('error', err)
         } else {
-          this.push(res ? new Buffer(res) : null)
+          this.push(res ? Buffer.from(res) : null)
         }
       })
     })
