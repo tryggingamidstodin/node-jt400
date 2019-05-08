@@ -101,7 +101,7 @@ public class HsqlClient implements ConnectionProvider
 	public IfsReadStream createIfsReadStream(String fileName) throws Exception {
 		return null;
 	}
-	public IfsWriteStream createIfsWriteStream(String fileName, boolean append) throws Exception {
+	public IfsWriteStream createIfsWriteStream(String fileName, boolean append, int ccsid) throws Exception {
 		return null;
 	}
 	public boolean deleteIfsFile(String fileName) throws Exception {
