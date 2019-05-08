@@ -289,7 +289,7 @@ Everything else (char) maps to com.ibm.as400.access.AS400Text
 Precision is the size and scale is the decimals. 
 
 
-> ATTENTION: To make the API clearer we renamed .pgm to .defineProgram. The pgm function is depricated in v3.0
+> ATTENTION: To make the API clearer we renamed .pgm to .defineProgram. The pgm function is deprecated in v3.0
 
 When you have defined your program, you can call/invoke it with the parameters you defined.
 

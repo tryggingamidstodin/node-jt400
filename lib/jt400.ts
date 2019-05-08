@@ -25,7 +25,7 @@ jvm.asyncOptions = {
   promisify: promisify
 }
 jvm.options.push('-Xrs') // fixing the signal handling issues (for exmaple ctrl-c)
-jvm.options.push('-Dcom.ibm.as400.access.AS400.guiAvailable=false'); // Removes gui prompts
+jvm.options.push('-Dcom.ibm.as400.access.AS400.guiAvailable=false') // Removes gui prompts
 
 jvm.classpath.push(__dirname + '/../../java/lib/jt400.jar')
 jvm.classpath.push(__dirname + '/../../java/lib/jt400wrap.jar')
@@ -367,7 +367,7 @@ function createInstance(connection, insertListFun, inMemory) {
         paramsSchema,
         libraryName
       })
-    }, 'pgm function is depricated, please use defineProgram'),
+    }, 'pgm function is deprecated, please use defineProgram'),
     close() {
       const cl = connection.connection.close.bind(connection.connection)
       return Q.nfcall(cl)
