@@ -5,38 +5,37 @@ import q = require('q')
 
 export function ifs(connection) {
   return {
-    createReadStream(fileName) {
-      const javaStream = q.when(fileName).then(file => {
+    createReadStream: function(fileName) {
+      const javaStream = q.when(fileName).then(function(file) {
         return q.nfcall(connection.createIfsReadStream.bind(connection), file)
       })
       return new IfsReadStream({
         ifsReadStream: javaStream
       })
     },
-    createWriteStream(fileName, options) {
-      options = options || { append: false }
-      const javaStream = q.when(fileName).then(file => {
+    createWriteStream: function(fileName, options) {
+      options = options || { append: false, ccsid: 1252 }
+
+      const javaStream = q.when(fileName).then(function(file) {
         const folderPath = dirname(file)
         const fileName = basename(file)
         return q.nfcall(
           connection.createIfsWriteStream.bind(connection),
           folderPath,
           fileName,
-          options.append
+          options.append,
+          options.ccsid | 1252
         )
       })
-
       return new IfsWriteStream({
         ifsWriteStream: javaStream
       })
     },
-    deleteFile(fileName) {
-      return q.nfcall(connection.deleteIfsFile.bind(connection), fileName)
-    },
-    fileMetadata(fileName) {
-      return q
+    deleteFile: fileName =>
+      q.nfcall(connection.deleteIfsFile.bind(connection), fileName),
+    fileMetadata: fileName =>
+      q
         .nfcall(connection.getIfsFileMetadata.bind(connection), fileName)
         .then(JSON.parse)
-    }
   }
 }

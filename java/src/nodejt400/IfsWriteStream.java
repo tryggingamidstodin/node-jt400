@@ -13,7 +13,7 @@ public class IfsWriteStream {
 	private final Connection connection;	
 	private final IFSFileOutputStream fos;
 
-	public IfsWriteStream(ConnectionProvider connectionProvider, String folderPath, String fileName, boolean append)
+	public IfsWriteStream(ConnectionProvider connectionProvider, String folderPath, String fileName, boolean append, int ccsid)
 			throws Exception {
 		this.connectionProvider = connectionProvider;
 		connection = connectionProvider.getConnection();
@@ -26,7 +26,7 @@ public class IfsWriteStream {
 		
 		IFSFile file = new IFSFile(as400, folder, fileName);		
 		
-		fos = new IFSFileOutputStream(file, IFSFileOutputStream.SHARE_ALL, append);
+		fos = new IFSFileOutputStream(file, IFSFileOutputStream.SHARE_ALL, append, ccsid);
 	}
 
 	public void write(byte[] data) throws Exception {				
