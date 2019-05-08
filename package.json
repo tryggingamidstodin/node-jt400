@@ -14,7 +14,7 @@
     "java/lib"
   ],
   "scripts": {
-    "format-verify": "prettier -l ./{lib,test}/**",
+    "format-verify": "prettier --check ./{lib,test}/**",
     "format": "prettier --write ./{lib,test}/**",
     "lint": "tslint --project .",
     "test": "mocha dist/test -t 10000",
