@@ -13,7 +13,7 @@ public class IfsWriteStream {
 	private final Connection connection;	
 	private final IFSFileOutputStream fos;
 
-	public IfsWriteStream(ConnectionProvider connectionProvider, String folderPath, String fileName, boolean append, int ccsid)
+	public IfsWriteStream(ConnectionProvider connectionProvider, String folderPath, String fileName, boolean append, Integer ccsid)
 			throws Exception {
 		this.connectionProvider = connectionProvider;
 		connection = connectionProvider.getConnection();
@@ -24,9 +24,16 @@ public class IfsWriteStream {
 			folder.mkdirs();			
 		}
 		
-		IFSFile file = new IFSFile(as400, folder, fileName);		
-		
-		fos = new IFSFileOutputStream(file, IFSFileOutputStream.SHARE_ALL, append, ccsid);
+		IFSFile file = new IFSFile(as400, folder, fileName);
+
+    if (ccsid == null) {
+      System.out.println("Not using ccsid");
+      fos = new IFSFileOutputStream(file, IFSFileOutputStream.SHARE_ALL, append);  
+    }
+    else {
+      System.out.println("Using ccsid");
+      fos = new IFSFileOutputStream(file, IFSFileOutputStream.SHARE_ALL, append, ccsid.intValue());
+    }
 	}
 
 	public void write(byte[] data) throws Exception {				

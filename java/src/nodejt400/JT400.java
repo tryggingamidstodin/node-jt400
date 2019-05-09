@@ -118,7 +118,7 @@ public class JT400
 		return new IfsReadStream(connectionProvider, fileName);
 	}
 
-	public IfsWriteStream createIfsWriteStream(String folderPath, String fileName, boolean append, int ccsid) throws Exception {
+	public IfsWriteStream createIfsWriteStream(String folderPath, String fileName, boolean append, Integer ccsid) throws Exception {
 		return new IfsWriteStream(connectionProvider, folderPath, fileName, append, ccsid);
 	}
 	

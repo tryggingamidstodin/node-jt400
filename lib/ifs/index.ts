@@ -14,7 +14,7 @@ export function ifs(connection) {
       })
     },
     createWriteStream: function(fileName, options) {
-      options = options || { append: false, ccsid: 1252 }
+      options = options || { append: false, ccsid: null }
 
       const javaStream = q.when(fileName).then(function(file) {
         const folderPath = dirname(file)
@@ -24,7 +24,7 @@ export function ifs(connection) {
           folderPath,
           fileName,
           options.append,
-          options.ccsid | 1252
+          options.ccsid
         )
       })
       return new IfsWriteStream({
