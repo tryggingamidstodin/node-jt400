@@ -27,11 +27,9 @@ public class IfsWriteStream {
 		IFSFile file = new IFSFile(as400, folder, fileName);
 
     if (ccsid == null) {
-      System.out.println("Not using ccsid");
       fos = new IFSFileOutputStream(file, IFSFileOutputStream.SHARE_ALL, append);  
     }
     else {
-      System.out.println("Using ccsid");
       fos = new IFSFileOutputStream(file, IFSFileOutputStream.SHARE_ALL, append, ccsid.intValue());
     }
 	}
