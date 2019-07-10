@@ -352,7 +352,8 @@ function createInstance(connection, insertListFun, inMemory) {
       const pgm = connection.connection.pgmSync(
         opt.programName,
         JSON.stringify(opt.paramsSchema),
-        opt.libraryName || '*LIBL'
+        opt.libraryName || '*LIBL',
+        opt.ccsid
       )
       const pgmFunc = pgm.run.bind(pgm)
       return function run(params, timeout = 3) {
@@ -381,6 +382,7 @@ export interface ProgramDefinitionOptions {
   programName: string
   paramsSchema: PgmParamType[]
   libraryName?: string
+  ccsid?: number
 }
 
 export interface WriteStreamOptions {

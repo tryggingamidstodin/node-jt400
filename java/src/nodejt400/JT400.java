@@ -95,9 +95,9 @@ public class JT400
 		return new Transaction(connectionProvider);
 	}
 
-	public Pgm pgm(String programName, String paramsSchemaJsonStr, String libraryName)
+	public Pgm pgm(String programName, String paramsSchemaJsonStr, String libraryName, Integer ccsid)
 	{
-		return new Pgm(connectionProvider, programName, paramsSchemaJsonStr,libraryName);
+		return new Pgm(connectionProvider, programName, paramsSchemaJsonStr, libraryName, ccsid);
 	}
 
 	public MessageQ openMessageQ(String name , Boolean isPath) throws Exception {
