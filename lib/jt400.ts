@@ -122,11 +122,7 @@ function createInstance(connection, insertListFun, inMemory) {
       return Q.nfcall(thisConn.query, sql, jsonParams)
         .then(JSON.parse)
         .catch(error => {
-          throw newProgrammerOops(
-            error.stack.split('\n')[1],
-            { jt400FunctionCall: 'query', sql, params },
-            error
-          )
+          throw newProgrammerOops('Failed to query', { sql, params }, error)
         })
     }
 
@@ -140,8 +136,8 @@ function createInstance(connection, insertListFun, inMemory) {
           100
         ).catch(error => {
           throw newProgrammerOops(
-            error.stack.split('\n')[1],
-            { jt400FunctionCall: 'createReadStream', sql, params },
+            'Failed to create readstream',
+            { sql, params },
             error
           )
         })
@@ -195,21 +191,13 @@ function createInstance(connection, insertListFun, inMemory) {
           return stWrap
         })
         .catch(error => {
-          throw newProgrammerOops(
-            error.stack.split('\n')[1],
-            { jt400FunctionCall: 'execute', sql, params },
-            error
-          )
+          throw newProgrammerOops('Failed to execute', { sql, params }, error)
         })
     }
     obj.update = function(sql, params) {
       const jsonParams = paramsToJson(params || [])
       return Q.nfcall(thisConn.update, sql, jsonParams).catch(error => {
-        throw newProgrammerOops(
-          error.stack.split('\n')[1],
-          { jt400FunctionCall: 'update', sql, params },
-          error
-        )
+        throw newProgrammerOops('Failed to update', { sql, params }, error)
       })
     }
 
@@ -222,20 +210,19 @@ function createInstance(connection, insertListFun, inMemory) {
     }
 
     obj.batchUpdate = function(sql, paramsList) {
-      const jsonParams = JSON.stringify(
-        (paramsList || []).map(row => {
-          return row.map(convertDateValues)
-        })
-      )
+      const params = (paramsList || []).map(row => {
+        return row.map(convertDateValues)
+      })
+
+      const jsonParams = JSON.stringify(params)
       return Q.nfcall(thisConn.batchUpdate, sql, jsonParams)
         .then(res => Array.from(res))
         .catch(error => {
           throw newProgrammerOops(
-            error.stack.split('\n')[1],
+            'Failed to insert batch',
             {
-              jt400FunctionCall: 'batchUpdate',
               sql,
-              params: JSON.parse(jsonParams)
+              params
             },
             error
           )
@@ -246,8 +233,8 @@ function createInstance(connection, insertListFun, inMemory) {
       const jsonParams = paramsToJson(params || [])
       return Q.nfcall(thisConn.insertAndGetId, sql, jsonParams).catch(error => {
         throw newProgrammerOops(
-          error.stack.split('\n')[1],
-          { jt400FunctionCall: 'insertAndGetId', sql, params },
+          'Failed to insert and get id',
+          { sql, params },
           error
         )
       })
@@ -415,7 +402,7 @@ function createInstance(connection, insertListFun, inMemory) {
         paramsSchema,
         libraryName
       })
-    }, 'pgm function is deprecated, please use defineProgram'),
+    }, 'pgm function is deprecated and will be removed in version 5.0. Please use defineProgram.'),
     close() {
       const cl = connection.connection.close.bind(connection.connection)
       return Q.nfcall(cl)

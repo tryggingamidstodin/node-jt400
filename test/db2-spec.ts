@@ -20,7 +20,8 @@ describe('connect', () => {
         throw new Error('should not be connected')
       })
       .catch(err => {
-        expect(err.message).to.have.string('connection does not exist')
+        expect(err.message).to.equal('Failed to update')
+        expect(err.cause.stack).to.have.string('connection does not exist')
       })
   }).timeout(6000)
 })
@@ -57,7 +58,10 @@ describe('jt400 pool', () => {
         throw new Error('should not return result from nohost')
       })
       .catch(err => {
-        expect(err.message).to.have.string('cannot establish the connection')
+        expect(err.message).to.equal('Failed to query')
+        expect(err.cause.stack).to.have.string(
+          'cannot establish the connection'
+        )
       })
   }).timeout(15000)
 
@@ -134,11 +138,8 @@ describe('jt400 pool', () => {
         throw new Error('wrong error')
       })
       .catch(error => {
-        expect(error.message).to.equal(
-          'java.sql.SQLException: Descriptor index not valid.'
-        )
+        expect(error.message).to.equal('Failed to query')
         expect(error.cause.stack).to.include('JdbcJsonClient.setParams')
-        expect(error.context.jt400FunctionCall).to.equal('query')
         expect(error.context.sql).to.equal(sql)
         expect(error.context.params).to.equal(params)
       })
@@ -153,13 +154,10 @@ describe('jt400 pool', () => {
         throw new Error('wrong error')
       })
       .catch(error => {
-        expect(error.message).to.equal(
-          'com.ibm.as400.access.AS400JDBCSQLSyntaxErrorException: [SQL0104] Token TESTTABLE was not valid. Valid tokens: : <INTEGER>.'
-        )
+        expect(error.message).to.equal('Failed to insert and get id')
         expect(error.cause.stack).to.include('JdbcJsonClient.insertAndGetId')
         expect(error.context.sql).to.equal(sql)
         expect(error.context.params).to.equal(params)
-        expect(error.context.jt400FunctionCall).to.equal('insertAndGetId')
       })
   })
 
@@ -171,12 +169,9 @@ describe('jt400 pool', () => {
         throw new Error('wrong error')
       })
       .catch(error => {
-        expect(error.message).to.equal(
-          'com.ibm.as400.access.AS400JDBCSQLSyntaxErrorException: [SQL0104] Token - was not valid. Valid tokens: FOR USE SKIP WAIT WITH FETCH LIMIT ORDER UNION EXCEPT OFFSET.'
-        )
+        expect(error.message).to.equal('Failed to execute')
         expect(error.context.sql).to.equal(sql)
         expect(error.context.params).to.equal(undefined)
-        expect(error.context.jt400FunctionCall).to.equal('execute')
       })
   })
 
@@ -189,12 +184,9 @@ describe('jt400 pool', () => {
         throw new Error('wrong error')
       })
       .catch(error => {
-        expect(error.message).to.equal(
-          'java.sql.SQLException: Descriptor index not valid.'
-        )
+        expect(error.message).to.equal('Failed to update')
         expect(error.context.sql).to.equal(sql)
         expect(error.context.params).to.equal(params)
-        expect(error.context.jt400FunctionCall).to.equal('update')
       })
   })
 })
