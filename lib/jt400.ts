@@ -8,6 +8,7 @@ import JSONStream = require('JSONStream')
 import { defaults } from './defaults'
 import Q = require('q')
 import { deprecate } from 'util'
+import { newProgrammerOops } from 'oops-error'
 
 const defaultConfig = {
   host: process.env.AS400_HOST,
@@ -118,7 +119,15 @@ function createInstance(connection, insertListFun, inMemory) {
 
     obj.query = function(sql, params) {
       const jsonParams = paramsToJson(params || [])
-      return Q.nfcall(thisConn.query, sql, jsonParams).then(JSON.parse)
+      return Q.nfcall(thisConn.query, sql, jsonParams)
+        .then(JSON.parse)
+        .catch(error => {
+          throw newProgrammerOops(
+            error.stack.split('\n')[1],
+            { jt400FunctionCall: 'query', sql, params },
+            error
+          )
+        })
     }
 
     obj.createReadStream = function(sql, params) {
@@ -129,7 +138,13 @@ function createInstance(connection, insertListFun, inMemory) {
           sql,
           jsonParams,
           100
-        )
+        ).catch(error => {
+          throw newProgrammerOops(
+            error.stack.split('\n')[1],
+            { jt400FunctionCall: 'createReadStream', sql, params },
+            error
+          )
+        })
       })
     }
 
@@ -137,49 +152,65 @@ function createInstance(connection, insertListFun, inMemory) {
 
     obj.execute = function(sql, params) {
       const jsonParams = paramsToJson(params || [])
-      return Q.nfcall(thisConn.execute, sql, jsonParams).then(statement => {
-        const isQuery = statement.isQuerySync()
-        const metadata = statement.getMetaData.bind(statement)
-        const updated = statement.updated.bind(statement)
-        let stream
-        const stWrap = {
-          isQuery() {
-            return isQuery
-          },
-          metadata() {
-            return Q.nfcall(metadata).then(JSON.parse)
-          },
-          asArray() {
-            return Q.nfcall(statement.asArray.bind(statement)).then(JSON.parse)
-          },
-          asStream(options) {
-            options = options || {}
-            stream = new JdbcStream({
-              jdbcStream: statement.asStreamSync(options.bufferSize || 100)
-            })
-            return stream
-          },
-          updated() {
-            return Q.nfcall(updated)
-          },
-          close() {
-            if (stream) {
-              stream.close()
-            } else {
-              statement.close(err => {
-                if (err) {
-                  console.log('close error', err)
-                }
+      return Q.nfcall(thisConn.execute, sql, jsonParams)
+        .then(statement => {
+          const isQuery = statement.isQuerySync()
+          const metadata = statement.getMetaData.bind(statement)
+          const updated = statement.updated.bind(statement)
+          let stream
+          const stWrap = {
+            isQuery() {
+              return isQuery
+            },
+            metadata() {
+              return Q.nfcall(metadata).then(JSON.parse)
+            },
+            asArray() {
+              return Q.nfcall(statement.asArray.bind(statement)).then(
+                JSON.parse
+              )
+            },
+            asStream(options) {
+              options = options || {}
+              stream = new JdbcStream({
+                jdbcStream: statement.asStreamSync(options.bufferSize || 100)
               })
+              return stream
+            },
+            updated() {
+              return Q.nfcall(updated)
+            },
+            close() {
+              if (stream) {
+                stream.close()
+              } else {
+                statement.close(err => {
+                  if (err) {
+                    console.log('close error', err)
+                  }
+                })
+              }
             }
           }
-        }
-        return stWrap
-      })
+          return stWrap
+        })
+        .catch(error => {
+          throw newProgrammerOops(
+            error.stack.split('\n')[1],
+            { jt400FunctionCall: 'execute', sql, params },
+            error
+          )
+        })
     }
     obj.update = function(sql, params) {
       const jsonParams = paramsToJson(params || [])
-      return Q.nfcall(thisConn.update, sql, jsonParams)
+      return Q.nfcall(thisConn.update, sql, jsonParams).catch(error => {
+        throw newProgrammerOops(
+          error.stack.split('\n')[1],
+          { jt400FunctionCall: 'update', sql, params },
+          error
+        )
+      })
     }
 
     obj.createWriteStream = function(sql, options) {
@@ -196,14 +227,30 @@ function createInstance(connection, insertListFun, inMemory) {
           return row.map(convertDateValues)
         })
       )
-      return Q.nfcall(thisConn.batchUpdate, sql, jsonParams).then(res =>
-        Array.from(res)
-      )
+      return Q.nfcall(thisConn.batchUpdate, sql, jsonParams)
+        .then(res => Array.from(res))
+        .catch(error => {
+          throw newProgrammerOops(
+            error.stack.split('\n')[1],
+            {
+              jt400FunctionCall: 'batchUpdate',
+              sql,
+              params: JSON.parse(jsonParams)
+            },
+            error
+          )
+        })
     }
 
     obj.insertAndGetId = function(sql, params) {
       const jsonParams = paramsToJson(params || [])
-      return Q.nfcall(thisConn.insertAndGetId, sql, jsonParams)
+      return Q.nfcall(thisConn.insertAndGetId, sql, jsonParams).catch(error => {
+        throw newProgrammerOops(
+          error.stack.split('\n')[1],
+          { jt400FunctionCall: 'insertAndGetId', sql, params },
+          error
+        )
+      })
     }
 
     obj.insertList = function(tableName, idColumn, list) {

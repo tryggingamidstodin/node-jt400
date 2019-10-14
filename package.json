@@ -48,6 +48,7 @@
     "JSONStream": "^1.3.2",
     "flushwritable": "^1.0.0",
     "java": "^0.11.0",
+    "oops-error": "^2.4.0",
     "q": "^1.5.1"
   },
   "devDependencies": {

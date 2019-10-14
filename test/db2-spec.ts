@@ -123,4 +123,78 @@ describe('jt400 pool', () => {
     const res: any = await connection.query('SELECT clob from tsttbl')
     expect(res[0].CLOB.length).to.equal(largeText.length)
   })
+
+  it('should fail query with oops error', () => {
+    const sql = 'select * from tsttbl where baz=?'
+    const params = [123.23, 'a']
+
+    return connection
+      .query(sql, params)
+      .then(() => {
+        throw new Error('wrong error')
+      })
+      .catch(error => {
+        expect(error.message).to.equal(
+          'java.sql.SQLException: Descriptor index not valid.'
+        )
+        expect(error.cause.stack).to.include('JdbcJsonClient.setParams')
+        expect(error.context.jt400FunctionCall).to.equal('query')
+        expect(error.context.sql).to.equal(sql)
+        expect(error.context.params).to.equal(params)
+      })
+  })
+
+  it('should fail insert with oops error', () => {
+    const sql = `insert into table testtable (foo) values (?)`
+    const params = [123.23, 'a']
+    return connection
+      .insertAndGetId(sql, params)
+      .then(() => {
+        throw new Error('wrong error')
+      })
+      .catch(error => {
+        expect(error.message).to.equal(
+          'com.ibm.as400.access.AS400JDBCSQLSyntaxErrorException: [SQL0104] Token TESTTABLE was not valid. Valid tokens: : <INTEGER>.'
+        )
+        expect(error.cause.stack).to.include('JdbcJsonClient.insertAndGetId')
+        expect(error.context.sql).to.equal(sql)
+        expect(error.context.params).to.equal(params)
+        expect(error.context.jt400FunctionCall).to.equal('insertAndGetId')
+      })
+  })
+
+  it('should fail execute query with oops-error', () => {
+    const sql = 'select * from tsttbl-invalidtoken'
+    return connection
+      .execute(sql)
+      .then(() => {
+        throw new Error('wrong error')
+      })
+      .catch(error => {
+        expect(error.message).to.equal(
+          'com.ibm.as400.access.AS400JDBCSQLSyntaxErrorException: [SQL0104] Token - was not valid. Valid tokens: FOR USE SKIP WAIT WITH FETCH LIMIT ORDER UNION EXCEPT OFFSET.'
+        )
+        expect(error.context.sql).to.equal(sql)
+        expect(error.context.params).to.equal(undefined)
+        expect(error.context.jt400FunctionCall).to.equal('execute')
+      })
+  })
+
+  it('should fail update', async () => {
+    const sql = 'update tsttbl set foo=? where testtblid=?'
+    const params = ['bar', 0, 'toomanyparams']
+    return connection
+      .update(sql, params)
+      .then(() => {
+        throw new Error('wrong error')
+      })
+      .catch(error => {
+        expect(error.message).to.equal(
+          'java.sql.SQLException: Descriptor index not valid.'
+        )
+        expect(error.context.sql).to.equal(sql)
+        expect(error.context.params).to.equal(params)
+        expect(error.context.jt400FunctionCall).to.equal('update')
+      })
+  })
 })
