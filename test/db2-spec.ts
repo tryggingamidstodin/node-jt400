@@ -20,8 +20,8 @@ describe('connect', () => {
         throw new Error('should not be connected')
       })
       .catch(err => {
-        expect(err.message).to.equal('Failed to update')
-        expect(err.cause.stack).to.have.string('connection does not exist')
+        expect(err.message).to.equal('The connection does not exist.')
+        expect(err.category).to.equal('OperationalError')
       })
   }).timeout(6000)
 })
@@ -58,10 +58,10 @@ describe('jt400 pool', () => {
         throw new Error('should not return result from nohost')
       })
       .catch(err => {
-        expect(err.message).to.equal('Failed to query')
-        expect(err.cause.stack).to.have.string(
-          'cannot establish the connection'
+        expect(err.message).to.equal(
+          'The application requester cannot establish the connection. (nohost)'
         )
+        expect(err.category).to.equal('OperationalError')
       })
   }).timeout(15000)
 
@@ -138,7 +138,7 @@ describe('jt400 pool', () => {
         throw new Error('wrong error')
       })
       .catch(error => {
-        expect(error.message).to.equal('Failed to query')
+        expect(error.message).to.equal('Descriptor index not valid.')
         expect(error.cause.stack).to.include('JdbcJsonClient.setParams')
         expect(error.context.sql).to.equal(sql)
         expect(error.context.params).to.equal(params)
@@ -154,7 +154,9 @@ describe('jt400 pool', () => {
         throw new Error('wrong error')
       })
       .catch(error => {
-        expect(error.message).to.equal('Failed to insert and get id')
+        expect(error.message).to.equal(
+          '[SQL0104] Token TESTTABLE was not valid. Valid tokens: : <INTEGER>.'
+        )
         expect(error.cause.stack).to.include('JdbcJsonClient.insertAndGetId')
         expect(error.context.sql).to.equal(sql)
         expect(error.context.params).to.equal(params)
@@ -169,7 +171,9 @@ describe('jt400 pool', () => {
         throw new Error('wrong error')
       })
       .catch(error => {
-        expect(error.message).to.equal('Failed to execute')
+        expect(error.message).to.equal(
+          '[SQL0104] Token - was not valid. Valid tokens: FOR USE SKIP WAIT WITH FETCH LIMIT ORDER UNION EXCEPT OFFSET.'
+        )
         expect(error.context.sql).to.equal(sql)
         expect(error.context.params).to.equal(undefined)
       })
@@ -184,7 +188,7 @@ describe('jt400 pool', () => {
         throw new Error('wrong error')
       })
       .catch(error => {
-        expect(error.message).to.equal('Failed to update')
+        expect(error.message).to.equal('Descriptor index not valid.')
         expect(error.context.sql).to.equal(sql)
         expect(error.context.params).to.equal(params)
       })

@@ -8,7 +8,7 @@ import JSONStream = require('JSONStream')
 import { defaults } from './defaults'
 import Q = require('q')
 import { deprecate } from 'util'
-import { newProgrammerOops } from 'oops-error'
+import { Oops } from 'oops-error'
 
 const defaultConfig = {
   host: process.env.AS400_HOST,
@@ -77,6 +77,23 @@ function insertListInOneStatment(jt400, tableName, idColumn, list) {
   })
 }
 
+function handleError(context) {
+  return err => {
+    const errMsg =
+      (err.cause && err.cause.getMessageSync && err.cause.getMessageSync()) ||
+      err.message
+    const category = errMsg.toLowerCase().includes('connection')
+      ? 'OperationalError'
+      : 'ProgrammerError'
+
+    throw new Oops({
+      message: errMsg,
+      context,
+      category,
+      cause: err
+    })
+  }
+}
 function standardInsertList(jt400, tableName, _, list) {
   const idList = []
   const pushToIdList = idList.push.bind(idList)
@@ -121,9 +138,7 @@ function createInstance(connection, insertListFun, inMemory) {
       const jsonParams = paramsToJson(params || [])
       return Q.nfcall(thisConn.query, sql, jsonParams)
         .then(JSON.parse)
-        .catch(error => {
-          throw newProgrammerOops('Failed to query', { sql, params }, error)
-        })
+        .catch(handleError({ sql, params }))
     }
 
     obj.createReadStream = function(sql, params) {
@@ -134,13 +149,7 @@ function createInstance(connection, insertListFun, inMemory) {
           sql,
           jsonParams,
           100
-        ).catch(error => {
-          throw newProgrammerOops(
-            'Failed to create readstream',
-            { sql, params },
-            error
-          )
-        })
+        ).catch(handleError({ sql, params }))
       })
     }
 
@@ -190,15 +199,13 @@ function createInstance(connection, insertListFun, inMemory) {
           }
           return stWrap
         })
-        .catch(error => {
-          throw newProgrammerOops('Failed to execute', { sql, params }, error)
-        })
+        .catch(handleError({ sql, params }))
     }
     obj.update = function(sql, params) {
       const jsonParams = paramsToJson(params || [])
-      return Q.nfcall(thisConn.update, sql, jsonParams).catch(error => {
-        throw newProgrammerOops('Failed to update', { sql, params }, error)
-      })
+      return Q.nfcall(thisConn.update, sql, jsonParams).catch(
+        handleError({ sql, params })
+      )
     }
 
     obj.createWriteStream = function(sql, options) {
@@ -217,27 +224,14 @@ function createInstance(connection, insertListFun, inMemory) {
       const jsonParams = JSON.stringify(params)
       return Q.nfcall(thisConn.batchUpdate, sql, jsonParams)
         .then(res => Array.from(res))
-        .catch(error => {
-          throw newProgrammerOops(
-            'Failed to insert batch',
-            {
-              sql,
-              params
-            },
-            error
-          )
-        })
+        .catch(handleError({ sql, params }))
     }
 
     obj.insertAndGetId = function(sql, params) {
       const jsonParams = paramsToJson(params || [])
-      return Q.nfcall(thisConn.insertAndGetId, sql, jsonParams).catch(error => {
-        throw newProgrammerOops(
-          'Failed to insert and get id',
-          { sql, params },
-          error
-        )
-      })
+      return Q.nfcall(thisConn.insertAndGetId, sql, jsonParams).catch(
+        handleError({ sql, params })
+      )
     }
 
     obj.insertList = function(tableName, idColumn, list) {

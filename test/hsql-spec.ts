@@ -68,7 +68,9 @@ describe('hsql in memory', () => {
 
       stream.on('error', err => {
         try {
-          expect(err.message).to.equal('Failed to create readstream')
+          expect(err.message).to.equal(
+            'Invalid argument in JDBC call: parameter index out of range: 1'
+          )
           done()
         } catch (e) {
           done(e)
@@ -165,7 +167,9 @@ describe('hsql in memory', () => {
           throw new Error('wrong error')
         })
         .catch(error => {
-          expect(error.message).to.equal('Failed to insert batch')
+          expect(error.message).to.equal(
+            'data exception: invalid datetime format'
+          )
           expect(error.cause.stack).to.include('JdbcJsonClient.setParams')
           expect(error.context.sql).to.equal(sql)
           expect(error.context.params).to.deep.equal(params)

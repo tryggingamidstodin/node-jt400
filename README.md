@@ -62,7 +62,7 @@ pool
     const field1 = result[0].FIELD1;
     console.log(field1);
   })
-  .fail(error => {
+  .catch(error => {
     console.log('error');
     console.log(error);
   });
@@ -355,3 +355,30 @@ let msg = await file.read({messageId:"AMX0051"}); // an IBM AS400Message Object
 console.log('msg',msg.getTextSync());
 console.log('msg',await msg.getTextPromise());
 ```
+
+# Error handling
+
+This module uses [oops-error](https://github.com/tryggingamidstodin/oops-error) to categorize errors into operational errors and programmer errors. We reccomend you take a look at the [readme](https://github.com/tryggingamidstodin/oops-error/blob/master/README.md) for further information about these categories.
+
+The oops-error has few properties:
+ - category: Tells you the error is programmer or operational.
+ - message: The basic error message.
+ - cause: the original error.
+  -fullstack: function that returns the fullstack of causes.
+
+## Examples
+
+Lets define too many paramters for our query.
+
+```javascript
+pool
+  .query('SELECT field1, field2 FROM foo WHERE bar=? AND baz=?', [1, 'a', 'b])
+  .then(result => {
+    console.log('we will not go here')
+  })
+  .catch(error => {
+    console.log('we got programmer error');
+    console.log('category': errror.category) // ProgrammerError
+    console.log('message': errror.message) // Descriptor index not valid.
+    console.log('original error', error.cause)
+  });
