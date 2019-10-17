@@ -8,6 +8,7 @@ import JSONStream = require('JSONStream')
 import { defaults } from './defaults'
 import Q = require('q')
 import { deprecate } from 'util'
+import { Oops } from 'oops-error'
 
 const defaultConfig = {
   host: process.env.AS400_HOST,
@@ -76,6 +77,23 @@ function insertListInOneStatment(jt400, tableName, idColumn, list) {
   })
 }
 
+function handleError(context) {
+  return err => {
+    const errMsg =
+      (err.cause && err.cause.getMessageSync && err.cause.getMessageSync()) ||
+      err.message
+    const category = errMsg.toLowerCase().includes('connection')
+      ? 'OperationalError'
+      : 'ProgrammerError'
+
+    throw new Oops({
+      message: errMsg,
+      context,
+      category,
+      cause: err
+    })
+  }
+}
 function standardInsertList(jt400, tableName, _, list) {
   const idList = []
   const pushToIdList = idList.push.bind(idList)
@@ -118,7 +136,9 @@ function createInstance(connection, insertListFun, inMemory) {
 
     obj.query = function(sql, params) {
       const jsonParams = paramsToJson(params || [])
-      return Q.nfcall(thisConn.query, sql, jsonParams).then(JSON.parse)
+      return Q.nfcall(thisConn.query, sql, jsonParams)
+        .then(JSON.parse)
+        .catch(handleError({ sql, params }))
     }
 
     obj.createReadStream = function(sql, params) {
@@ -129,7 +149,7 @@ function createInstance(connection, insertListFun, inMemory) {
           sql,
           jsonParams,
           100
-        )
+        ).catch(handleError({ sql, params }))
       })
     }
 
@@ -137,49 +157,55 @@ function createInstance(connection, insertListFun, inMemory) {
 
     obj.execute = function(sql, params) {
       const jsonParams = paramsToJson(params || [])
-      return Q.nfcall(thisConn.execute, sql, jsonParams).then(statement => {
-        const isQuery = statement.isQuerySync()
-        const metadata = statement.getMetaData.bind(statement)
-        const updated = statement.updated.bind(statement)
-        let stream
-        const stWrap = {
-          isQuery() {
-            return isQuery
-          },
-          metadata() {
-            return Q.nfcall(metadata).then(JSON.parse)
-          },
-          asArray() {
-            return Q.nfcall(statement.asArray.bind(statement)).then(JSON.parse)
-          },
-          asStream(options) {
-            options = options || {}
-            stream = new JdbcStream({
-              jdbcStream: statement.asStreamSync(options.bufferSize || 100)
-            })
-            return stream
-          },
-          updated() {
-            return Q.nfcall(updated)
-          },
-          close() {
-            if (stream) {
-              stream.close()
-            } else {
-              statement.close(err => {
-                if (err) {
-                  console.log('close error', err)
-                }
+      return Q.nfcall(thisConn.execute, sql, jsonParams)
+        .then(statement => {
+          const isQuery = statement.isQuerySync()
+          const metadata = statement.getMetaData.bind(statement)
+          const updated = statement.updated.bind(statement)
+          let stream
+          const stWrap = {
+            isQuery() {
+              return isQuery
+            },
+            metadata() {
+              return Q.nfcall(metadata).then(JSON.parse)
+            },
+            asArray() {
+              return Q.nfcall(statement.asArray.bind(statement)).then(
+                JSON.parse
+              )
+            },
+            asStream(options) {
+              options = options || {}
+              stream = new JdbcStream({
+                jdbcStream: statement.asStreamSync(options.bufferSize || 100)
               })
+              return stream
+            },
+            updated() {
+              return Q.nfcall(updated)
+            },
+            close() {
+              if (stream) {
+                stream.close()
+              } else {
+                statement.close(err => {
+                  if (err) {
+                    console.log('close error', err)
+                  }
+                })
+              }
             }
           }
-        }
-        return stWrap
-      })
+          return stWrap
+        })
+        .catch(handleError({ sql, params }))
     }
     obj.update = function(sql, params) {
       const jsonParams = paramsToJson(params || [])
-      return Q.nfcall(thisConn.update, sql, jsonParams)
+      return Q.nfcall(thisConn.update, sql, jsonParams).catch(
+        handleError({ sql, params })
+      )
     }
 
     obj.createWriteStream = function(sql, options) {
@@ -191,19 +217,21 @@ function createInstance(connection, insertListFun, inMemory) {
     }
 
     obj.batchUpdate = function(sql, paramsList) {
-      const jsonParams = JSON.stringify(
-        (paramsList || []).map(row => {
-          return row.map(convertDateValues)
-        })
-      )
-      return Q.nfcall(thisConn.batchUpdate, sql, jsonParams).then(res =>
-        Array.from(res)
-      )
+      const params = (paramsList || []).map(row => {
+        return row.map(convertDateValues)
+      })
+
+      const jsonParams = JSON.stringify(params)
+      return Q.nfcall(thisConn.batchUpdate, sql, jsonParams)
+        .then(res => Array.from(res))
+        .catch(handleError({ sql, params }))
     }
 
     obj.insertAndGetId = function(sql, params) {
       const jsonParams = paramsToJson(params || [])
-      return Q.nfcall(thisConn.insertAndGetId, sql, jsonParams)
+      return Q.nfcall(thisConn.insertAndGetId, sql, jsonParams).catch(
+        handleError({ sql, params })
+      )
     }
 
     obj.insertList = function(tableName, idColumn, list) {
@@ -368,7 +396,7 @@ function createInstance(connection, insertListFun, inMemory) {
         paramsSchema,
         libraryName
       })
-    }, 'pgm function is deprecated, please use defineProgram'),
+    }, 'pgm function is deprecated and will be removed in version 5.0. Please use defineProgram.'),
     close() {
       const cl = connection.connection.close.bind(connection.connection)
       return Q.nfcall(cl)

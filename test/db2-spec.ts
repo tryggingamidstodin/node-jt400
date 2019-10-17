@@ -20,7 +20,8 @@ describe('connect', () => {
         throw new Error('should not be connected')
       })
       .catch(err => {
-        expect(err.message).to.have.string('connection does not exist')
+        expect(err.message).to.equal('The connection does not exist.')
+        expect(err.category).to.equal('OperationalError')
       })
   }).timeout(6000)
 })
@@ -57,7 +58,10 @@ describe('jt400 pool', () => {
         throw new Error('should not return result from nohost')
       })
       .catch(err => {
-        expect(err.message).to.have.string('cannot establish the connection')
+        expect(err.message).to.equal(
+          'The application requester cannot establish the connection. (nohost)'
+        )
+        expect(err.category).to.equal('OperationalError')
       })
   }).timeout(15000)
 
@@ -122,5 +126,71 @@ describe('jt400 pool', () => {
     ])
     const res: any = await connection.query('SELECT clob from tsttbl')
     expect(res[0].CLOB.length).to.equal(largeText.length)
+  })
+
+  it('should fail query with oops error', () => {
+    const sql = 'select * from tsttbl where baz=?'
+    const params = [123.23, 'a']
+
+    return connection
+      .query(sql, params)
+      .then(() => {
+        throw new Error('wrong error')
+      })
+      .catch(error => {
+        expect(error.message).to.equal('Descriptor index not valid.')
+        expect(error.cause.stack).to.include('JdbcJsonClient.setParams')
+        expect(error.context.sql).to.equal(sql)
+        expect(error.context.params).to.equal(params)
+      })
+  })
+
+  it('should fail insert with oops error', () => {
+    const sql = `insert into table testtable (foo) values (?)`
+    const params = [123.23, 'a']
+    return connection
+      .insertAndGetId(sql, params)
+      .then(() => {
+        throw new Error('wrong error')
+      })
+      .catch(error => {
+        expect(error.message).to.equal(
+          '[SQL0104] Token TESTTABLE was not valid. Valid tokens: : <INTEGER>.'
+        )
+        expect(error.cause.stack).to.include('JdbcJsonClient.insertAndGetId')
+        expect(error.context.sql).to.equal(sql)
+        expect(error.context.params).to.equal(params)
+      })
+  })
+
+  it('should fail execute query with oops-error', () => {
+    const sql = 'select * from tsttbl-invalidtoken'
+    return connection
+      .execute(sql)
+      .then(() => {
+        throw new Error('wrong error')
+      })
+      .catch(error => {
+        expect(error.message).to.equal(
+          '[SQL0104] Token - was not valid. Valid tokens: FOR USE SKIP WAIT WITH FETCH LIMIT ORDER UNION EXCEPT OFFSET.'
+        )
+        expect(error.context.sql).to.equal(sql)
+        expect(error.context.params).to.equal(undefined)
+      })
+  })
+
+  it('should fail update', async () => {
+    const sql = 'update tsttbl set foo=? where testtblid=?'
+    const params = ['bar', 0, 'toomanyparams']
+    return connection
+      .update(sql, params)
+      .then(() => {
+        throw new Error('wrong error')
+      })
+      .catch(error => {
+        expect(error.message).to.equal('Descriptor index not valid.')
+        expect(error.context.sql).to.equal(sql)
+        expect(error.context.params).to.equal(params)
+      })
   })
 })

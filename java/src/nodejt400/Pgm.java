@@ -70,7 +70,6 @@ public class Pgm
         }
         catch (Exception ex)
         {
-          System.err.println("Error set param value in pgm: " + objectName + " paramname: " + param.getName() + ", value: " + params.get(param.getName()));
           throw ex;
         }
       }

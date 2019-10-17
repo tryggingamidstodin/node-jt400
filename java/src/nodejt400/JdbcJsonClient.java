@@ -52,7 +52,6 @@ public class JdbcJsonClient
 		}
 		catch (Exception e)
 		{
-			System.err.println(sql + " params: " + paramsJson);
 			throw e;
 		}
 		finally
@@ -75,7 +74,6 @@ public class JdbcJsonClient
 			ResultSet rs = st.executeQuery();
 			return new ResultStream(pool, c, st, rs, bufferSize);
 		} catch (Exception e) {
-			System.err.println(sql + " params: " + paramsJson);
 			throw e;
 		}
 	}
@@ -94,7 +92,6 @@ public class JdbcJsonClient
 		}
 		catch (Exception e)
 		{
-			System.err.println(sql + " params: " + paramsJson);
 			if(st!=null) {
 				st.close();
 			}
@@ -195,7 +192,6 @@ public class JdbcJsonClient
 		}
 		catch (Exception e)
 		{
-			System.err.println(sql + " params: " + paramsJson);
 			throw e;
 		}
 		finally
@@ -223,7 +219,6 @@ public class JdbcJsonClient
 			}
 			result = st.executeBatch();
 		} catch (Exception e) {
-			System.err.println(sql + " params: " + paramsListJson);
 			throw e;
 		} finally {
 			if (st != null)
@@ -253,7 +248,6 @@ public class JdbcJsonClient
 		}
 		catch (Exception e)
 		{
-			System.err.println(sql + " params: " + paramsJson);
 			throw e;
 		}
 		finally
@@ -306,7 +300,6 @@ public class JdbcJsonClient
 			}
 			catch (SQLException e)
 			{
-				System.err.println("Value: " + value + ", index: " + i);
 				throw e;
 			}
 		}

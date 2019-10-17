@@ -55,6 +55,28 @@ describe('hsql in memory', () => {
 
       stream.on('error', done)
     })
+
+    it('should fail queryAsStream with oops error', done => {
+      const sql = 'select * from testtbl'
+      const params = ['a']
+      const stream = jt400.createReadStream(sql, params)
+      const jsonStream = stream.pipe(parse([true]))
+
+      jsonStream.on('end', () => {
+        stream.emit('error', new Error('wrong error'))
+      })
+
+      stream.on('error', err => {
+        try {
+          expect(err.message).to.equal(
+            'Invalid argument in JDBC call: parameter index out of range: 1'
+          )
+          done()
+        } catch (e) {
+          done(e)
+        }
+      })
+    })
   })
 
   describe('insert', () => {
@@ -76,7 +98,6 @@ describe('hsql in memory', () => {
         }
       ])
 
-      console.log(res)
       expect(res).to.eql([1234567891235, 1234567891236])
 
       const select = await jt400.query('select * from testtbl')
@@ -130,6 +151,29 @@ describe('hsql in memory', () => {
       )
 
       expect(res).to.eql([1, 1])
+    })
+
+    it('should fail insert batch with oops-error', () => {
+      const sql = 'insert into testtbl (NAME,START) values(?, ?)'
+      const params = [
+        ['foo', '2015-01-02'],
+        ['bar', '2015-03-04'],
+        ['a', 'b', 'c', 'd']
+      ]
+
+      return jt400
+        .batchUpdate(sql, params)
+        .then(() => {
+          throw new Error('wrong error')
+        })
+        .catch(error => {
+          expect(error.message).to.equal(
+            'data exception: invalid datetime format'
+          )
+          expect(error.cause.stack).to.include('JdbcJsonClient.setParams')
+          expect(error.context.sql).to.equal(sql)
+          expect(error.context.params).to.deep.equal(params)
+        })
     })
   })
 

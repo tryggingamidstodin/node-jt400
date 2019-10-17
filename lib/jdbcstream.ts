@@ -33,14 +33,13 @@ JdbcStream.prototype.close = function() {
 }
 
 JdbcStream.prototype._read = function() {
-  const _this = this
   if (!this._jdbcStream) {
     this._jdbcStreamPromise
       .then(stream => {
-        _this._jdbcStream = stream
-        read(_this)
+        this._jdbcStream = stream
+        read(this)
       })
-      .fail(function(err) {
+      .catch(err => {
         this.emit('error', err)
       })
   } else {
