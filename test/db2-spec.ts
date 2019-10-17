@@ -142,6 +142,7 @@ describe('jt400 pool', () => {
         expect(error.cause.stack).to.include('JdbcJsonClient.setParams')
         expect(error.context.sql).to.equal(sql)
         expect(error.context.params).to.equal(params)
+        expect(error.category).to.equal('ProgrammerError')
       })
   })
 
@@ -160,6 +161,7 @@ describe('jt400 pool', () => {
         expect(error.cause.stack).to.include('JdbcJsonClient.insertAndGetId')
         expect(error.context.sql).to.equal(sql)
         expect(error.context.params).to.equal(params)
+        expect(error.category).to.equal('ProgrammerError')
       })
   })
 
@@ -176,6 +178,7 @@ describe('jt400 pool', () => {
         )
         expect(error.context.sql).to.equal(sql)
         expect(error.context.params).to.equal(undefined)
+        expect(error.category).to.equal('ProgrammerError')
       })
   })
 
@@ -191,6 +194,7 @@ describe('jt400 pool', () => {
         expect(error.message).to.equal('Descriptor index not valid.')
         expect(error.context.sql).to.equal(sql)
         expect(error.context.params).to.equal(params)
+        expect(error.category).to.equal('ProgrammerError')
       })
   })
 })

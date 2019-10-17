@@ -173,6 +173,7 @@ describe('hsql in memory', () => {
           expect(error.cause.stack).to.include('JdbcJsonClient.setParams')
           expect(error.context.sql).to.equal(sql)
           expect(error.context.params).to.deep.equal(params)
+          expect(error.category).to.equal('ProgrammerError')
         })
     })
   })
