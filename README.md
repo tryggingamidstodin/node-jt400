@@ -295,6 +295,8 @@ const myProgram = pool.defineProgram({
 );
 ```
 
+The library name specified is only used in the context of executing the program defined in ```programName```. This means that if the defined program calls additional programs (or relies on other objects like physical or logical files), the libraries of those relied on objects need to be added to your library list prior to invoking your defined program (Even if those objects are within the same library defined in ```libraryName```). If you specified the ```libraries``` paramater in your config object, it will not be used here. The ```libraries``` paramater is only used for SQL type connections.
+
 The Decimal type maps to com.ibm.as400.access.AS400PackedDecimal
 The Numeric type maps to com.ibm.as400.access.AS400ZonedDecimal
 Everything else (char) maps to com.ibm.as400.access.AS400Text
