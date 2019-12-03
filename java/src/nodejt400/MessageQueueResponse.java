@@ -14,8 +14,4 @@ public class MessageQueueResponse {
 		return data;
 	}
 
-	// public void write(String data) throws Exception {
-	// 	MessageQ.write(data);
-	// }
-
 }

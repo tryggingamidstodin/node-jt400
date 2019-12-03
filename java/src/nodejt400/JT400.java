@@ -95,9 +95,13 @@ public class JT400
 		return new Transaction(connectionProvider);
 	}
 
-	public Pgm pgm(String programName, String paramsSchemaJsonStr)
+	public Pgm pgm(String programName, String paramsSchemaJsonStr, String libraryName, Integer ccsid)
 	{
-		return new Pgm(connectionProvider, programName, paramsSchemaJsonStr);
+		return new Pgm(connectionProvider, programName, paramsSchemaJsonStr, libraryName, ccsid);
+	}
+
+	public MessageQ openMessageQ(String name , Boolean isPath) throws Exception {
+		return new MessageQ(connectionProvider, name, isPath);
 	}
 
 	public MessageQ openMessageQ(String name , Boolean isPath) throws Exception {
@@ -118,8 +122,8 @@ public class JT400
 		return new IfsReadStream(connectionProvider, fileName);
 	}
 
-	public IfsWriteStream createIfsWriteStream(String folderPath, String fileName, boolean append) throws Exception {
-		return new IfsWriteStream(connectionProvider, folderPath, fileName, append);
+	public IfsWriteStream createIfsWriteStream(String folderPath, String fileName, boolean append, Integer ccsid) throws Exception {
+		return new IfsWriteStream(connectionProvider, folderPath, fileName, append, ccsid);
 	}
 	
 	public boolean deleteIfsFile(String fileName) throws Exception {

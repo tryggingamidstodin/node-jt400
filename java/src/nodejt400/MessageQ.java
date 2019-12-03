@@ -19,7 +19,7 @@ public class MessageQ
 		if(isPath){
 			this.path = name;
 		}else{
-			this.path = QSYSObjectPathName.toPath("*LIBL", name, "DTAQ");
+			this.path = QSYSObjectPathName.toPath("*LIBL", name, "MSGQ");
 		}
 	}
 
@@ -62,22 +62,22 @@ public class MessageQ
 		return new MessageQueueResponse(allData, this);
 	}
 
-	// public void write(String data) throws Exception
-	// {
-	// 	Connection c = connectionProvider.getConnection();
-	// 	try
-	// 	{
-	// 		MessageQueue msgQ = openMessageQ(c);
-
-	// 	}
-	// 	catch (Exception ex)
-	// 	{
-	// 		throw ex;
-	// 	}
-	// 	finally
-	// 	{
-	// 		connectionProvider.returnConnection(c);
-	// 	}
-	// }
+	public void sendInformational(String messageText) throws Exception
+	{
+		Connection c = connectionProvider.getConnection();
+		try
+		{
+			MessageQueue msgQ = openMessageQ(c);
+			msgQ.sendInformational(messageText);
+		}
+		catch (Exception ex)
+		{
+			throw ex;
+		}
+		finally
+		{
+			connectionProvider.returnConnection(c);
+		}
+	}
 
 }

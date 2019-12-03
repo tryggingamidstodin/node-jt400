@@ -25,31 +25,39 @@ public class Pgm
 {
   private final ConnectionProvider connectionProvider;
 
-  private final String name;
+  private final String objectName;
+  private final String libraryName;  
+  private final JSONArray paramsSchema;
+  private final Integer ccsid;
 
-  private final String paramsSchemaJsonStr;
-
-  public Pgm(ConnectionProvider connectionProvider, String programName, String paramsSchemaJsonStr)
+  public Pgm(ConnectionProvider connectionProvider, String objectName, String paramsSchemaJsonStr, String libraryName, Integer ccsid)
   {
     this.connectionProvider = connectionProvider;
-    this.name = programName;
-    this.paramsSchemaJsonStr = paramsSchemaJsonStr;
+    this.objectName = objectName; // programName
+    this.libraryName = libraryName;
+    this.paramsSchema = (JSONArray) JSONValue.parse(paramsSchemaJsonStr);
+    this.ccsid = ccsid;
   }
 
-  public String run(String paramsJsonStr) throws Exception
+  public String run(String paramsJsonStr, int timeout) throws Exception
   {
     Connection c = connectionProvider.getConnection();
     JSONObject result = new JSONObject();
+        
     try
     {
-      JSONArray paramsSchema = (JSONArray) JSONValue.parse(paramsSchemaJsonStr);
+      AS400JDBCConnectionHandle handle = (AS400JDBCConnectionHandle) c;
+      AS400 as400 = handle.getSystem();
+      
+      int selectedCcsid = (ccsid == null) ? as400.getCcsid() : ccsid.intValue();      
+      
       int n = paramsSchema.size();
       PgmParam[] paramArray = new PgmParam[n];
       ProgramParameter[] pgmParamArray = new ProgramParameter[n];
       for (int i = 0; i < n; i++)
       {
         JSONObject paramJson = (JSONObject) paramsSchema.get(i);
-        paramArray[i] = PgmParam.parse(paramJson);
+        paramArray[i] = PgmParam.parse(paramJson, selectedCcsid);
         pgmParamArray[i] = paramArray[i].asPgmParam();
       }
 
@@ -62,17 +70,15 @@ public class Pgm
         }
         catch (Exception ex)
         {
-          System.err.println("Error set param value in pgm: " + name + " paramname: " + param.getName() + ", value: " + params.get(param.getName()));
           throw ex;
         }
       }
-
-      AS400JDBCConnectionHandle handle = (AS400JDBCConnectionHandle) c;
-      AS400 as400 = handle.getSystem();
+      
       ProgramCall call = new ProgramCall(as400);
 
       //Run
-      call.setProgram(QSYSObjectPathName.toPath("*LIBL", name, "PGM"), pgmParamArray);
+      call.setTimeOut(timeout);
+      call.setProgram(QSYSObjectPathName.toPath(libraryName, objectName, "PGM"), pgmParamArray);
       if (!call.run())
       {
         AS400Message[] ms = call.getMessageList();
@@ -156,7 +162,7 @@ abstract class PgmParam
     return output;
   }
 
-  public static final PgmParam parse(JSONObject paramJson)
+  public static final PgmParam parse(JSONObject paramJson, int ccsid)
   {
     Object nameAttr = paramJson.get("name");
     String name = null;
@@ -169,7 +175,7 @@ abstract class PgmParam
       Object paramsObject = paramJson.get(name);
       if (paramsObject instanceof JSONArray)
       {
-        return new StructPgmParam(name, (JSONArray) paramsObject);
+        return new StructPgmParam(name, (JSONArray) paramsObject, ccsid);
       }
       else
       {
@@ -193,7 +199,7 @@ abstract class PgmParam
     {
       return new DecimalPgmParam(name, paramDef);
     }
-    return new TextPgmParam(name, paramDef);
+    return new TextPgmParam(name, paramDef, ccsid);
   }
 
   public abstract AS400DataType getAS400DataType();
@@ -203,10 +209,10 @@ class TextPgmParam extends PgmParam
 {
   private final AS400Text parser;
 
-  public TextPgmParam(String name, Props paramDef)
+  public TextPgmParam(String name, Props paramDef, int ccsid)
   {
     super(name, paramDef);
-    parser = new AS400Text(paramDef.getFirstInt("size", "precision"), "Cp871");
+    parser = new AS400Text(paramDef.getFirstInt("size", "precision"), ccsid);
   }
 
   @Override
@@ -281,7 +287,7 @@ class StructPgmParam extends PgmParam
 
   private final AS400Structure asStructure;
 
-  public StructPgmParam(String name, JSONArray structure)
+  public StructPgmParam(String name, JSONArray structure, int ccsid)
   {
     super(name, -1);
     int n = structure.size();
@@ -290,7 +296,7 @@ class StructPgmParam extends PgmParam
     for (int i = 0; i < n; i++)
     {
       JSONObject paramJson = (JSONObject) structure.get(i);
-      params[i] = PgmParam.parse(paramJson);
+      params[i] = PgmParam.parse(paramJson, ccsid);
       asDT[i] = params[i].getAS400DataType();
     }
 

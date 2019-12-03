@@ -85,6 +85,10 @@ public class HsqlClient implements ConnectionProvider
 		return new Transaction(this);
 	}
 
+	public MessageQ openMessageQ(String name , Boolean isPath) throws Exception {
+		return null;
+	}
+
 	public KeyedDataQ createKeyedDataQ(String name) throws Exception
 	{
 		return null;
@@ -97,7 +101,7 @@ public class HsqlClient implements ConnectionProvider
 	public IfsReadStream createIfsReadStream(String fileName) throws Exception {
 		return null;
 	}
-	public IfsWriteStream createIfsWriteStream(String fileName, boolean append) throws Exception {
+	public IfsWriteStream createIfsWriteStream(String fileName, boolean append, Integer ccsid) throws Exception {
 		return null;
 	}
 	public boolean deleteIfsFile(String fileName) throws Exception {
@@ -117,18 +121,18 @@ public class HsqlClient implements ConnectionProvider
 	 * @param paramsSchemaJsonStr
 	 * @return
 	 */
-	public Pgm pgm(String programName, String paramsSchemaJsonStr)
+	public Pgm pgm(String programName, String paramsSchemaJsonStr, String libraryName, Integer ccsid)
 	{
-		return new Pgm(programName, paramsSchemaJsonStr);
+		return new Pgm(programName, paramsSchemaJsonStr, libraryName, ccsid);
 	}
 
 	public class Pgm
 	{
-		public Pgm(String programName, String paramsSchemaJsonStr)
+		public Pgm(String programName, String paramsSchemaJsonStr, String libraryName, Integer cssid)
 		{
 		}
 
-		public String run(String paramsJsonStr)
+		public String run(String paramsJsonStr, int timeout)
 		{
 			return paramsJsonStr;
 		}
