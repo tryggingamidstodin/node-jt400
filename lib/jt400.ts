@@ -522,6 +522,7 @@ export interface BaseConnection {
   createWriteStream: (sql: string, options?: WriteStreamOptions) => Writable
   batchUpdate: (sql: string, params?: Param[][]) => Promise<number[]>
   execute: (sql: string, params?: Param[]) => Promise<any>
+  close: () => void
 }
 
 export type TransactionFun = (transaction: BaseConnection) => Promise<any>
