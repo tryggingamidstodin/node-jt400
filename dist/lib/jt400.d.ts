@@ -103,7 +103,7 @@ export interface Connection extends BaseConnection {
     getColumns: (params: any) => any;
     getPrimaryKeys: (params: any) => any;
     transaction: (fn: TransactionFun) => Promise<any>;
-    openMessageQ: (params: MessageQOptions) => Promise<MessageQ>;
+    openMessageQ: (params: MessageQOptions) => MessageQ;
     createKeyedDataQ: (params: DataQOptions) => KeyedDataQ;
     openMessageFile: (params: MessageFileHandlerOptions) => Promise<MessageFileHandler>;
     ifs: () => Ifs;
