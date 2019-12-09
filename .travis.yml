@@ -1,0 +1,10 @@
+language: node_js
+node_js:
+ - "lts/*" 
+sudo: false
+dist: trusty
+install:
+ - npm ci
+script:
+  - npm run build
+  - npm publish
