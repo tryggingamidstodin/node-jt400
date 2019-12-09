@@ -5,9 +5,10 @@ node_js:
 dist: trusty
 install:
  - npm ci
-before_deploy:
+script:
   - npm run build
 deploy:
   provider: npm
   email: $NPM_EMAIL
   api_key: $NPM_TOKEN
+  skip_cleanup: true
