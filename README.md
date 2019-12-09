@@ -1,7 +1,7 @@
 # node-jt400
 NodeJS JT400 wrapper to connect to IBM iSeries and AS/400 systems (OS400 operating system, database like DB2, programs and filesystem). 
 
-[![Version](https://img.shields.io/npm/v/node-jt400.svg)](https://npmjs.org/package/node-jt400)
+[![Version](https://img.shields.io/npm/v/node-jt400.svg)](https://npmjs.org/package/node-jt400) [![Build Status](https://travis-ci.org/tryggingamidstodin/node-jt400.svg?branch=master)](https://travis-ci.org/tryggingamidstodin/node-jt400)
 
 ## About
 This package is built on the IBM Toolbox for Java (http://jt400.sourceforge.net/). It maps the java functions to node using node-java. Not all of the Java code has been mapped over to node. The reason is that this module was originally written for internal use-only for Tryggingadmidstodin. Therefore we only implemented what Tryggingamidstodin needed, for example program calls, but not stored procedures. 
