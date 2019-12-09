@@ -1,10 +1,17 @@
+sudo: false
 language: node_js
 node_js:
- - "lts/*" 
-sudo: false
+ - "8"
+ - "9" 
+ - "10"
+ - "11"
+ - "12"
 dist: trusty
 install:
  - npm ci
-script:
+before_deploy:
   - npm run build
-  - npm publish
+deploy:
+  provider: npm
+  email: $NPM_EMAIL
+  api_key: $NPM_TOKEN
