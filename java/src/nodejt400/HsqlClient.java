@@ -89,6 +89,11 @@ public class HsqlClient implements ConnectionProvider
 		return null;
 	}
 
+	public DataQ createDataQ(String name) throws Exception
+	{
+		return null;
+	}
+
 	public KeyedDataQ createKeyedDataQ(String name) throws Exception
 	{
 		return null;

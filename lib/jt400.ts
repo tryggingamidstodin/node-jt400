@@ -50,6 +50,7 @@ function createConFrom(con) {
     getPrimaryKeys: con.getPrimaryKeys.bind(con),
     openMessageQ: con.openMessageQSync.bind(con),
     createKeyedDataQ: con.createKeyedDataQSync.bind(con),
+    createDataQ: con.createDataQSync.bind(con),
     openMessageFile: con.openMessageFileSync.bind(con)
   }
 }
@@ -363,6 +364,32 @@ function createInstance(connection, insertListFun, inMemory) {
         }
       }
     },
+    createDataQ(opt) {
+      const dq = connection.createDataQ(opt.name)
+      // const read = dq.read.bind(dq)
+      const readRes = function(wait) {
+        return Q.nfcall(dq.readResponse.bind(dq), wait).then(res => {
+          return {
+            data: res.getDataSync(),
+            write: res.writeSync.bind(res)
+          }
+        })
+      }
+      return {
+        write(data) {
+          dq.write(data)
+        },
+        read() {
+          let wait = -1
+          if (arguments[0] === Object(arguments[0])) {
+            wait = arguments[0].wait || wait
+          }
+          return readRes(wait)
+          // return read
+          // return Q.nfcall(read, wait)
+        }
+      }
+    },
     openMessageFile(opt: MessageFileHandlerOptions) {
       const f: MessageFileHandler = connection.openMessageFile(opt.path)
       const read = f.read.bind(f)
@@ -483,6 +510,12 @@ export interface KeyedDataQ {
   read: (params: DataQReadOptions | string) => Promise<any>
 }
 
+export interface DataQ {
+  peek: () => Promise<any>
+  read: () => Promise<any>
+  write: (data: string) => void
+}
+
 export interface AS400Message {
   getText: (cb: (err: any, data: string) => void) => void
   getTextSync: () => string
@@ -540,6 +573,7 @@ export interface Connection extends BaseConnection {
   transaction: (fn: TransactionFun) => Promise<any>
   openMessageQ: (params: MessageQOptions) => Promise<MessageQ>
   createKeyedDataQ: (params: DataQOptions) => KeyedDataQ
+  createDataQ: (params: DataQOptions) => DataQ
   openMessageFile: (
     params: MessageFileHandlerOptions
   ) => Promise<MessageFileHandler>

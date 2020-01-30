@@ -104,6 +104,11 @@ public class JT400
 		return new MessageQ(connectionProvider, name, isPath);
 	}
 
+	public DataQ createDataQ(String path) throws Exception
+	{
+		return new DataQ(connectionProvider, path);
+	}
+
 	public KeyedDataQ createKeyedDataQ(String name) throws Exception
 	{
 		return new KeyedDataQ(connectionProvider, name);
