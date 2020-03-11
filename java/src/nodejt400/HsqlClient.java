@@ -2,6 +2,8 @@ package nodejt400;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+
+import com.ibm.as400.access.AS400;
 import org.json.simple.JSONObject;
 
 import org.hsqldb.jdbc.JDBCDriver;
@@ -20,6 +22,11 @@ public class HsqlClient implements ConnectionProvider
 	public Connection getConnection() throws Exception
 	{
 		return DriverManager.getConnection("jdbc:hsqldb:mem:test", "quser", "");
+	}
+
+	@Override
+	public AS400 getAS400Connection() throws Exception {
+		return null;
 	}
 
 	@Override

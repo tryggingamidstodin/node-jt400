@@ -1,5 +1,7 @@
 package nodejt400;
 
+import com.ibm.as400.access.AS400;
+
 import java.sql.Connection;
 
 public class Transaction implements ConnectionProvider
@@ -79,6 +81,11 @@ public class Transaction implements ConnectionProvider
 	public Connection getConnection() throws Exception
 	{
 		return connection;
+	}
+
+	@Override
+	public AS400 getAS400Connection() throws Exception {
+		return null;
 	}
 
 	@Override

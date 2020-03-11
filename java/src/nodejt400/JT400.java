@@ -4,16 +4,9 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.Properties;
 
+import com.ibm.as400.access.*;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-
-import com.ibm.as400.access.AS400;
-import com.ibm.as400.access.AS400JDBCConnectionHandle;
-import com.ibm.as400.access.AS400JDBCConnectionPool;
-import com.ibm.as400.access.AS400JDBCConnectionPoolDataSource;
-import com.ibm.as400.access.AS400JDBCDriver;
-import com.ibm.as400.access.IFSFile;
-import com.ibm.as400.access.MessageFile;
 
 public class JT400
 {
@@ -159,22 +152,35 @@ public class JT400
 class SimpleConnection implements ConnectionProvider
 {
 	private final Connection connection;
+	private final JSONObject jsonConf;
+	private AS400 as400;
 
-	public SimpleConnection(JSONObject jsonConf)
-	throws Exception
+	public SimpleConnection(JSONObject jsonConf)  throws Exception
 	{
 		Connection conn = null;
-    Properties connectionProps = new Properties();
-    connectionProps.putAll(jsonConf);
+		this.jsonConf = jsonConf;
+    	Properties connectionProps = new Properties();
+    	connectionProps.putAll(jsonConf);
 
 		DriverManager.registerDriver(new AS400JDBCDriver());
-    connection = DriverManager.getConnection("jdbc:as400://" + jsonConf.get("host"), connectionProps);
+    	connection = DriverManager.getConnection("jdbc:as400://" + jsonConf.get("host"), connectionProps);
 	}
 
 	@Override
 	public Connection getConnection() throws Exception
 	{
 		return connection;
+	}
+
+	@Override
+	public AS400 getAS400Connection() throws Exception {
+		as400 = new AS400((String) jsonConf.get("host"),
+				(String) jsonConf.get("user"),
+				(String) jsonConf.get("password"));
+		as400.setGuiAvailable(false);
+		as400.connectService(AS400.COMMAND);
+
+		return as400;
 	}
 
 	@Override
@@ -188,6 +194,10 @@ class SimpleConnection implements ConnectionProvider
 		try
 		{
 			connection.close();
+
+			if ((as400 != null && as400.isConnected())) {
+				as400.disconnectAllServices();
+			}
 		}
 		catch(Exception ex)
 		{
@@ -200,28 +210,33 @@ class Pool implements ConnectionProvider
 {
 	private final AS400JDBCConnectionPool sqlPool;
 	private final long logConnectionTimeThreshold;
+	private final JSONObject jsonConf;
+	private AS400 as400;
 
 	public Pool(JSONObject jsonConf)
 	{
+		this.jsonConf = jsonConf;
+
 		Properties connectionProps = new Properties();
 		connectionProps.putAll(jsonConf);
 		connectionProps.remove("host");
 		connectionProps.remove("user");
 		connectionProps.remove("password");
-		
+
 		String conTimeThresshold = System.getenv("LOG_CONNECTION_TIME_THRESHOLD");
 		if(conTimeThresshold == null) {
 			conTimeThresshold = "10000";
 		}
 		logConnectionTimeThreshold = Long.parseLong(conTimeThresshold);
-		
 
+		//DB2 Pool
 		AS400JDBCConnectionPoolDataSource ds = new AS400JDBCConnectionPoolDataSource();
 		ds.setServerName((String) jsonConf.get("host"));
 		ds.setUser((String) jsonConf.get("user"));
 		ds.setPassword((String) jsonConf.get("password"));
 		ds.setProperties(connectionProps);
 		this.sqlPool = new AS400JDBCConnectionPool(ds);
+
 		Runtime.getRuntime().addShutdownHook(new Thread()
 		{
 			@Override
@@ -246,6 +261,17 @@ class Pool implements ConnectionProvider
 	}
 
 	@Override
+	public AS400 getAS400Connection() throws Exception {
+		as400 = new AS400((String) jsonConf.get("host"),
+				(String) jsonConf.get("user"),
+				(String) jsonConf.get("password"));
+		as400.setGuiAvailable(false);
+		as400.connectService(AS400.COMMAND);
+
+		return as400;
+	}
+
+	@Override
 	public void returnConnection(Connection c) throws Exception
 	{
 		c.close();
@@ -254,6 +280,15 @@ class Pool implements ConnectionProvider
 	@Override
 	public void close()
 	{
-		sqlPool.close();
+		try
+		{
+			sqlPool.close();
+
+			if ((as400 != null && as400.isConnected())) {
+				as400.disconnectAllServices();
+			}
+		} catch (Exception ex) {
+
+		}
 	}
 }

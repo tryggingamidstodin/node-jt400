@@ -16,9 +16,8 @@ public class DataQ {
         this.path = path;
     }
 
-    private DataQueue getDataQueue(Connection c) {
-        AS400JDBCConnectionHandle handle = (AS400JDBCConnectionHandle) c;
-        AS400 as400 = handle.getSystem();
+    private DataQueue getDataQueue() throws Exception {
+        AS400 as400 = connectionProvider.getAS400Connection();
         DataQueue dq = new DataQueue(as400, path);
 
         return dq;
@@ -26,15 +25,14 @@ public class DataQ {
 
     public String peek() throws Exception {
         String response = EMPTY_STRING;
-        Connection c = connectionProvider.getConnection();
 
         try {
-            DataQueue dq = getDataQueue(c);
+            DataQueue dq = getDataQueue();
             response = dq.peek().getString();
         } catch (Exception ex) {
             throw ex;
         } finally {
-            connectionProvider.returnConnection(c);
+            connectionProvider.close();
         }
 
         return response;
@@ -42,15 +40,14 @@ public class DataQ {
 
     public String peek(int wait) throws Exception {
         String response = EMPTY_STRING;
-        Connection c = connectionProvider.getConnection();
 
         try {
-            DataQueue dq = getDataQueue(c);
+            DataQueue dq = getDataQueue();
             response = dq.peek(wait).getString();
         } catch (Exception ex) {
             throw ex;
         } finally {
-            connectionProvider.returnConnection(c);
+            connectionProvider.close();
         }
 
         return response;
@@ -58,15 +55,14 @@ public class DataQ {
 
     public String read() throws Exception {
         String response = EMPTY_STRING;
-        Connection c = connectionProvider.getConnection();
 
         try {
-            DataQueue dq = getDataQueue(c);
+            DataQueue dq = getDataQueue();
             response = dq.read().getString();
         } catch (Exception ex) {
             throw ex;
         } finally {
-            connectionProvider.returnConnection(c);
+            connectionProvider.close();
         }
 
         return response;
@@ -74,15 +70,14 @@ public class DataQ {
 
     public String read(int wait) throws Exception {
         String response = EMPTY_STRING;
-        Connection c = connectionProvider.getConnection();
 
         try {
-            DataQueue dq = getDataQueue(c);
+            DataQueue dq = getDataQueue();
             response = dq.read(wait).getString();
         } catch (Exception ex) {
             throw ex;
         } finally {
-            connectionProvider.returnConnection(c);
+            connectionProvider.close();
         }
 
         return response;
@@ -97,12 +92,12 @@ public class DataQ {
         Connection c = connectionProvider.getConnection();
 
         try {
-            DataQueue dq = getDataQueue(c);
+            DataQueue dq = getDataQueue();
             dq.write(data);
         } catch (Exception ex) {
             throw ex;
         } finally {
-            connectionProvider.returnConnection(c);
+            connectionProvider.close();
         }
     }
 }
