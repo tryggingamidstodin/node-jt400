@@ -147,7 +147,10 @@ describe('hsql in memory', () => {
     it('should insert batch', async () => {
       const res = await jt400.batchUpdate(
         'insert into testtbl (NAME,START) values(?, ?)',
-        [['foo', '2015-01-02'], ['bar', '2015-03-04']]
+        [
+          ['foo', '2015-01-02'],
+          ['bar', '2015-03-04']
+        ]
       )
 
       expect(res).to.eql([1, 1])
