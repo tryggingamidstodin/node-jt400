@@ -134,9 +134,13 @@ function createInstance(connection, insertListFun, inMemory) {
   const mixinConnection = function(obj, newConn?) {
     const thisConn = newConn || connection
 
-    obj.query = function(sql, params) {
+    obj.query = function(sql, params, options) {
       const jsonParams = paramsToJson(params || [])
-      return Q.nfcall(thisConn.query, sql, jsonParams)
+
+      // Sending default options to java
+      const trim = options && options.trim !== undefined ? options.trim : true
+
+      return Q.nfcall(thisConn.query, sql, jsonParams, trim)
         .then(JSON.parse)
         .catch(handleError({ sql, params }))
     }
@@ -508,8 +512,16 @@ export interface Ifs {
   fileMetadata: (fileName: string) => Promise<IfsFileMetadata>
 }
 
+export interface QueryOptions {
+  trim: Boolean
+}
+
 export interface BaseConnection {
-  query: <T>(sql: string, params?: Param[]) => Promise<T[]>
+  query: <T>(
+    sql: string,
+    params?: Param[],
+    options?: QueryOptions
+  ) => Promise<T[]>
   update: (sql: string, params?: Param[]) => Promise<number>
   isInMemory: () => boolean
   createReadStream: (sql: string, params?: Param[]) => Readable

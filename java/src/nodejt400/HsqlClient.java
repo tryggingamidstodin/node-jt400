@@ -31,10 +31,10 @@ public class HsqlClient implements ConnectionProvider
 	public void close(){
 	}
 
-	public String query(String sql, String paramsJson)
+	public String query(String sql, String paramsJson, boolean trim)
 			throws Exception
 	{
-		return client.query(sql, paramsJson);
+		return client.query(sql, paramsJson, trim);
 	}
 
 	public ResultStream queryAsStream(String sql, String paramsJson,
