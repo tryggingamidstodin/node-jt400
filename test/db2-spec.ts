@@ -84,7 +84,11 @@ describe('jt400 pool', () => {
   })
 
   it('should trim values when options is empty', async () => {
-    const data: any = await connection.query('select * from tsttbl', [], {})
+    const data: any = await connection.query(
+      'select * from tsttbl',
+      [],
+      {} as QueryOptions
+    )
     expect(data.length).to.equal(2)
     expect(data[1].FOO).to.equal('bar2')
   })
