@@ -26,7 +26,7 @@ public class JdbcJsonClient
 		this.pool = pool;
 	}
 
-	public String query(String sql, String paramsJson)
+	public String query(String sql, String paramsJson, boolean trim)
 			throws Exception
 	{
 		Connection c = pool.getConnection();
@@ -45,7 +45,11 @@ public class JdbcJsonClient
 				int columnCount = metaData.getColumnCount();
 				for (int i = 1; i <= columnCount; i++)
 				{
-					json.put(metaData.getColumnLabel(i), trim(rs.getString(i)));
+					if (trim) {
+						json.put(metaData.getColumnLabel(i), trim(rs.getString(i)));
+					} else {
+						json.put(metaData.getColumnLabel(i), rs.getString(i));
+					}
 				}
 				array.add(json);
 			}
