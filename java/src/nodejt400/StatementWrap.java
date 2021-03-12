@@ -78,17 +78,21 @@ public class StatementWrap {
 		return new ResultStream(connectionProvider, c, st, rs, bufferSize);
 	}
 
+	private JSONArray toJSOnArray() throws Exception {
+		JSONArray json = new JSONArray();
+		ResultSetMetaData metaData = rs.getMetaData();
+		int columnCount = metaData.getColumnCount();
+		for (int i = 1; i <= columnCount; i++) {
+			json.add(JdbcJsonClient.trim(rs.getString(i)));
+		}
+		return json;
+	}
+
 	public String asArray() throws Exception {
 		try {
 			JSONArray array = new JSONArray();
 			while (rs.next()) {
-				JSONArray json = new JSONArray();
-				ResultSetMetaData metaData = rs.getMetaData();
-				int columnCount = metaData.getColumnCount();
-				for (int i = 1; i <= columnCount; i++) {
-					json.add(JdbcJsonClient.trim(rs.getString(i)));
-				}
-				array.add(json);
+				array.add(toJSOnArray());
 			}
 			return array.toJSONString();
 		} catch (Exception e) {
@@ -103,13 +107,7 @@ public class StatementWrap {
 	public String next() throws Exception {
 		try {
 			if (rs.next()) {
-				JSONArray json = new JSONArray();
-				ResultSetMetaData metaData = rs.getMetaData();
-				int columnCount = metaData.getColumnCount();
-				for (int i = 1; i <= columnCount; i++) {
-					json.add(JdbcJsonClient.trim(rs.getString(i)));
-				}
-				return json.toJSONString();
+				return toJSOnArray().toJSONString();
 			}
 			close();
 			return null;
