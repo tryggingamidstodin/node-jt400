@@ -209,6 +209,16 @@ pool
   .pipe(pool.createWriteStream('INSERT INTO FOO2 (F1, F2) VALUES(?, ?)'));
 ```
 
+### iterable
+```javascript
+const statement = await pool
+  .execute('SELECT FIELD1, FIELD2 FROM FOO WHERE BAR=? AND BAZ=?', [1, 'a'])
+const rows = statement.asIterable()
+for await (const [field1, field2] of rows) {
+  console.log(field1, field2)
+}
+```
+
 ### Transactions
 Transaction is commited on success and rolled back on failure.
 The transaction object has the same api as the pool object.

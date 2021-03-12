@@ -99,4 +99,23 @@ public class StatementWrap {
 		}
 
 	}
+
+	public String next() throws Exception {
+		try {
+			if (rs.next()) {
+				JSONArray json = new JSONArray();
+				ResultSetMetaData metaData = rs.getMetaData();
+				int columnCount = metaData.getColumnCount();
+				for (int i = 1; i <= columnCount; i++) {
+					json.add(JdbcJsonClient.trim(rs.getString(i)));
+				}
+				return json.toJSONString();
+			}
+			close();
+			return null;
+		} catch (Exception e) {
+			close();
+			throw e;
+		}
+	}
 }
