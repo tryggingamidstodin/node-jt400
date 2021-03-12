@@ -27,10 +27,15 @@ describe('keyed dataQ', () => {
 
   it('should write to reponse', () => {
     const dataQ = jt400.createKeyedDataQ({ name: 'SDQS1' })
-    dataQ.read({ key: 'mytestkey', wait: 1, writeKeyLength: 11 }).then(res => {
-      expect(res.data).to.equal('ping')
-      res.write('pong')
-    })
+    dataQ
+      .read({ key: 'mytestkey', wait: 1, writeKeyLength: 11 })
+      .then(res => {
+        expect(res.data).to.equal('ping')
+        res.write('pong')
+      })
+      .catch(err => {
+        console.log('error reading data Q', err)
+      })
 
     dataQ.write('mytestkey', 'returnkey  ping')
 

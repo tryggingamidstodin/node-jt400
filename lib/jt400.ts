@@ -182,6 +182,22 @@ function createInstance(connection, insertListFun, inMemory) {
               })
               return stream
             },
+            asIterable() {
+              return {
+                [Symbol.asyncIterator]() {
+                  return {
+                    async next() {
+                      return Q.nfcall(statement.next.bind(statement))
+                        .then(JSON.parse)
+                        .then(value => ({
+                          done: !Boolean(value),
+                          value
+                        }))
+                    }
+                  }
+                }
+              }
+            },
             updated() {
               return Q.nfcall(updated)
             },
@@ -508,21 +524,48 @@ export interface Ifs {
   fileMetadata: (fileName: string) => Promise<IfsFileMetadata>
 }
 
+export interface Metadata {
+  name: string
+  typeName: string
+  precision: number
+  scale: number
+}
+export interface Statement {
+  isQuery: () => boolean
+  metadata: () => Promise<Metadata[]>
+  asArray: () => Promise<string[][]>
+  asIterable: () => AsyncIterable<string[]>
+  asStream: (options?: any) => Readable
+  updated: () => Promise<number>
+  close: Close
+}
+export type Execute = (sql: string, params?: Param[]) => Promise<Statement>
+export type Query = <T>(sql: string, params?: Param[]) => Promise<T[]>
+export type Update = (sql: string, params?: Param[]) => Promise<number>
+export type CreateReadStream = (sql: string, params?: Param[]) => Readable
+export type InsertAndGetId = (sql: string, params?: Param[]) => Promise<number>
+export type CreateWriteStream = (
+  sql: string,
+  options?: WriteStreamOptions
+) => Writable
+export type BatchUpdate = (sql: string, params?: Param[][]) => Promise<number[]>
+export type Close = () => void
+export type InsertList = (
+  tableName: string,
+  idColumn: string,
+  rows: any[]
+) => Promise<number[]>
 export interface BaseConnection {
-  query: <T>(sql: string, params?: Param[]) => Promise<T[]>
-  update: (sql: string, params?: Param[]) => Promise<number>
+  query: Query
+  update: Update
   isInMemory: () => boolean
-  createReadStream: (sql: string, params?: Param[]) => Readable
-  insertAndGetId: (sql: string, params?: Param[]) => Promise<number>
-  insertList: (
-    tableName: string,
-    idColumn: string,
-    rows: any[]
-  ) => Promise<number[]>
-  createWriteStream: (sql: string, options?: WriteStreamOptions) => Writable
+  createReadStream: CreateReadStream
+  insertAndGetId: InsertAndGetId
+  insertList: InsertList
+  createWriteStream: CreateWriteStream
   batchUpdate: (sql: string, params?: Param[][]) => Promise<number[]>
-  execute: (sql: string, params?: Param[]) => Promise<any>
-  close: () => void
+  execute: Execute
+  close: Close
 }
 
 export type TransactionFun = (transaction: BaseConnection) => Promise<any>

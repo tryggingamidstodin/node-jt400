@@ -26,7 +26,7 @@ describe('hsql in memory', () => {
     })
 
     it('should select form testtbl', async () => {
-      const res = await jt400.query('select * from testtbl')
+      const res = await jt400.query<any>('select * from testtbl')
       expect(res.length).to.equal(1)
     })
 
@@ -176,6 +176,7 @@ describe('hsql in memory', () => {
           expect(error.cause.stack).to.include('JdbcJsonClient.setParams')
           expect(error.context.sql).to.equal(sql)
           expect(error.context.params).to.deep.equal(params)
+          expect(error.category).to.equal('ProgrammerError')
         })
     })
   })
@@ -266,32 +267,47 @@ describe('hsql in memory', () => {
     })
 
     it('should get result as stream', done => {
-      jt400.execute('select * from testtbl').then(statement => {
-        const stream = statement.asStream()
-        let data = ''
-        expect(statement.isQuery()).to.equal(true)
+      jt400
+        .execute('select * from testtbl')
+        .then(statement => {
+          const stream = statement.asStream()
+          let data = ''
+          expect(statement.isQuery()).to.equal(true)
 
-        stream.on('data', chunk => {
-          data += chunk
+          stream.on('data', chunk => {
+            data += chunk
+          })
+
+          stream.on('end', () => {
+            try {
+              expect(data).to.equal(
+                '[["1234567891234","Foo bar baz",null,null]]'
+              )
+              done()
+            } catch (err) {
+              done(err)
+            }
+          })
+
+          stream.on('error', done)
         })
-
-        stream.on('end', () => {
-          try {
-            expect(data).to.equal('[["1234567891234","Foo bar baz",null,null]]')
-            done()
-          } catch (err) {
-            done(err)
-          }
-        })
-
-        stream.on('error', done)
-      })
+        .catch(done)
     })
 
     it('should get result as array', async () => {
       const statement = await jt400.execute('select * from testtbl')
       const data = await statement.asArray()
       expect(data).to.eql([['1234567891234', 'Foo bar baz', null, null]])
+    })
+    it('should get result as iterable', async () => {
+      const statement = await jt400.execute('select * from testtbl')
+      const rows = statement.asIterable()
+      let count = 0
+      for await (const row of rows) {
+        count++
+        expect(row).to.eql(['1234567891234', 'Foo bar baz', null, null])
+      }
+      expect(count).to.equal(1)
     })
 
     it('should pipe to JSONStream', done => {
