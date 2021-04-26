@@ -87,7 +87,7 @@ describe('ifs', () => {
       .on('error', done)
   }).timeout(50000)
 
-  it('should pipe image', done => {
+  it('should pipe image', () => {
     const rs = ifs().createReadStream('/atm/test/image.jpg')
     const ws = ifs().createWriteStream('/atm/test2/image.jpg', {
       append: false
@@ -97,10 +97,8 @@ describe('ifs', () => {
       const oldImage = ifs().createReadStream('/atm/test/image.jpg')
       const newImage = ifs().createReadStream('/atm/test2/image.jpg')
 
-      streamEqual(oldImage, newImage, (error, equal) => {
-        expect(error).to.be.equal(null)
+      return streamEqual(oldImage, newImage).then(equal => {
         expect(equal).to.be.equal(true)
-        done()
       })
     })
   }).timeout(50000)
