@@ -6,5 +6,6 @@ CREATE TABLE TSTTBL
    FRA        DATE,
    TIMI       TIMESTAMP,
    BAZ        DECIMAL(11,2),
-   CLOB       CLOB            CCSID 871
+   CLOB       CLOB            CCSID 871,
+   BLOB       BLOB
 );

@@ -128,6 +128,18 @@ describe('jt400 pool', () => {
     expect(res[0].CLOB.length).to.equal(largeText.length)
   })
 
+  it('should insert blob', async () => {
+    const base64String = readFileSync(
+      __dirname + '/../../test-data/blob.png',
+      {encoding: 'base64'}
+    )
+    await connection.update('update tsttbl set blob=?', [
+      { type: 'BLOB', value: base64String }
+    ])
+    const res: any = await connection.query('SELECT blob from tsttbl')
+    expect(res[0].BLOB.length).to.equal(base64String.length)
+  })
+
   it('should fail query with oops error', () => {
     const sql = 'select * from tsttbl where baz=?'
     const params = [123.23, 'a']
