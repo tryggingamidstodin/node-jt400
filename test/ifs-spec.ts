@@ -4,10 +4,10 @@ import * as streamEqual from 'stream-equal'
 const { ifs } = jt400
 
 describe('ifs', () => {
-  it('should read file', (done) => {
+  it('should read file', done => {
     const stream = ifs().createReadStream('/atm/test/hello_world.txt')
     let data = ''
-    stream.on('data', (chunk) => {
+    stream.on('data', chunk => {
       data += chunk
     })
 
@@ -23,7 +23,7 @@ describe('ifs', () => {
     const metadata = await ifs().fileMetadata('/atm/test/hello_world.txt')
     expect(metadata).to.deep.equal({
       exists: true,
-      length: 15,
+      length: 15
     })
   })
 
@@ -34,16 +34,16 @@ describe('ifs', () => {
 
     expect(metadata).to.deep.equal({
       exists: false,
-      length: 0,
+      length: 0
     })
   })
 
-  it('should read filename promise', (done) => {
+  it('should read filename promise', done => {
     const stream = ifs().createReadStream(
       Promise.resolve('/atm/test/hello_world.txt')
     )
     let data = ''
-    stream.on('data', (chunk) => {
+    stream.on('data', chunk => {
       data += chunk
     })
 
@@ -55,17 +55,17 @@ describe('ifs', () => {
     stream.on('error', done)
   }).timeout(50000)
 
-  it('should write file', (done) => {
+  it('should write file', done => {
     const rs = ifs().createReadStream('/atm/test/hello_world.txt')
     const ws = ifs().createWriteStream('/atm/test2/new_file.txt', {
-      append: false,
+      append: false
     })
 
     rs.pipe(ws)
       .on('finish', () => {
         const stream = ifs().createReadStream('/atm/test2/new_file.txt')
         let data = ''
-        stream.on('data', (chunk) => {
+        stream.on('data', chunk => {
           data += chunk
         })
 
@@ -90,14 +90,14 @@ describe('ifs', () => {
   it('should pipe image', () => {
     const rs = ifs().createReadStream('/atm/test/image.jpg')
     const ws = ifs().createWriteStream('/atm/test2/image.jpg', {
-      append: false,
+      append: false
     })
 
     rs.pipe(ws).on('finish', () => {
       const oldImage = ifs().createReadStream('/atm/test/image.jpg')
       const newImage = ifs().createReadStream('/atm/test2/image.jpg')
 
-      return streamEqual(oldImage, newImage).then((equal) => {
+      return streamEqual(oldImage, newImage).then(equal => {
         expect(equal).to.be.equal(true)
       })
     })

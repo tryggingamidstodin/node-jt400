@@ -11,7 +11,7 @@ inherits(JdbcStream, Readable)
 
 function read(context) {
   if (context._closed) {
-    context._jdbcStream.close((err) => {
+    context._jdbcStream.close(err => {
       if (err) {
         console.log('close error', err)
       }
@@ -28,18 +28,18 @@ function read(context) {
   }
 }
 
-JdbcStream.prototype.close = function () {
+JdbcStream.prototype.close = function() {
   this._closed = true
 }
 
-JdbcStream.prototype._read = function () {
+JdbcStream.prototype._read = function() {
   if (!this._jdbcStream) {
     this._jdbcStreamPromise
-      .then((stream) => {
+      .then(stream => {
         this._jdbcStream = stream
         read(this)
       })
-      .catch((err) => {
+      .catch(err => {
         this.emit('error', err)
       })
   } else {

@@ -5,11 +5,11 @@ describe('PGM', () => {
   it('should run rpg program', async () => {
     const getIsk = jt400.defineProgram({
       programName: 'GET_ISK',
-      paramsSchema: [{ name: 'mynt', size: 3 }],
+      paramsSchema: [{ name: 'mynt', size: 3 }]
     })
     const result = await Promise.all([
       getIsk({ mynt: 'Kr.' }),
-      getIsk({ mynt: 'EUR' }),
+      getIsk({ mynt: 'EUR' })
     ])
     expect(result[0].mynt).to.equal('ISK')
     expect(result[1].mynt).to.equal('EUR')
@@ -21,8 +21,8 @@ describe('PGM', () => {
       paramsSchema: [
         { name: 'kt', size: 10, decimals: 0 },
         { name: 'email', size: 30 },
-        { name: 'valid', size: 1 },
-      ],
+        { name: 'valid', size: 1 }
+      ]
     })
     const result = await getNetfang({ kt: '0123456789' })
     expect(result.valid).to.equal('J')
@@ -36,10 +36,10 @@ describe('PGM', () => {
           p1: [
             { name: 'txt1', size: 3 },
             { name: 'num1', size: 9, decimals: 0 },
-            { name: 'num2', type: 'numeric', size: 9, decimals: 0 },
-          ],
-        },
-      ],
+            { name: 'num2', type: 'numeric', size: 9, decimals: 0 }
+          ]
+        }
+      ]
     })
 
     const result = await tstDs({ p1: { txt1: 'tst', num1: 400, num2: 7 } })
@@ -56,10 +56,10 @@ describe('PGM', () => {
           p1: [
             { name: 'txt1', typeName: 'VARCHAR', precision: 3, scale: 0 },
             { name: 'num1', typeName: 'DECIMAL', precision: 9, scale: 0 },
-            { name: 'num2', typeName: 'NUMERIC', precision: 9, scale: 0 },
-          ],
-        },
-      ],
+            { name: 'num2', typeName: 'NUMERIC', precision: 9, scale: 0 }
+          ]
+        }
+      ]
     })
 
     const result = await tstDs({ p1: { txt1: 'tst', num1: 400, num2: 7 } })
@@ -79,7 +79,7 @@ describe('PGM', () => {
       .then(() => {
         throw new Error('Not the correct error')
       })
-      .catch((e) => {
+      .catch(e => {
         expect(e).not.to.equal(null)
         expect(e.message).to.contain('Connection was dropped unexpectedly.')
       })

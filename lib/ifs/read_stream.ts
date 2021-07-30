@@ -3,7 +3,7 @@ import { Readable } from 'stream'
 
 export function IfsReadStream(opt) {
   Readable.call(this, {
-    objectMode: false,
+    objectMode: false
   })
   this._ifsReadStream = opt.ifsReadStream
   this._buffer = []
@@ -11,10 +11,10 @@ export function IfsReadStream(opt) {
 
 util.inherits(IfsReadStream, Readable)
 
-IfsReadStream.prototype._read = function () {
+IfsReadStream.prototype._read = function() {
   const _this = this
   this._ifsReadStream
-    .then((stream) => {
+    .then(stream => {
       stream.read((err, res) => {
         if (err) {
           _this.emit('error', err)
@@ -23,7 +23,7 @@ IfsReadStream.prototype._read = function () {
         }
       })
     })
-    .fail((err) => {
+    .fail(err => {
       this.emit('error', err)
     })
 }

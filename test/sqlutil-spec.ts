@@ -7,12 +7,12 @@ describe('sql helpers', () => {
     const records = [
       {
         foo: 'bar',
-        baz: 123,
+        baz: 123
       },
       {
         foo: 'ble',
-        baz: 456,
-      },
+        baz: 456
+      }
     ]
     expect(toInsertSql('myTable', records)).to.equal(
       'INSERT INTO myTable (foo, baz) VALUES(?, ?), (?, ?)'

@@ -1,7 +1,7 @@
 import { jt400 } from './db'
 import { expect } from 'chai'
 
-describe('MessageFileHandler', async function () {
+describe('MessageFileHandler', async function() {
   it('should open a message file and read an id', async () => {
     const file = await jt400.openMessageFile({ path: '/QSYS.LIB/QCPFMSG.MSGF' })
     const msg = await file.read({ messageId: 'CPF2105' })
