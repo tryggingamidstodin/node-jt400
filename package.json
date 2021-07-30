@@ -1,7 +1,7 @@
 {
   "name": "node-jt400",
   "author": "Tryggingamiðstöðin <bt.hugbunadargerd@tm.is>",
-  "version": "4.2.0",
+  "version": "4.2.1",
   "description": "JT400 (IBM Toolbox) for NodeJS",
   "main": "dist/lib/jt400.js",
   "types": "dist/lib/jt400.d.ts",
@@ -14,8 +14,8 @@
     "java/lib"
   ],
   "scripts": {
-    "format-verify": "prettier --check ./{lib,test}/**",
-    "format": "prettier --write ./{lib,test}/**",
+    "format-verify": "prettier --check ./lib/** ./test/*.ts",
+    "format": "prettier --write ./lib/** ./test/*.ts",
     "lint": "tslint --project .",
     "test": "mocha dist/test -t 10000",
     "build": "tsc",
@@ -46,22 +46,22 @@
   "dependencies": {
     "JSONStream": "^1.3.2",
     "flushwritable": "^1.0.0",
-    "java": "^0.12.1",
+    "java": "^0.12.2",
     "oops-error": "^2.4.0",
     "q": "^1.5.1"
   },
   "devDependencies": {
-    "@types/chai": "^4.2.17",
-    "@types/mocha": "^8.2.2",
-    "@types/node": "^14.14.41",
+    "@types/chai": "^4.2.21",
+    "@types/mocha": "^9.0.0",
+    "@types/node": "^16.4.7",
     "chai": "^4.3.4",
-    "husky": "^6.0.0",
-    "mocha": "^8.3.2",
-    "prettier": "^2.2.1",
+    "husky": "^7.0.1",
+    "mocha": "^9.0.3",
+    "prettier": "^2.3.2",
     "stream-equal": "^2.0.1",
     "tslint": "^6.1.3",
     "tslint-config-standard": "^9.0.0",
-    "typescript": "^4.2.4"
+    "typescript": "^4.3.5"
   },
   "husky": {
     "hooks": {

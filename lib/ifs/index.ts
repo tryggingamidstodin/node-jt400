@@ -5,18 +5,18 @@ import q = require('q')
 
 export function ifs(connection) {
   return {
-    createReadStream: function(fileName) {
-      const javaStream = q.when(fileName).then(function(file) {
+    createReadStream: function (fileName) {
+      const javaStream = q.when(fileName).then(function (file) {
         return q.nfcall(connection.createIfsReadStream.bind(connection), file)
       })
       return new IfsReadStream({
-        ifsReadStream: javaStream
+        ifsReadStream: javaStream,
       })
     },
-    createWriteStream: function(fileName, options) {
+    createWriteStream: function (fileName, options) {
       options = options || { append: false, ccsid: null }
 
-      const javaStream = q.when(fileName).then(function(file) {
+      const javaStream = q.when(fileName).then(function (file) {
         const folderPath = dirname(file)
         const fileName = basename(file)
         return q.nfcall(
@@ -28,14 +28,14 @@ export function ifs(connection) {
         )
       })
       return new IfsWriteStream({
-        ifsWriteStream: javaStream
+        ifsWriteStream: javaStream,
       })
     },
-    deleteFile: fileName =>
+    deleteFile: (fileName) =>
       q.nfcall(connection.deleteIfsFile.bind(connection), fileName),
-    fileMetadata: fileName =>
+    fileMetadata: (fileName) =>
       q
         .nfcall(connection.getIfsFileMetadata.bind(connection), fileName)
-        .then(JSON.parse)
+        .then(JSON.parse),
   }
 }

@@ -15,7 +15,7 @@ export function createJdbcWriteStream(batchUpdate, statement, bufferSize) {
       .fail(done)
   }
 
-  ws._write = function(chunck, _, next) {
+  ws._write = function (chunck, _, next) {
     dataBuffer.push(chunck)
     if (dataBuffer.length >= bufferSize) {
       flush(next)
@@ -24,7 +24,7 @@ export function createJdbcWriteStream(batchUpdate, statement, bufferSize) {
     }
   }
 
-  ws._flush = function(done) {
+  ws._flush = function (done) {
     if (dataBuffer.length) {
       flush(done)
     } else {
