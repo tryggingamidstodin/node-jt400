@@ -14,7 +14,7 @@ const defaultConfig = {
   host: process.env.AS400_HOST,
   user: process.env.AS400_USERNAME,
   password: process.env.AS400_PASSWORD,
-  naming: 'system'
+  naming: 'system',
 }
 
 const { promisify } = require('util')
@@ -23,7 +23,7 @@ jvm.asyncOptions = {
   asyncSuffix: '',
   syncSuffix: 'Sync',
   promiseSuffix: 'Promise', // Generate methods returning promises, using the suffix Promise.
-  promisify: promisify
+  promisify: promisify,
 }
 jvm.options.push('-Xrs') // fixing the signal handling issues (for exmaple ctrl-c)
 jvm.options.push('-Dcom.ibm.as400.access.AS400.guiAvailable=false') // Removes gui prompts
@@ -50,12 +50,12 @@ function createConFrom(con) {
     getPrimaryKeys: con.getPrimaryKeys.bind(con),
     openMessageQ: con.openMessageQSync.bind(con),
     createKeyedDataQ: con.createKeyedDataQSync.bind(con),
-    openMessageFile: con.openMessageFileSync.bind(con)
+    openMessageFile: con.openMessageFileSync.bind(con),
   }
 }
 
 function values(list) {
-  return Object.keys(list).map(k => list[k])
+  return Object.keys(list).map((k) => list[k])
 }
 
 function insertListInOneStatment(jt400, tableName, idColumn, list) {
@@ -72,13 +72,13 @@ function insertListInOneStatment(jt400, tableName, idColumn, list) {
     return arr.concat(valueArr)
   }, [])
 
-  return jt400.query(sql, params).then(idList => {
-    return idList.map(idObj => idObj[idColumn.toUpperCase()])
+  return jt400.query(sql, params).then((idList) => {
+    return idList.map((idObj) => idObj[idColumn.toUpperCase()])
   })
 }
 
 function handleError(context) {
-  return err => {
+  return (err) => {
     const errMsg =
       (err.cause && err.cause.getMessageSync && err.cause.getMessageSync()) ||
       err.message
@@ -90,7 +90,7 @@ function handleError(context) {
       message: errMsg,
       context,
       category,
-      cause: err
+      cause: err,
     })
   }
 }
@@ -99,10 +99,10 @@ function standardInsertList(jt400, tableName, _, list) {
   const pushToIdList = idList.push.bind(idList)
 
   return list
-    .map(record => {
+    .map((record) => {
       return {
         sql: toInsertSql(tableName, [record]),
-        values: values(record)
+        values: values(record),
       }
     })
     .reduce((soFar, sqlObj) => {
@@ -119,10 +119,7 @@ function standardInsertList(jt400, tableName, _, list) {
 
 function convertDateValues(v) {
   return v instanceof Date
-    ? v
-        .toISOString()
-        .replace('T', ' ')
-        .replace('Z', '')
+    ? v.toISOString().replace('T', ' ').replace('Z', '')
     : v
 }
 
@@ -131,17 +128,17 @@ function paramsToJson(params) {
 }
 
 function createInstance(connection, insertListFun, inMemory) {
-  const mixinConnection = function(obj, newConn?) {
+  const mixinConnection = function (obj, newConn?) {
     const thisConn = newConn || connection
 
-    obj.query = function(sql, params) {
+    obj.query = function (sql, params) {
       const jsonParams = paramsToJson(params || [])
       return Q.nfcall(thisConn.query, sql, jsonParams)
         .then(JSON.parse)
         .catch(handleError({ sql, params }))
     }
 
-    obj.createReadStream = function(sql, params) {
+    obj.createReadStream = function (sql, params) {
       const jsonParams = paramsToJson(params || [])
       return new JdbcStream({
         jdbcStreamPromise: Q.nfcall(
@@ -149,16 +146,16 @@ function createInstance(connection, insertListFun, inMemory) {
           sql,
           jsonParams,
           100
-        ).catch(handleError({ sql, params }))
+        ).catch(handleError({ sql, params })),
       })
     }
 
     obj.queryAsStream = obj.createReadStream
 
-    obj.execute = function(sql, params) {
+    obj.execute = function (sql, params) {
       const jsonParams = paramsToJson(params || [])
       return Q.nfcall(thisConn.execute, sql, jsonParams)
-        .then(statement => {
+        .then((statement) => {
           const isQuery = statement.isQuerySync()
           const metadata = statement.getMetaData.bind(statement)
           const updated = statement.updated.bind(statement)
@@ -178,7 +175,7 @@ function createInstance(connection, insertListFun, inMemory) {
             asStream(options) {
               options = options || {}
               stream = new JdbcStream({
-                jdbcStream: statement.asStreamSync(options.bufferSize || 100)
+                jdbcStream: statement.asStreamSync(options.bufferSize || 100),
               })
               return stream
             },
@@ -189,13 +186,13 @@ function createInstance(connection, insertListFun, inMemory) {
                     async next() {
                       return Q.nfcall(statement.next.bind(statement))
                         .then(JSON.parse)
-                        .then(value => ({
+                        .then((value) => ({
                           done: !Boolean(value),
-                          value
+                          value,
                         }))
-                    }
+                    },
                   }
-                }
+                },
               }
             },
             updated() {
@@ -205,26 +202,26 @@ function createInstance(connection, insertListFun, inMemory) {
               if (stream) {
                 stream.close()
               } else {
-                statement.close(err => {
+                statement.close((err) => {
                   if (err) {
                     console.log('close error', err)
                   }
                 })
               }
-            }
+            },
           }
           return stWrap
         })
         .catch(handleError({ sql, params }))
     }
-    obj.update = function(sql, params) {
+    obj.update = function (sql, params) {
       const jsonParams = paramsToJson(params || [])
       return Q.nfcall(thisConn.update, sql, jsonParams).catch(
         handleError({ sql, params })
       )
     }
 
-    obj.createWriteStream = function(sql, options) {
+    obj.createWriteStream = function (sql, options) {
       return createJdbcWriteStream(
         obj.batchUpdate,
         sql,
@@ -232,29 +229,29 @@ function createInstance(connection, insertListFun, inMemory) {
       )
     }
 
-    obj.batchUpdate = function(sql, paramsList) {
-      const params = (paramsList || []).map(row => {
+    obj.batchUpdate = function (sql, paramsList) {
+      const params = (paramsList || []).map((row) => {
         return row.map(convertDateValues)
       })
 
       const jsonParams = JSON.stringify(params)
       return Q.nfcall(thisConn.batchUpdate, sql, jsonParams)
-        .then(res => Array.from(res))
+        .then((res) => Array.from(res))
         .catch(handleError({ sql, params }))
     }
 
-    obj.insertAndGetId = function(sql, params) {
+    obj.insertAndGetId = function (sql, params) {
       const jsonParams = paramsToJson(params || [])
       return Q.nfcall(thisConn.insertAndGetId, sql, jsonParams).catch(
         handleError({ sql, params })
       )
     }
 
-    obj.insertList = function(tableName, idColumn, list) {
+    obj.insertList = function (tableName, idColumn, list) {
       return insertListFun(obj, tableName, idColumn, list)
     }
 
-    obj.isInMemory = function() {
+    obj.isInMemory = function () {
       return inMemory
     }
     return obj
@@ -268,7 +265,7 @@ function createInstance(connection, insertListFun, inMemory) {
         execute: t.execute.bind(t),
         insertAndGetId: t.insertAndGetId.bind(t),
         batchUpdate: t.batchUpdate.bind(t),
-        query: t.query.bind(t)
+        query: t.query.bind(t),
       }
       const transaction = mixinConnection(
         {
@@ -277,18 +274,18 @@ function createInstance(connection, insertListFun, inMemory) {
           },
           rollback() {
             t.rollbackSync()
-          }
+          },
         },
         c
       )
 
       return transactionFunction(transaction)
-        .then(res => {
+        .then((res) => {
           t.commitSync()
           t.endSync()
           return res
         })
-        .catch(err => {
+        .catch((err) => {
           t.rollbackSync()
           t.endSync()
           throw err
@@ -300,7 +297,7 @@ function createInstance(connection, insertListFun, inMemory) {
           opt.catalog,
           opt.schema,
           opt.table || '%'
-        )
+        ),
       }).pipe(JSONStream.parse([true]))
     },
     getColumns(opt) {
@@ -339,22 +336,22 @@ function createInstance(connection, insertListFun, inMemory) {
         },
         sendInformational(messageText) {
           return Q.nfcall(sendInformational, messageText)
-        }
+        },
       }
     },
     createKeyedDataQ(opt) {
       const dq = connection.createKeyedDataQ(opt.name)
       const read = dq.read.bind(dq)
-      const readRes = function(key, wait, writeKeyLength) {
+      const readRes = function (key, wait, writeKeyLength) {
         return Q.nfcall(
           dq.readResponse.bind(dq),
           key,
           wait,
           writeKeyLength
-        ).then(res => {
+        ).then((res) => {
           return {
             data: res.getDataSync(),
-            write: res.writeSync.bind(res)
+            write: res.writeSync.bind(res),
           }
         })
       }
@@ -376,7 +373,7 @@ function createInstance(connection, insertListFun, inMemory) {
           return writeKeyLength
             ? readRes(key, wait, writeKeyLength)
             : Q.nfcall(read, key, wait)
-        }
+        },
       }
     },
     openMessageFile(opt: MessageFileHandlerOptions) {
@@ -386,7 +383,7 @@ function createInstance(connection, insertListFun, inMemory) {
         read() {
           const messageId = arguments[0].messageId
           return Q.nfcall(read, messageId)
-        }
+        },
       }
     },
     ifs() {
@@ -406,17 +403,17 @@ function createInstance(connection, insertListFun, inMemory) {
         )
       }
     },
-    pgm: deprecate(function(programName, paramsSchema, libraryName) {
+    pgm: deprecate(function (programName, paramsSchema, libraryName) {
       return this.defineProgram({
         programName,
         paramsSchema,
-        libraryName
+        libraryName,
       })
     }, 'pgm function is deprecated and will be removed in version 5.0. Please use defineProgram.'),
     close() {
       const cl = connection.connection.close.bind(connection.connection)
       return Q.nfcall(cl)
-    }
+    },
   })
 
   return jt400
@@ -605,7 +602,7 @@ export function connect(config?) {
   return Q.nfcall(
     createConnection,
     JSON.stringify(defaults(config || {}, defaultConfig))
-  ).then(javaCon => {
+  ).then((javaCon) => {
     return createInstance(
       createConFrom(javaCon),
       insertListInOneStatment,
@@ -622,15 +619,15 @@ export function useInMemoryDb(): InMemoryConnection {
     true
   )
   const pgmMockRegistry = {}
-  instance.mockPgm = function(programName, func) {
+  instance.mockPgm = function (programName, func) {
     pgmMockRegistry[programName] = func
     return instance
   }
 
   const defaultPgm = instance.defineProgram
-  instance.defineProgram = function(opt) {
+  instance.defineProgram = function (opt) {
     const defaultFunc = defaultPgm(opt.programName, opt.paramsSchema)
-    return function(params, timeout = 3) {
+    return function (params, timeout = 3) {
       const mockFunc = pgmMockRegistry[opt.programName]
 
       if (mockFunc) {
