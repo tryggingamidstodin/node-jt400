@@ -458,7 +458,12 @@ export interface CLOB {
   value: string
 }
 
-export type Param = string | number | Date | null | CLOB
+export interface BLOB {
+  type: 'BLOB'
+  value: string
+}
+
+export type Param = string | number | Date | null | CLOB | BLOB
 
 export interface JustNameMessageQ {
   name: string
