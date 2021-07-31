@@ -1,10 +1,10 @@
 # node-jt400
-NodeJS JT400 wrapper to connect to IBM iSeries and AS/400 systems (OS400 operating system, database like DB2, programs and filesystem). 
+NodeJS JT400 wrapper to connect to IBM iSeries and AS/400 systems (OS400 operating system, database like DB2, programs and filesystem).
 
-[![Version](https://img.shields.io/npm/v/node-jt400.svg)](https://npmjs.org/package/node-jt400) [![Build Status](https://travis-ci.org/tryggingamidstodin/node-jt400.svg?branch=master)](https://travis-ci.org/tryggingamidstodin/node-jt400)
+[![Version](https://img.shields.io/npm/v/node-jt400.svg)](https://npmjs.org/package/node-jt400) [![Build Status](https://travis-ci.com/tryggingamidstodin/node-jt400.svg?branch=master)](https://travis-ci.com/tryggingamidstodin/node-jt400)
 
 ## About
-This package is built on the IBM Toolbox for Java (http://jt400.sourceforge.net/). It maps the java functions to node using node-java. Not all of the Java code has been mapped over to node. The reason is that this module was originally written for internal use-only for Tryggingadmidstodin. Therefore we only implemented what Tryggingamidstodin needed, for example program calls, but not stored procedures. 
+This package is built on the IBM Toolbox for Java (http://jt400.sourceforge.net/). It maps the java functions to node using node-java. Not all of the Java code has been mapped over to node. The reason is that this module was originally written for internal use-only for Tryggingadmidstodin. Therefore we only implemented what Tryggingamidstodin needed, for example program calls, but not stored procedures.
 
 Tryggingamidstodin is an Icelandic insurance company dealing with legacy systems in AS400. We figured other people or companies might be dealing with the similar problems so this module was made open source. Most of the coding and documentation reflects this, although we are always trying to improve that. For example the library for programs was orignally not configurable, but is now.
 
@@ -209,6 +209,16 @@ pool
   .pipe(pool.createWriteStream('INSERT INTO FOO2 (F1, F2) VALUES(?, ?)'));
 ```
 
+### iterable
+```javascript
+const statement = await pool
+  .execute('SELECT FIELD1, FIELD2 FROM FOO WHERE BAR=? AND BAZ=?', [1, 'a'])
+const rows = statement.asIterable()
+for await (const [field1, field2] of rows) {
+  console.log(field1, field2)
+}
+```
+
 ### Transactions
 Transaction is commited on success and rolled back on failure.
 The transaction object has the same api as the pool object.
@@ -216,7 +226,7 @@ The transaction object has the same api as the pool object.
 ```javascript
 pool.transaction(transaction => {
 	const fooId = 1;
-	
+
 	return transaction.update('INSERT INTO FOO (FOOID, FIELD2) VALUES(?,?)', [fooId, 'a']).then(function() {
 		return transaction.update('update BAR set FOOID=? where BARID=?', [fooId , 2])
 	});
@@ -224,10 +234,20 @@ pool.transaction(transaction => {
 ```
 
 ### Complex types
-The node-jt400 module handles strings, longs, doubles and nulls automatically as types. When using other types like CLOB you need to specify the type specifically.
+The node-jt400 module handles strings, longs, doubles and nulls automatically as types. When using other types like CLOB or BLOB you need to specify the type specifically.
 ```javascript
 pool
   .update('INSERT INTO foo (fooid, textfield, clobfield) VALUES(?, ?)', [1, 'text', {type:'CLOB',value:'A really long string'}])
+  .then(() => {
+    console.log('updated');
+});
+```
+For BLOB you can pass the base64 string representation of a file. Before inserting on as400 will be converted into a byte array.
+```javascript
+const fs = require('fs').promises;
+const base64String = await fs.readFile('/path/to/file.jpg', {encoding: 'base64'});
+pool
+  .update('INSERT INTO foo (fooid, textfield, blobfield) VALUES(?, ?)', [1, 'text', {type:'BLOB',value: base64String}])
   .then(() => {
     console.log('updated');
 });
@@ -281,7 +301,7 @@ ifs.deleteFile('/foo/bar.txt.old').then(console.log); // true or false
 ```
 
 ## Programs
-With programs it is neccesary to define your input parameters first. These must match your program defination in AS.
+With programs it is necessary to define your input parameters first. These must match your program defination in AS.
 ```javascript
 const myProgram = pool.defineProgram({
   programName: 'MYPGM',
@@ -298,7 +318,7 @@ const myProgram = pool.defineProgram({
 The Decimal type maps to com.ibm.as400.access.AS400PackedDecimal
 The Numeric type maps to com.ibm.as400.access.AS400ZonedDecimal
 Everything else (char) maps to com.ibm.as400.access.AS400Text
-Precision is the size and scale is the decimals. 
+Precision is the size and scale is the decimals.
 
 
 > ATTENTION: To make the API clearer we renamed .pgm to .defineProgram. The pgm function is deprecated in v3.0
@@ -329,9 +349,9 @@ myProgram(
 ```javascript
     const jt400 = pool(jt400config);
     // Open a keyed data queue for reading
-    let queue = jt400.createKeyedDataQ({name}); 
+    let queue = jt400.createKeyedDataQ({name});
     // -1 waits until a message exists. (MSGW)
-    let m = await queue.read({key:inboxKey,wait:2}); 
+    let m = await queue.read({key:inboxKey,wait:2});
 ```
 
 ## Message Queues

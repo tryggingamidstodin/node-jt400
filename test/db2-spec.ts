@@ -19,7 +19,7 @@ describe('connect', () => {
       .then(() => {
         throw new Error('should not be connected')
       })
-      .catch(err => {
+      .catch((err) => {
         expect(err.message).to.equal('The connection does not exist.')
         expect(err.category).to.equal('OperationalError')
       })
@@ -39,7 +39,7 @@ describe('jt400 pool', () => {
         ]
         return connection.insertList('tsttbl', 'testtblid', records)
       })
-      .then(idListResult => (idList = idListResult))
+      .then((idListResult) => (idList = idListResult))
   })
 
   it('should not be in memory', () => {
@@ -57,7 +57,7 @@ describe('jt400 pool', () => {
       .then(() => {
         throw new Error('should not return result from nohost')
       })
-      .catch(err => {
+      .catch((err) => {
         expect(err.message).to.equal(
           'The application requester cannot establish the connection. (nohost)'
         )
@@ -120,7 +120,7 @@ describe('jt400 pool', () => {
 
   it('should execute query with params', async () => {
     const data = await connection.query('select * from tsttbl where baz=?', [
-      123.23
+      123.23,
     ])
     expect(data.length).to.equal(1)
   })
@@ -144,7 +144,7 @@ describe('jt400 pool', () => {
     const params = [
       new Date(2014, 0, 15),
       new Date(2014, 0, 16, 15, 32, 5),
-      'bar'
+      'bar',
     ]
     return connection
       .update('update tsttbl set fra=?, timi=? where foo=?', params)
@@ -154,7 +154,7 @@ describe('jt400 pool', () => {
           ['bar']
         )
       })
-      .then(res => {
+      .then((res) => {
         expect(res[0].FRA).to.eql('2014-01-15')
         expect(res[0].TIMI).to.eql('2014-01-16 15:32:05.000000')
       })
@@ -165,10 +165,21 @@ describe('jt400 pool', () => {
       __dirname + '/../../test-data/clob.txt'
     ).toString()
     await connection.update('update tsttbl set clob=?', [
-      { type: 'CLOB', value: largeText }
+      { type: 'CLOB', value: largeText },
     ])
     const res: any = await connection.query('SELECT clob from tsttbl')
     expect(res[0].CLOB.length).to.equal(largeText.length)
+  })
+
+  it('should insert blob', async () => {
+    const base64String = readFileSync(__dirname + '/../../test-data/blob.png', {
+      encoding: 'base64',
+    })
+    await connection.update('update tsttbl set blob=?', [
+      { type: 'BLOB', value: base64String },
+    ])
+    const res: any = await connection.query('SELECT blob from tsttbl')
+    expect(res[0].BLOB.length).to.equal(base64String.length)
   })
 
   it('should fail query with oops error', () => {
@@ -180,11 +191,12 @@ describe('jt400 pool', () => {
       .then(() => {
         throw new Error('wrong error')
       })
-      .catch(error => {
+      .catch((error) => {
         expect(error.message).to.equal('Descriptor index not valid.')
         expect(error.cause.stack).to.include('JdbcJsonClient.setParams')
         expect(error.context.sql).to.equal(sql)
         expect(error.context.params).to.equal(params)
+        expect(error.category).to.equal('ProgrammerError')
       })
   })
 
@@ -196,13 +208,14 @@ describe('jt400 pool', () => {
       .then(() => {
         throw new Error('wrong error')
       })
-      .catch(error => {
+      .catch((error) => {
         expect(error.message).to.equal(
           '[SQL0104] Token TESTTABLE was not valid. Valid tokens: : <INTEGER>.'
         )
         expect(error.cause.stack).to.include('JdbcJsonClient.insertAndGetId')
         expect(error.context.sql).to.equal(sql)
         expect(error.context.params).to.equal(params)
+        expect(error.category).to.equal('ProgrammerError')
       })
   })
 
@@ -213,12 +226,13 @@ describe('jt400 pool', () => {
       .then(() => {
         throw new Error('wrong error')
       })
-      .catch(error => {
+      .catch((error) => {
         expect(error.message).to.equal(
           '[SQL0104] Token - was not valid. Valid tokens: FOR USE SKIP WAIT WITH FETCH LIMIT ORDER UNION EXCEPT OFFSET.'
         )
         expect(error.context.sql).to.equal(sql)
         expect(error.context.params).to.equal(undefined)
+        expect(error.category).to.equal('ProgrammerError')
       })
   })
 
@@ -230,10 +244,11 @@ describe('jt400 pool', () => {
       .then(() => {
         throw new Error('wrong error')
       })
-      .catch(error => {
+      .catch((error) => {
         expect(error.message).to.equal('Descriptor index not valid.')
         expect(error.context.sql).to.equal(sql)
         expect(error.context.params).to.equal(params)
+        expect(error.category).to.equal('ProgrammerError')
       })
   })
 })

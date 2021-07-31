@@ -26,7 +26,7 @@ describe('hsql in memory', () => {
     })
 
     it('should select form testtbl', async () => {
-      const res = await jt400.query('select * from testtbl')
+      const res = await jt400.query<any>('select * from testtbl')
       expect(res.length).to.equal(1)
     })
 
@@ -35,12 +35,12 @@ describe('hsql in memory', () => {
       expect(res[0]).to.have.property('MYNAME')
     })
 
-    it('should query as stream', done => {
+    it('should query as stream', (done) => {
       const stream = jt400.createReadStream('select * from testtbl')
       const jsonStream = stream.pipe(parse([true]))
       const data: any[] = []
 
-      jsonStream.on('data', row => {
+      jsonStream.on('data', (row) => {
         data.push(row)
       })
 
@@ -56,7 +56,7 @@ describe('hsql in memory', () => {
       stream.on('error', done)
     })
 
-    it('should fail queryAsStream with oops error', done => {
+    it('should fail queryAsStream with oops error', (done) => {
       const sql = 'select * from testtbl'
       const params = ['a']
       const stream = jt400.createReadStream(sql, params)
@@ -66,7 +66,7 @@ describe('hsql in memory', () => {
         stream.emit('error', new Error('wrong error'))
       })
 
-      stream.on('error', err => {
+      stream.on('error', (err) => {
         try {
           expect(err.message).to.equal(
             'Invalid argument in JDBC call: parameter index out of range: 1'
@@ -91,11 +91,11 @@ describe('hsql in memory', () => {
     it('should insert list', async () => {
       const res = await jt400.insertList('testtbl', 'ID', [
         {
-          NAME: 'foo'
+          NAME: 'foo',
         },
         {
-          NAME: 'bar'
-        }
+          NAME: 'bar',
+        },
       ])
 
       expect(res).to.eql([1234567891235, 1234567891236])
@@ -108,17 +108,17 @@ describe('hsql in memory', () => {
       const ids = await jt400.insertList('testtbl', 'ID', [
         {
           START: new Date().toISOString().substr(0, 10),
-          STAMP: new Date()
-        }
+          STAMP: new Date(),
+        },
       ])
 
       expect(ids).to.eql([1234567891235])
     })
 
-    it('should create write stream', done => {
+    it('should create write stream', (done) => {
       const dataStream = new Readable({ objectMode: true })
       let c = 97
-      dataStream._read = function() {
+      dataStream._read = function () {
         dataStream.push([String.fromCharCode(c++)])
         if (c > 'z'.charCodeAt(0)) {
           dataStream.push(null)
@@ -134,7 +134,7 @@ describe('hsql in memory', () => {
         .on('finish', () => {
           jt400
             .query('select name from testtbl')
-            .then(res => {
+            .then((res) => {
               expect(res.length).to.equal(27)
             })
             .then(done, done)
@@ -149,7 +149,7 @@ describe('hsql in memory', () => {
         'insert into testtbl (NAME,START) values(?, ?)',
         [
           ['foo', '2015-01-02'],
-          ['bar', '2015-03-04']
+          ['bar', '2015-03-04'],
         ]
       )
 
@@ -161,7 +161,7 @@ describe('hsql in memory', () => {
       const params = [
         ['foo', '2015-01-02'],
         ['bar', '2015-03-04'],
-        ['a', 'b', 'c', 'd']
+        ['a', 'b', 'c', 'd'],
       ]
 
       return jt400
@@ -169,13 +169,14 @@ describe('hsql in memory', () => {
         .then(() => {
           throw new Error('wrong error')
         })
-        .catch(error => {
+        .catch((error) => {
           expect(error.message).to.equal(
             'data exception: invalid datetime format'
           )
           expect(error.cause.stack).to.include('JdbcJsonClient.setParams')
           expect(error.context.sql).to.equal(sql)
           expect(error.context.params).to.deep.equal(params)
+          expect(error.category).to.equal('ProgrammerError')
         })
     })
   })
@@ -190,19 +191,19 @@ describe('hsql in memory', () => {
         paramsSchema: [
           {
             name: 'bar',
-            size: 10
+            size: 10,
           },
           {
             name: 'baz',
             size: 9,
-            decimals: 2
-          }
-        ]
+            decimals: 2,
+          },
+        ],
       })
 
       input = {
         bar: 'a',
-        baz: 10
+        baz: 10,
       }
     })
 
@@ -212,7 +213,7 @@ describe('hsql in memory', () => {
     })
 
     it('should register mock', async () => {
-      jt400.mockPgm('foo', input => {
+      jt400.mockPgm('foo', (input) => {
         input.baz = 20
         return input
       })
@@ -227,7 +228,7 @@ describe('hsql in memory', () => {
       const metadata = await jt400.ifs().fileMetadata('/foo/bar.txt')
       expect(metadata).to.deep.equal({
         exists: false,
-        length: 0
+        length: 0,
       })
     })
   })
@@ -242,50 +243,55 @@ describe('hsql in memory', () => {
           name: 'ID',
           typeName: 'DECIMAL',
           precision: 15,
-          scale: 0
+          scale: 0,
         },
         {
           name: 'NAME',
           typeName: 'VARCHAR',
           precision: 300,
-          scale: 0
+          scale: 0,
         },
         {
           name: 'START',
           typeName: 'DATE',
           precision: 10,
-          scale: 0
+          scale: 0,
         },
         {
           name: 'STAMP',
           typeName: 'TIMESTAMP',
           precision: 26,
-          scale: 6
-        }
+          scale: 6,
+        },
       ])
     })
 
-    it('should get result as stream', done => {
-      jt400.execute('select * from testtbl').then(statement => {
-        const stream = statement.asStream()
-        let data = ''
-        expect(statement.isQuery()).to.equal(true)
+    it('should get result as stream', (done) => {
+      jt400
+        .execute('select * from testtbl')
+        .then((statement) => {
+          const stream = statement.asStream()
+          let data = ''
+          expect(statement.isQuery()).to.equal(true)
 
-        stream.on('data', chunk => {
-          data += chunk
+          stream.on('data', (chunk) => {
+            data += chunk
+          })
+
+          stream.on('end', () => {
+            try {
+              expect(data).to.equal(
+                '[["1234567891234","Foo bar baz",null,null]]'
+              )
+              done()
+            } catch (err) {
+              done(err)
+            }
+          })
+
+          stream.on('error', done)
         })
-
-        stream.on('end', () => {
-          try {
-            expect(data).to.equal('[["1234567891234","Foo bar baz",null,null]]')
-            done()
-          } catch (err) {
-            done(err)
-          }
-        })
-
-        stream.on('error', done)
-      })
+        .catch(done)
     })
 
     it('should get result as array', async () => {
@@ -293,8 +299,18 @@ describe('hsql in memory', () => {
       const data = await statement.asArray()
       expect(data).to.eql([['1234567891234', 'Foo bar baz', null, null]])
     })
+    it('should get result as iterable', async () => {
+      const statement = await jt400.execute('select * from testtbl')
+      const rows = statement.asIterable()
+      let count = 0
+      for await (const row of rows) {
+        count++
+        expect(row).to.eql(['1234567891234', 'Foo bar baz', null, null])
+      }
+      expect(count).to.equal(1)
+    })
 
-    it('should pipe to JSONStream', done => {
+    it('should pipe to JSONStream', (done) => {
       let i = 1
       const data: any[] = []
 
@@ -309,10 +325,10 @@ describe('hsql in memory', () => {
           )
         }, Promise.resolve())
         .then(() => jt400.execute('select NAME from testtbl order by ID'))
-        .then(statement => statement.asStream().pipe(parse([true])))
-        .then(stream => {
+        .then((statement) => statement.asStream().pipe(parse([true])))
+        .then((stream) => {
           const res: any[] = []
-          stream.on('data', row => {
+          stream.on('data', (row) => {
             res.push(row)
           })
 
@@ -333,14 +349,14 @@ describe('hsql in memory', () => {
 
     it('should get update count', async () => {
       const statement = await jt400.execute('update testtbl set NAME=?', [
-        'testing'
+        'testing',
       ])
       expect(statement.isQuery()).to.equal(false)
       const updated = await statement.updated()
       expect(updated).to.equal(1)
     })
 
-    it('should close stream', done => {
+    it('should close stream', (done) => {
       let i = 1
       const data: any[] = []
 
@@ -349,20 +365,20 @@ describe('hsql in memory', () => {
       }
 
       Promise.all(
-        data.map(item =>
+        data.map((item) =>
           jt400.update('insert into testtbl (NAME) values(?)', ['n' + item])
         )
       )
         .then(() => {
           const res: any[] = []
-          return jt400.execute('select NAME from testtbl').then(statement => {
+          return jt400.execute('select NAME from testtbl').then((statement) => {
             const stream = statement
               .asStream({
-                bufferSize: 10
+                bufferSize: 10,
               })
               .pipe(parse([true]))
 
-            stream.on('data', row => {
+            stream.on('data', (row) => {
               res.push(row)
               if (res.length >= 10) {
                 statement.close()
@@ -382,13 +398,13 @@ describe('hsql in memory', () => {
   })
 
   describe('metadata', () => {
-    it('should return table metadata as stream', done => {
+    it('should return table metadata as stream', (done) => {
       const stream = jt400.getTablesAsStream({
-        schema: 'PUBLIC'
+        schema: 'PUBLIC',
       })
 
       const schema: any[] = []
-      stream.on('data', data => {
+      stream.on('data', (data) => {
         schema.push(data)
       })
 
@@ -397,8 +413,8 @@ describe('hsql in memory', () => {
           {
             schema: 'PUBLIC',
             table: 'TESTTBL',
-            remarks: ''
-          }
+            remarks: '',
+          },
         ])
         done()
       })
@@ -409,7 +425,7 @@ describe('hsql in memory', () => {
     it('should return columns', async () => {
       const res = await jt400.getColumns({
         schema: 'PUBLIC',
-        table: 'TESTTBL'
+        table: 'TESTTBL',
       })
 
       expect(res).to.eql([
@@ -417,32 +433,32 @@ describe('hsql in memory', () => {
           name: 'ID',
           typeName: 'DECIMAL',
           precision: 15,
-          scale: 0
+          scale: 0,
         },
         {
           name: 'NAME',
           typeName: 'VARCHAR',
           precision: 300,
-          scale: 0
+          scale: 0,
         },
         {
           name: 'START',
           typeName: 'DATE',
           precision: 10,
-          scale: 0
+          scale: 0,
         },
         {
           name: 'STAMP',
           typeName: 'TIMESTAMP',
           precision: 26,
-          scale: 0
-        }
+          scale: 0,
+        },
       ])
     })
 
     it('should return primary key', async () => {
       const res = await jt400.getPrimaryKeys({
-        table: 'TESTTBL'
+        table: 'TESTTBL',
       })
 
       expect(res.length).to.equal(1)
@@ -454,12 +470,12 @@ describe('hsql in memory', () => {
     it('should commit', () => {
       let rowId
       return jt400
-        .transaction(transaction => {
+        .transaction((transaction) => {
           return transaction
             .insertAndGetId(
               "insert into testtbl (NAME) values('Transaction 1')"
             )
-            .then(res => {
+            .then((res) => {
               rowId = res
               return transaction.update(
                 "update testtbl set NAME='Transaction 2' where id=?",
@@ -470,7 +486,7 @@ describe('hsql in memory', () => {
         .then(() =>
           jt400.query<any>('select NAME from testtbl where id=?', [rowId])
         )
-        .then(res => {
+        .then((res) => {
           expect(res[0].NAME).to.eql('Transaction 2')
         })
     })
@@ -479,30 +495,30 @@ describe('hsql in memory', () => {
       const fakeError = new Error('fake error')
       let rowId
       return jt400
-        .transaction(transaction => {
+        .transaction((transaction) => {
           return transaction
             .insertAndGetId(
               "insert into testtbl (NAME) values('Transaction 1')"
             )
-            .then(res => {
+            .then((res) => {
               rowId = res
               throw fakeError
             })
         })
-        .catch(err => {
+        .catch((err) => {
           expect(err).to.equal(fakeError)
         })
         .then(() => jt400.query('select NAME from testtbl where id=?', [rowId]))
-        .then(res => {
+        .then((res) => {
           expect(res.length).to.equal(0)
         })
     })
 
     it('should batch update', async () => {
-      const res = await jt400.transaction(transaction => {
+      const res = await jt400.transaction((transaction) => {
         return transaction.batchUpdate('insert into testtbl (NAME) values(?)', [
           ['Foo'],
-          ['Bar']
+          ['Bar'],
         ])
       })
       expect(res).to.eql([1, 1])

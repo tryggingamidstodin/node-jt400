@@ -17,6 +17,10 @@ import java.io.StringReader;
 import java.io.Reader;
 import java.io.Writer;
 
+import java.util.Base64;
+
+import java.lang.IllegalArgumentException;
+
 public class JdbcJsonClient
 {
 	private final ConnectionProvider pool;
@@ -266,23 +270,26 @@ public class JdbcJsonClient
 	private void setParams(JSONArray params, PreparedStatement st)
 			throws Exception
 	{
-		int n = params.size();		
-		
+		int n = params.size();
+
 		for (int i = 0; i < n; i++)
 		{
 			Object value = params.get(i);
-						
+
 			try
-			{			
+			{
 				if (value instanceof JSONObject) {
 					JSONObject obj = (JSONObject)value;
 
 					String objType = (String) obj.get("type");
-					String objValue = (String) obj.get("value");					
+					String objValue = (String) obj.get("value");
 
 					if ("CLOB".equals(objType)) {
-						StringReader reader = new StringReader(objValue);												
-						st.setClob(i+1, reader, objValue.length());
+						StringReader reader = new StringReader(objValue);
+						st.setClob(i + 1, reader, objValue.length());
+					} else if ("BLOB".equals(objType)) {
+						byte[] byteArray = Base64.getDecoder().decode(objValue.getBytes("UTF-8"));
+						st.setBytes(i + 1, byteArray);
 					}
 				}
 				else if (value instanceof Long)
@@ -303,6 +310,10 @@ public class JdbcJsonClient
 				}
 			}
 			catch (SQLException e)
+			{
+				throw e;
+			}
+			catch (IllegalArgumentException e)
 			{
 				throw e;
 			}
