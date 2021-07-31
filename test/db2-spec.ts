@@ -35,7 +35,7 @@ describe('jt400 pool', () => {
       .then(() => {
         const records = [
           { foo: 'bar', bar: 123, baz: '123.23' },
-          { foo: 'bar2     ', bar: 124, baz: '321.32' }
+          { foo: 'bar2     ', bar: 124, baz: '321.32' },
         ]
         return connection.insertList('tsttbl', 'testtblid', records)
       })
@@ -99,7 +99,7 @@ describe('jt400 pool', () => {
       'select * from tsttbl order by bar',
       [],
       {
-        trim
+        trim,
       }
     )
     expect(data.length).to.equal(2)
@@ -111,7 +111,7 @@ describe('jt400 pool', () => {
       'select * from tsttbl order by bar',
       [],
       {
-        trim: false
+        trim: false,
       }
     )
     expect(data.length).to.equal(2)

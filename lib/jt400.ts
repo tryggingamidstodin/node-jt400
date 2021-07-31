@@ -131,7 +131,7 @@ function createInstance(connection, insertListFun, inMemory) {
   const mixinConnection = function (obj, newConn?) {
     const thisConn = newConn || connection
 
-    obj.query = function(sql, params, options) {
+    obj.query = function (sql, params, options) {
       const jsonParams = paramsToJson(params || [])
 
       // Sending default options to java
@@ -550,7 +550,11 @@ export interface Statement {
   close: Close
 }
 export type Execute = (sql: string, params?: Param[]) => Promise<Statement>
-export type Query = <T>(sql: string, params?: Param[], options?: QueryOptions) => Promise<T[]>
+export type Query = <T>(
+  sql: string,
+  params?: Param[],
+  options?: QueryOptions
+) => Promise<T[]>
 export type Update = (sql: string, params?: Param[]) => Promise<number>
 export type CreateReadStream = (sql: string, params?: Param[]) => Readable
 export type InsertAndGetId = (sql: string, params?: Param[]) => Promise<number>
@@ -567,7 +571,7 @@ export type InsertList = (
 ) => Promise<number[]>
 export interface BaseConnection {
   query: Query
-  update: Update,
+  update: Update
   isInMemory: () => boolean
   createReadStream: CreateReadStream
   insertAndGetId: InsertAndGetId
