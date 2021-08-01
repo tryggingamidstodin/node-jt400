@@ -1,9 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file. Please note that this changelog was added in version 4.0 so documentation on versions prior to that are incomplete.
 
+## [4.2.0] - 2021-07-30
+### Added
+ - Support for BLOB column (not only clob). See [#66](https://github.com/tryggingamidstodin/node-jt400/pull/66)
+
+
 ## [4.1.0] - 2021-03-12
 ### Added
- - asIterable function added for async iterable support. 
+ - asIterable function added for async iterable support. See [#60](https://github.com/tryggingamidstodin/node-jt400/pull/60).
  - new types and interfaces added.
 
 
