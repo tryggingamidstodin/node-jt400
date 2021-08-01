@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file. Please note that this changelog was added in version 4.0 so documentation on versions prior to that are incomplete.
 
-## [4.3.0] - 2021-07-30
+## [4.3.0] - 2021-08-01
 ### Added
  - Options parameter added to the query function. Trimming values is now configurable, but still defaults to true. Issue [#22](https://github.com/tryggingamidstodin/node-jt400/issues/22).
 
