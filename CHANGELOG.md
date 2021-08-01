@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file. Please note that this changelog was added in version 4.0 so documentation on versions prior to that are incomplete.
 
+## [4.1.0] - 2021-03-12
+### Added
+ - asIterable function added for async iterable support. 
+ - new types and interfaces added.
+
+
 ## [4.0.0] - 2019-10-15
 ### Added
  - All errors wrapped in [oops-error](https://github.com/tryggingamidstodin/oops-error).
