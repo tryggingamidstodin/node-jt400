@@ -1,5 +1,5 @@
 import { jt400 as connection } from './db'
-import { pool, connect } from '../lib/jt400'
+import { pool, connect, QueryOptions } from '../lib/jt400'
 import { expect } from 'chai'
 import { readFileSync } from 'fs'
 
@@ -35,7 +35,7 @@ describe('jt400 pool', () => {
       .then(() => {
         const records = [
           { foo: 'bar', bar: 123, baz: '123.23' },
-          { foo: 'bar2', bar: 124, baz: '321.32' },
+          { foo: 'bar2     ', bar: 124, baz: '321.32' },
         ]
         return connection.insertList('tsttbl', 'testtblid', records)
       })
@@ -63,7 +63,7 @@ describe('jt400 pool', () => {
         )
         expect(err.category).to.equal('OperationalError')
       })
-  }).timeout(15000)
+  }).timeout(20000)
 
   it('should insert records', () => {
     expect(idList.length).to.equal(2)
@@ -73,6 +73,49 @@ describe('jt400 pool', () => {
   it('should execute query', async () => {
     const data = await connection.query('select * from tsttbl')
     expect(data.length).to.equal(2)
+  })
+
+  it('should trim values as default', async () => {
+    const data: any = await connection.query(
+      'select * from tsttbl order by bar'
+    )
+    expect(data.length).to.equal(2)
+    expect(data[1].FOO).to.equal('bar2')
+  })
+
+  it('should trim values when options is empty', async () => {
+    const data: any = await connection.query(
+      'select * from tsttbl',
+      [],
+      {} as QueryOptions
+    )
+    expect(data.length).to.equal(2)
+    expect(data[1].FOO).to.equal('bar2')
+  })
+
+  it('should trim values when trim is undefined', async () => {
+    let trim
+    const data: any = await connection.query(
+      'select * from tsttbl order by bar',
+      [],
+      {
+        trim,
+      }
+    )
+    expect(data.length).to.equal(2)
+    expect(data[1].FOO).to.equal('bar2')
+  })
+
+  it('should not trim values when trim option is false', async () => {
+    const data: any = await connection.query(
+      'select * from tsttbl order by bar',
+      [],
+      {
+        trim: false,
+      }
+    )
+    expect(data.length).to.equal(2)
+    expect(data[1].FOO).to.equal('bar2     ')
   })
 
   it('should execute query with params', async () => {
