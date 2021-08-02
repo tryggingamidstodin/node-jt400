@@ -81,6 +81,21 @@ catch (error) {
 }
 ```
 
+Please note that values from the database are automatically trimmed so 'abc   ' will be returned as 'abc'.
+[Issue #27](https://github.com/tryggingamidstodin/node-jt400/issues/22)
+To override this use the optional QueryOptions parameter to set trim to false.
+
+```javascript
+pool
+  .query(
+    'SELECT field1, field2 FROM foo WHERE bar=? AND baz=?',
+    [1, 'a'],
+    {
+      trim: false
+    }
+  )
+```
+
 ## Update
 ###### Promises
 ```javascript
