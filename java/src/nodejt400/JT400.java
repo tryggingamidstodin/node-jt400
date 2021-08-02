@@ -39,10 +39,10 @@ public class JT400
 		return new JT400(new Pool(conf));
 	}
 
-	public String query(String sql, String paramsJson)
+	public String query(String sql, String paramsJson, boolean trim)
 			throws Exception
 	{
-		return client.query(sql, paramsJson);
+		return client.query(sql, paramsJson, trim);
 	}
 
 	public ResultStream queryAsStream(String sql, String paramsJson,

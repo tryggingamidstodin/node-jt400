@@ -34,10 +34,10 @@ public class Transaction implements ConnectionProvider
 		this.connectionProvider.returnConnection(this.connection);
 	}
 
-	public String query(String sql, String paramsJson)
+	public String query(String sql, String paramsJson, boolean trim)
 			throws Exception
 	{
-		return client.query(sql, paramsJson);
+		return client.query(sql, paramsJson, trim);
 	}
 
 	public StatementWrap execute(String sql, String paramsJson)
