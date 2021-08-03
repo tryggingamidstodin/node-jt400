@@ -16,6 +16,7 @@ import org.json.simple.JSONValue;
 import java.io.StringReader;
 import java.io.Reader;
 import java.io.Writer;
+import java.io.ByteArrayInputStream;
 
 import java.util.Base64;
 
@@ -288,8 +289,8 @@ public class JdbcJsonClient
 						StringReader reader = new StringReader(objValue);
 						st.setClob(i + 1, reader, objValue.length());
 					} else if ("BLOB".equals(objType)) {
-						byte[] byteArray = Base64.getDecoder().decode(objValue.getBytes("UTF-8"));
-						st.setBytes(i + 1, byteArray);
+						ByteArrayInputStream stream = new ByteArrayInputStream(objValue.getBytes("UTF-8"));
+						st.setBlob(i + 1, stream, objValue.length());
 					}
 				}
 				else if (value instanceof Long)
