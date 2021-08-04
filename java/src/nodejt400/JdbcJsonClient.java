@@ -1,6 +1,6 @@
 package nodejt400;
 
-import java.sql.Clob;
+import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,11 +14,12 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 import java.io.StringReader;
+import java.io.CharArrayReader;
+import java.io.BufferedReader;
 import java.io.Reader;
 import java.io.Writer;
 import java.io.ByteArrayInputStream;
-
-import java.util.Base64;
+import java.nio.charset.StandardCharsets;
 
 import java.lang.IllegalArgumentException;
 
@@ -50,10 +51,18 @@ public class JdbcJsonClient
 				int columnCount = metaData.getColumnCount();
 				for (int i = 1; i <= columnCount; i++)
 				{
-					if (trim) {
-						json.put(metaData.getColumnLabel(i), trim(rs.getString(i)));
+					String typeName = metaData.getColumnTypeName(i);
+					if ("BLOB".equals(typeName)) {
+						Blob blob = rs.getBlob(i);
+						byte[] bytes = blob.getBytes(1, (int) blob.length());						
+						String text = new String(bytes, StandardCharsets.UTF_8);
+						json.put(metaData.getColumnLabel(i), text);
 					} else {
-						json.put(metaData.getColumnLabel(i), rs.getString(i));
+						if (trim) {
+							json.put(metaData.getColumnLabel(i), trim(rs.getString(i)));
+						} else {
+							json.put(metaData.getColumnLabel(i), rs.getString(i));
+						}
 					}
 				}
 				array.add(json);
@@ -280,7 +289,7 @@ public class JdbcJsonClient
 			try
 			{
 				if (value instanceof JSONObject) {
-					JSONObject obj = (JSONObject)value;
+					JSONObject obj = (JSONObject)value;					
 
 					String objType = (String) obj.get("type");
 					String objValue = (String) obj.get("value");
@@ -289,8 +298,11 @@ public class JdbcJsonClient
 						StringReader reader = new StringReader(objValue);
 						st.setClob(i + 1, reader, objValue.length());
 					} else if ("BLOB".equals(objType)) {
-						ByteArrayInputStream stream = new ByteArrayInputStream(objValue.getBytes("UTF-8"));
-						st.setBlob(i + 1, stream, objValue.length());
+						byte[] bytes = objValue.getBytes("UTF-8");
+						System.out.println(bytes.length);
+						ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
+
+						st.setBlob(i + 1, stream, bytes.length);
 					}
 				}
 				else if (value instanceof Long)
