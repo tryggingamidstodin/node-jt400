@@ -1,30 +1,7 @@
 import { jt400 as connection } from './db'
-import { pool, connect, QueryOptions } from '../lib/jt400'
+import { pool, QueryOptions } from '../lib/jt400'
 import { expect } from 'chai'
 import { readFileSync } from 'fs'
-
-describe('connect', () => {
-  it('should connect', async () => {
-    const db = await connect()
-    const nUpdated = await db.update('delete from tsttbl')
-    expect(nUpdated).to.be.least(0)
-  }).timeout(10000)
-
-  it('should close', async () => {
-    const db = await connect()
-    await db.close()
-
-    return db
-      .update('delete from tsttbl')
-      .then(() => {
-        throw new Error('should not be connected')
-      })
-      .catch((err) => {
-        expect(err.message).to.equal('The connection does not exist.')
-        expect(err.category).to.equal('OperationalError')
-      })
-  }).timeout(6000)
-})
 
 describe('jt400 pool', () => {
   let idList
@@ -172,14 +149,15 @@ describe('jt400 pool', () => {
   })
 
   it('should insert blob', async () => {
-    const base64String = readFileSync(__dirname + '/../../test-data/blob.png', {
+    const image = readFileSync(__dirname + '/../../test-data/blob.png', {
       encoding: 'base64',
     })
+
     await connection.update('update tsttbl set blob=?', [
-      { type: 'BLOB', value: base64String },
+      { type: 'BLOB', value: image },
     ])
     const res: any = await connection.query('SELECT blob from tsttbl')
-    expect(res[0].BLOB.length).to.equal(base64String.length)
+    expect(res[0].BLOB.length).to.equal(image.length)
   })
 
   it('should fail query with oops error', () => {

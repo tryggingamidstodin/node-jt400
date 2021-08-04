@@ -257,16 +257,17 @@ pool
     console.log('updated');
 });
 ```
-For BLOB you can pass the base64 string representation of a file. Before inserting on as400 will be converted into a byte array.
+For BLOB pass the base64 string representation of a file. The module will convert it to a blob for the AS400 database.
 ```javascript
 const fs = require('fs').promises;
-const base64String = await fs.readFile('/path/to/file.jpg', {encoding: 'base64'});
+const base64String = await fs.readFile('/path/to/file.jpg', { encoding: 'base64' });
 pool
   .update('INSERT INTO foo (fooid, textfield, blobfield) VALUES(?, ?)', [1, 'text', {type:'BLOB',value: base64String}])
   .then(() => {
     console.log('updated');
 });
 ```
+When querying a blob field you will recieve a string.
 
 ## Filesystem
 

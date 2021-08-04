@@ -1,6 +1,6 @@
 package nodejt400;
 
-import java.sql.Clob;
+import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,11 +14,14 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 import java.io.StringReader;
+import java.io.CharArrayReader;
+import java.io.BufferedReader;
 import java.io.Reader;
 import java.io.Writer;
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 
 import java.util.Base64;
-
 import java.lang.IllegalArgumentException;
 
 public class JdbcJsonClient
@@ -49,10 +52,23 @@ public class JdbcJsonClient
 				int columnCount = metaData.getColumnCount();
 				for (int i = 1; i <= columnCount; i++)
 				{
-					if (trim) {
-						json.put(metaData.getColumnLabel(i), trim(rs.getString(i)));
+					String typeName = metaData.getColumnTypeName(i);
+					if ("BLOB".equals(typeName)) {
+						Blob blob = rs.getBlob(i);
+						if (blob != null) {												
+							byte[] originalFileBytes = blob.getBytes(1, (int) blob.length());
+							byte[] base64Bytes = Base64.getEncoder().encode(originalFileBytes);
+							String text = new String(base64Bytes, StandardCharsets.UTF_8);
+							json.put(metaData.getColumnLabel(i), text);
+						} else {
+							json.put(metaData.getColumnLabel(i), null);
+						}
 					} else {
-						json.put(metaData.getColumnLabel(i), rs.getString(i));
+						if (trim) {
+							json.put(metaData.getColumnLabel(i), trim(rs.getString(i)));
+						} else {
+							json.put(metaData.getColumnLabel(i), rs.getString(i));
+						}
 					}
 				}
 				array.add(json);
@@ -279,7 +295,7 @@ public class JdbcJsonClient
 			try
 			{
 				if (value instanceof JSONObject) {
-					JSONObject obj = (JSONObject)value;
+					JSONObject obj = (JSONObject)value;					
 
 					String objType = (String) obj.get("type");
 					String objValue = (String) obj.get("value");
@@ -288,8 +304,11 @@ public class JdbcJsonClient
 						StringReader reader = new StringReader(objValue);
 						st.setClob(i + 1, reader, objValue.length());
 					} else if ("BLOB".equals(objType)) {
-						byte[] byteArray = Base64.getDecoder().decode(objValue.getBytes("UTF-8"));
-						st.setBytes(i + 1, byteArray);
+						// Data gets sent as base64
+						byte[] base64Bytes = objValue.getBytes(StandardCharsets.UTF_8);
+						byte[] originalFileBytes = Base64.getDecoder().decode(base64Bytes);
+						ByteArrayInputStream stream = new ByteArrayInputStream(originalFileBytes);
+						st.setBlob(i + 1, stream, originalFileBytes.length);
 					}
 				}
 				else if (value instanceof Long)
