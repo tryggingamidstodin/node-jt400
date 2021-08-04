@@ -298,7 +298,7 @@ public class JdbcJsonClient
 						StringReader reader = new StringReader(objValue);
 						st.setClob(i + 1, reader, objValue.length());
 					} else if ("BLOB".equals(objType)) {
-						byte[] bytes = objValue.getBytes("UTF-8");
+						byte[] bytes = objValue.getBytes(StandardCharsets.UTF_8);
 						ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
 
 						st.setBlob(i + 1, stream, bytes.length);
