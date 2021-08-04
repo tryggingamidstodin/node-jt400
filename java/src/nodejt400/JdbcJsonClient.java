@@ -54,9 +54,14 @@ public class JdbcJsonClient
 					String typeName = metaData.getColumnTypeName(i);
 					if ("BLOB".equals(typeName)) {
 						Blob blob = rs.getBlob(i);
-						byte[] bytes = blob.getBytes(1, (int) blob.length());						
-						String text = new String(bytes, StandardCharsets.UTF_8);
-						json.put(metaData.getColumnLabel(i), text);
+						if (blob != null) {												
+							byte[] bytes = blob.getBytes(1, (int) blob.length());
+							String text = new String(bytes, StandardCharsets.UTF_8);
+							json.put(metaData.getColumnLabel(i), text);
+							
+						} else {
+							json.put(metaData.getColumnLabel(i), null);
+						}
 					} else {
 						if (trim) {
 							json.put(metaData.getColumnLabel(i), trim(rs.getString(i)));
@@ -300,7 +305,6 @@ public class JdbcJsonClient
 					} else if ("BLOB".equals(objType)) {
 						byte[] bytes = objValue.getBytes(StandardCharsets.UTF_8);
 						ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
-
 						st.setBlob(i + 1, stream, bytes.length);
 					}
 				}
