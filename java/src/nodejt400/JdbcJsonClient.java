@@ -58,7 +58,6 @@ public class JdbcJsonClient
 							byte[] bytes = blob.getBytes(1, (int) blob.length());
 							String text = new String(bytes, StandardCharsets.UTF_8);
 							json.put(metaData.getColumnLabel(i), text);
-							
 						} else {
 							json.put(metaData.getColumnLabel(i), null);
 						}
