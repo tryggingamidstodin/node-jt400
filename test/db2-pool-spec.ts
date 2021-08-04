@@ -148,7 +148,7 @@ describe('jt400 pool', () => {
     expect(res[0].CLOB.length).to.equal(largeText.length)
   })
 
-  it.only('should insert blob', async () => {
+  it('should insert blob', async () => {
     const image = readFileSync(__dirname + '/../../test-data/blob.png', 'base64')
     await connection.update('update tsttbl set blob=?', [
       { type: 'BLOB', value: image }
