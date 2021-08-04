@@ -150,9 +150,10 @@ describe('jt400 pool', () => {
 
   it('should insert blob', async () => {
     const image = readFileSync(
-      __dirname + '/../../test-data/blob.png',
-      'base64'
+      __dirname + '/../../test-data/blob.png', 
+      { encoding: 'base64' }
     )
+
     await connection.update('update tsttbl set blob=?', [
       { type: 'BLOB', value: image },
     ])

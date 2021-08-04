@@ -21,6 +21,7 @@ import java.io.Writer;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 
+import java.util.Base64;
 import java.lang.IllegalArgumentException;
 
 public class JdbcJsonClient
@@ -55,8 +56,9 @@ public class JdbcJsonClient
 					if ("BLOB".equals(typeName)) {
 						Blob blob = rs.getBlob(i);
 						if (blob != null) {												
-							byte[] bytes = blob.getBytes(1, (int) blob.length());
-							String text = new String(bytes, StandardCharsets.UTF_8);
+							byte[] originalFileBytes = blob.getBytes(1, (int) blob.length());
+							byte[] base64Bytes = Base64.getEncoder().encode(originalFileBytes);
+							String text = new String(base64Bytes, StandardCharsets.UTF_8);
 							json.put(metaData.getColumnLabel(i), text);
 						} else {
 							json.put(metaData.getColumnLabel(i), null);
@@ -302,9 +304,11 @@ public class JdbcJsonClient
 						StringReader reader = new StringReader(objValue);
 						st.setClob(i + 1, reader, objValue.length());
 					} else if ("BLOB".equals(objType)) {
-						byte[] bytes = objValue.getBytes(StandardCharsets.UTF_8);
-						ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
-						st.setBlob(i + 1, stream, bytes.length);
+						// Data gets sent as base64
+						byte[] base64Bytes = objValue.getBytes(StandardCharsets.UTF_8);
+						byte[] originalFileBytes = Base64.getDecoder().decode(base64Bytes);
+						ByteArrayInputStream stream = new ByteArrayInputStream(originalFileBytes);
+						st.setBlob(i + 1, stream, originalFileBytes.length);
 					}
 				}
 				else if (value instanceof Long)
