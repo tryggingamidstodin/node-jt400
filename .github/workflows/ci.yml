@@ -9,7 +9,7 @@ jobs:
   ci:
     name: ci
     runs-on: ubuntu-latest
-    environment: development
+    environment: CI
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v3
