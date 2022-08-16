@@ -1,0 +1,34 @@
+
+on:
+  workflow_dispatch:
+  push:
+
+name: ci
+
+jobs:
+  ci:
+    name: ci
+    runs-on: ubuntu-latest
+    environment: development
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 16
+    - name: npm install
+      run: |
+        echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+        npm ci
+      env:
+        NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      shell: bash
+    - name: build
+      run: |
+        npm run build
+      shell: bash
+    - name: publish npm module
+      if: github.ref == 'refs/heads/main'
+      run: |
+        npm publish
+      shell: bash
+
