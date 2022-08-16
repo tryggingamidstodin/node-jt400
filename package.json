@@ -17,14 +17,15 @@
     "format-verify": "prettier --check ./lib/** ./test/*.ts",
     "format": "prettier --write ./lib/** ./test/*.ts",
     "lint": "tslint --project .",
-    "test": "mocha -r source-map-support/register --exit dist/test -t 10000",
+    "test": "mocha -r source-map-support/register --exit dist/unit-test -t 1000",
+    "integration-test": "mocha -r source-map-support/register --exit dist/integration-test -t 10000",
     "build": "tsc",
     "clean": "rm -rf dist/",
     "build-dev": "tsc --watch",
     "test-dev": "mocha dist/test --watch",
     "build-all": "npm run build && npm run build-java",
     "build-java": "ant archive -buildfile ./java",
-    "ci": "npm run clean && npm run build && npm run test"
+    "ci": "npm run clean && npm run build && npm run test && npm run integration-test"
   },
   "keywords": [
     "typescript",
