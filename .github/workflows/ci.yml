@@ -36,7 +36,7 @@ jobs:
         npm run test
       shell: bash
     - name: publish npm module
-      if: github.ref == 'refs/heads/main'
+      if: github.ref == 'refs/heads/master'
       run: |
         npm publish
       shell: bash
