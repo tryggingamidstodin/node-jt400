@@ -5,7 +5,7 @@ describe('MessageQ', async function () {
   beforeEach(async () => {
     // Clear queue
     msgq = await jt400.openMessageQ({
-      name: process.env.AS400_USERNAME || '',
+      name: process.env.AS400_TEST_MESSAGE_Q || '',
     })
 
     const readnext = async () => {

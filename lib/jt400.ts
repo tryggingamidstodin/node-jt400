@@ -404,7 +404,7 @@ function createInstance(connection, insertListFun, inMemory) {
       return function run(params, timeout = 3) {
         return Q.nfcall(pgmFunc, JSON.stringify(params), timeout).then(
           JSON.parse
-        )
+        ).catch(handleError({ programName: opt.programName, params, timeout }))
       }
     },
     pgm: deprecate(function (programName, paramsSchema, libraryName) {

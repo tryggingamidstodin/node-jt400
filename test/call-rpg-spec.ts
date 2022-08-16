@@ -80,6 +80,7 @@ describe('PGM', () => {
         throw new Error('Not the correct error')
       })
       .catch((e) => {
+        expect(e.category).to.equal('OperationalError')
         expect(e).not.to.equal(null)
         expect(e.message).to.contain('Connection was dropped unexpectedly.')
       })
