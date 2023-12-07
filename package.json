@@ -45,25 +45,25 @@
     "node": ">=8"
   },
   "dependencies": {
-    "JSONStream": "^1.3.2",
     "flushwritable": "^1.0.0",
-    "java": "^0.12.2",
-    "oops-error": "^2.4.0",
+    "java": "^0.14.0",
+    "JSONStream": "^1.3.2",
+    "oops-error": "^2.5.0",
     "q": "^1.5.1"
   },
   "devDependencies": {
-    "@types/chai": "^4.2.21",
-    "@types/mocha": "^9.0.0",
+    "@types/chai": "^4.3.11",
+    "@types/mocha": "^10.0.6",
     "@types/node": "^18.7.5",
-    "chai": "^4.3.4",
-    "husky": "^8.0.1",
-    "mocha": "^9.0.3",
+    "chai": "^4.3.10",
+    "husky": "^8.0.3",
+    "mocha": "^10.2.0",
     "prettier": "^2.3.2",
     "source-map-support": "^0.5.21",
     "stream-equal": "^2.0.1",
     "tslint": "^6.1.3",
     "tslint-config-standard": "^9.0.0",
-    "typescript": "^4.3.5"
+    "typescript": "^5.3.3"
   },
   "husky": {
     "hooks": {
