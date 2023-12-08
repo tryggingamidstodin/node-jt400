@@ -1,6 +1,6 @@
-import { jt400 } from './db'
 import { expect } from 'chai'
 import * as streamEqual from 'stream-equal'
+import { jt400 } from './db'
 const { ifs } = jt400
 
 describe('ifs', () => {
