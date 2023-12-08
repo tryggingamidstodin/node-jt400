@@ -1,5 +1,5 @@
-import { jt400 } from './db'
 import { expect } from 'chai'
+import { jt400 } from './db'
 describe('MessageQ', async function () {
   let msgq
   beforeEach(async () => {
