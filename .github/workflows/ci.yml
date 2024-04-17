@@ -1,4 +1,3 @@
-
 on:
   workflow_dispatch:
   push:
@@ -11,33 +10,32 @@ jobs:
     runs-on: ubuntu-latest
     environment: CI
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v3
-      with:
-        node-version: 18
-    - name: Set up JDK 11
-      uses: actions/setup-java@v3
-      with:
-        java-version: '11'
-        distribution: 'adopt'
-    - name: npm install
-      run: |
-        echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
-        npm ci
-      env:
-        NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      shell: bash
-    - name: build
-      run: |
-        npm run build-all
-      shell: bash
-    - name: test
-      run: |
-        npm run test
-      shell: bash
-    - name: publish npm module
-      if: github.ref == 'refs/heads/master'
-      run: |
-        npm publish
-      shell: bash
-
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'adopt'
+      - name: npm install
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+          npm ci
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        shell: bash
+      - name: build
+        run: |
+          npm run build-all
+        shell: bash
+      - name: test
+        run: |
+          npm run test
+        shell: bash
+      - name: publish npm module
+        if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/rc') }}
+        run: |
+          npm publish
+        shell: bash
