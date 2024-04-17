@@ -31,7 +31,7 @@ export function createConnection(
   )
   const jt400: Connection = {
     ...baseConnection,
-    transaction(transactionFunction) {
+    async transaction(transactionFunction) {
       const t = connection.createTransactionSync()
       const transactionContext = createBaseConnection(
         t,
@@ -39,17 +39,16 @@ export function createConnection(
         inMemory
       )
 
-      return transactionFunction(transactionContext)
-        .then((res) => {
-          t.commitSync()
-          t.endSync()
-          return res
-        })
-        .catch((err) => {
-          t.rollbackSync()
-          t.endSync()
-          throw err
-        })
+      try {
+        const res = await transactionFunction(transactionContext)
+        await t.commit()
+        return res
+      } catch (err) {
+        await t.rollback()
+        throw err
+      } finally {
+        await t.end()
+      }
     },
     getTablesAsStream(opt) {
       return new JdbcStream({

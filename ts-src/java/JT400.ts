@@ -46,11 +46,8 @@ export interface JDBCConnection {
 
 export interface Transaction extends JDBCConnection {
   commit: () => Promise<void>
-  commitSync: () => void
   rollback: () => Promise<void>
-  rollbackSync: () => void
   end: () => Promise<void>
-  endSync: () => void
 }
 
 export interface Pgm {
