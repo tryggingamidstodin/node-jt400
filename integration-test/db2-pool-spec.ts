@@ -35,9 +35,7 @@ describe('jt400 pool', () => {
         throw new Error('should not return result from nohost')
       })
       .catch((err) => {
-        expect(err.message).to.equal(
-          'The application requester cannot establish the connection. (nohost)'
-        )
+        expect(err.message).to.equal('nohost')
         expect(err.category).to.equal('OperationalError')
       })
   }).timeout(20000)

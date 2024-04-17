@@ -14,7 +14,7 @@
 		</delete>
 	</target>
 	<target name="build" depends="clean">
-		<javac srcdir="src" destdir="build" encoding="utf-8" includeantruntime="false" target="1.6" source="1.6">
+		<javac srcdir="src" destdir="build" encoding="utf-8" includeantruntime="false" target="1.8" source="1.8">
 			<include name="**/*.java" />
 			<classpath refid="project.classpath"/>
 		</javac>

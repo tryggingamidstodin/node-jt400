@@ -1,5 +1,4 @@
 import util = require('util')
-import java = require('java')
 import FlushWritable = require('flushwritable')
 
 export function IfsWriteStream(opt) {
@@ -15,8 +14,9 @@ util.inherits(IfsWriteStream, FlushWritable)
 IfsWriteStream.prototype._write = function (chunk, _, next) {
   this._ifsWriteStream
     .then((stream) => {
-      const byteArray = java.newArray('byte', [...chunk])
-      stream.write(byteArray)
+      return stream.write(chunk)
+    })
+    .then(() => {
       next()
     })
     .catch((err) => {
@@ -25,13 +25,12 @@ IfsWriteStream.prototype._write = function (chunk, _, next) {
 }
 
 IfsWriteStream.prototype._flush = function (done) {
-  this._ifsWriteStream.then((stream) =>
-    stream.flush((err) => {
-      if (err) {
-        done(err)
-      } else {
-        done()
-      }
+  this._ifsWriteStream
+    .then((stream) => stream.flush())
+    .then(() => {
+      done()
     })
-  )
+    .catch((err) => {
+      done(err)
+    })
 }

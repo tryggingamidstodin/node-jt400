@@ -15,15 +15,16 @@ IfsReadStream.prototype._read = function () {
   const _this = this
   this._ifsReadStream
     .then((stream) => {
-      stream.read((err, res) => {
-        if (err) {
+      stream
+        .read()
+        .then((res) => {
+          this.push(res)
+        })
+        .catch((err) => {
           _this.emit('error', err)
-        } else {
-          this.push(res ? Buffer.from(res) : null)
-        }
-      })
+        })
     })
-    .fail((err) => {
+    .catch((err) => {
       this.emit('error', err)
     })
 }
