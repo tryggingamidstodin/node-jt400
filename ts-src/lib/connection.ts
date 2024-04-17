@@ -9,7 +9,7 @@ import {
   MessageFileHandlerOptions,
   ProgramDefinitionOptions,
 } from './connection.types'
-import { JT400 } from './java/JT400'
+import { JT400 } from '../java/JT400'
 import { JdbcStream } from './jdbcstream'
 import { handleError } from './handleError'
 

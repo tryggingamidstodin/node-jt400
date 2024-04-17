@@ -17,7 +17,7 @@ export const initJT400Factory = (): JT400Factory => {
   })
   appendClasspath(
     ['jt400.jar', 'jt400wrap.jar', 'json-simple-1.1.1.jar', 'hsqldb.jar'].map(
-      (jar) => joinPath(__dirname, '/../../../java/lib/', jar)
+      (jar) => joinPath(__dirname, '/../../java/lib/', jar)
     )
   )
 

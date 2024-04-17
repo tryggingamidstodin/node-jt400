@@ -1,5 +1,5 @@
 import { handleError } from './handleError'
-import { JDBCConnection } from './java/JT400'
+import { JDBCConnection } from '../java/JT400'
 import { JdbcStream } from './jdbcstream'
 import { createJdbcWriteStream } from './jdbcwritestream'
 import { BaseConnection } from './baseConnection.types'

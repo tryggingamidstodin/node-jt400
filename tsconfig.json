@@ -9,6 +9,7 @@
         "noImplicitAny": false,
         "removeComments": true,
         "preserveConstEnums": true,
+        "sourceRoot": "./ts-src",
         "outDir": "dist",
         "sourceMap": true
     },

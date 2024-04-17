@@ -1,5 +1,5 @@
 'use strict'
-import { useInMemoryDb } from '../lib/jt400'
+import { useInMemoryDb } from '..'
 import { Readable } from 'stream'
 import { parse } from 'JSONStream'
 import { expect } from 'chai'

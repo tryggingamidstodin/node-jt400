@@ -1,15 +1,15 @@
 import { initJT400Factory } from './java'
-import { Connection } from './connection.types'
-import { createConnection } from './connection'
-import { createInsertListInOneStatment } from './insertList'
+import { Connection } from './lib/connection.types'
+import { createConnection } from './lib/connection'
+import { createInsertListInOneStatment } from './lib/insertList'
 import {
   InMemoryConnection,
   createInMemoryConnection,
-} from './inMemoryConnection'
+} from './lib/inMemoryConnection'
 
-export * from './connection.types'
-export * from './baseConnection.types'
-export * from './ifs/types'
+export * from './lib/connection.types'
+export * from './lib/baseConnection.types'
+export * from './lib/ifs/types'
 export { InMemoryConnection }
 
 const defaultConfig = {

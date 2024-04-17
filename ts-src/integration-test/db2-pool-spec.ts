@@ -1,5 +1,5 @@
 import { jt400 as connection } from './db'
-import { pool, QueryOptions } from '../lib/jt400'
+import { pool, QueryOptions } from '..'
 import { expect } from 'chai'
 import { readFileSync } from 'fs'
 

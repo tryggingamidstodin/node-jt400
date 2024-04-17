@@ -3,19 +3,19 @@
   "author": "Tryggingamiðstöðin <bt.hugbunadargerd@tm.is>",
   "version": "4.5.0",
   "description": "JT400 (IBM Toolbox) for NodeJS",
-  "main": "dist/lib/jt400.js",
-  "types": "dist/lib/jt400.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git://github.com/tryggingamidstodin/node-jt400.git"
   },
   "files": [
-    "dist/lib",
+    "dist",
     "java/lib"
   ],
   "scripts": {
-    "format-verify": "prettier --check ./lib/** ./test/*.ts",
-    "format": "prettier --write ./lib/** ./test/*.ts",
+    "format-verify": "prettier --check ./ts-src/**/*.ts",
+    "format": "prettier --write ./ts-src/**/*.ts",
     "lint": "tslint --project .",
     "test": "mocha -r source-map-support/register --exit dist/unit-test -t 1000",
     "integration-test": "mocha -r source-map-support/register --exit dist/integration-test -t 10000",

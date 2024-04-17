@@ -1,7 +1,7 @@
 import { createConnection } from './connection'
 import { Connection } from './connection.types'
 import { createStandardInsertList } from './insertList'
-import { JT400Factory } from './java'
+import { JT400Factory } from '../java'
 
 export interface InMemoryConnection extends Connection {
   mockPgm: (programName: string, fn: (input: any) => any) => InMemoryConnection
