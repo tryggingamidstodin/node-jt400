@@ -9,6 +9,7 @@ import {
 
 export * from './connection.types'
 export * from './baseConnection.types'
+export * from './ifs/types'
 export { InMemoryConnection }
 
 const defaultConfig = {

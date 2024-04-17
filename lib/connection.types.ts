@@ -1,9 +1,6 @@
-import {
-  BaseConnection,
-  Close,
-  Readable,
-  Writable,
-} from './baseConnection.types'
+import { Readable } from 'stream'
+import { BaseConnection, Close } from './baseConnection.types'
+import { Ifs } from './ifs/types'
 
 export interface ProgramDefinitionOptions {
   programName: string
@@ -77,21 +74,6 @@ export interface AS400Message {
 
 export interface MessageFileHandler {
   read: (params: MessageFileReadOptions) => Promise<AS400Message>
-}
-
-export interface IfsFileMetadata {
-  exists: boolean
-  length: number
-}
-
-export interface Ifs {
-  createReadStream: (fileName: string | Promise<string>) => Readable
-  createWriteStream: (
-    fileName: string | Promise<string>,
-    options?: { append: boolean; ccsid?: number }
-  ) => Writable
-  deleteFile: (fileName: string) => Promise<boolean>
-  fileMetadata: (fileName: string) => Promise<IfsFileMetadata>
 }
 
 export type TransactionFun = (transaction: BaseConnection) => Promise<any>
