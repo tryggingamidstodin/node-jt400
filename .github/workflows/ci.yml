@@ -35,7 +35,12 @@ jobs:
           npm run test
         shell: bash
       - name: publish npm module
-        if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/rc') }}
+        if: github.ref == 'refs/heads/master'
         run: |
           npm publish
+        shell: bash
+      - name: publish release candidate to npm
+        if: github.ref == 'refs/heads/rc'
+        run: |
+          npm publish --tag rc
         shell: bash
