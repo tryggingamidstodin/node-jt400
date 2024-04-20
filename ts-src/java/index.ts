@@ -10,6 +10,10 @@ export interface JT400Factory {
 
 export const initJT400Factory = (): JT400Factory => {
   ensureJvm({
+    // This option should not have any effect when not using electron or not having the application packaged.
+    // https://github.com/MarkusJx/node-java-bridge?tab=readme-ov-file#notes-on-electron
+    isPackagedElectron: true,
+
     opts: [
       '-Xrs',
       '-Dcom.ibm.as400.access.AS400.guiAvailable=false', // Removes gui prompts
