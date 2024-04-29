@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file. Please note
 - The java dependency was replaced with java-bridge.
 - main was move from dist/lib/jt400.js to dist/index.js
 - Q promises replaced with native promises
+- The full java object is no longer exposed when reading a message file
 
 ## [4.3.0] - 2021-08-01
 
