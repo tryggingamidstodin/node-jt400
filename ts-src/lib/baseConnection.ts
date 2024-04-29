@@ -1,17 +1,17 @@
-import { handleError } from './handleError'
 import { JDBCConnection } from '../java/JT400'
+import { BaseConnection, Param } from './baseConnection.types'
+import { handleError } from './handleError'
+import { CreateInsertList } from './insertList'
 import { JdbcStream } from './jdbcstream'
 import { createJdbcWriteStream } from './jdbcwritestream'
-import { BaseConnection } from './baseConnection.types'
-import { CreateInsertList } from './insertList'
 
-function convertDateValues(v) {
+function convertDateValues(v: any) {
   return v instanceof Date
     ? v.toISOString().replace('T', ' ').replace('Z', '')
     : v
 }
 
-function paramsToJson(params) {
+function paramsToJson(params: Param[]) {
   return JSON.stringify((params || []).map(convertDateValues))
 }
 

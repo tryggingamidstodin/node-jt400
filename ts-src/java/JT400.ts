@@ -112,7 +112,7 @@ export interface JT400 extends JDBCConnection {
     folderPath: string,
     fileName: string,
     append: boolean,
-    ccsid: number
+    ccsid?: number
   ) => Promise<IfsWriteStream>
   deleteIfsFile: (fileName: string) => Promise<boolean>
   getIfsFileMetadata: (fileName: string) => Promise<string>

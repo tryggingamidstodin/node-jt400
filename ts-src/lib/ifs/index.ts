@@ -1,8 +1,9 @@
+import { JT400 } from '../../java/JT400'
 import { IfsReadStream } from './read_stream'
 import { IfsWriteStream } from './write_stream'
 import { dirname, basename } from 'path'
 
-export function ifs(connection) {
+export function ifs(connection: JT400) {
   return {
     createReadStream: function (fileName: string | Promise<string>) {
       const javaStream = Promise.resolve(fileName).then(function (file) {

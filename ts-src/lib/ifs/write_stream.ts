@@ -1,7 +1,10 @@
 import util = require('util')
 import FlushWritable = require('flushwritable')
+import { IfsWriteStream as IfsWriteStreamType } from '../../java/JT400'
 
-export function IfsWriteStream(opt) {
+export function IfsWriteStream(opt: {
+  ifsWriteStream: Promise<IfsWriteStreamType>
+}) {
   FlushWritable.call(this, {
     objectMode: false,
   })
@@ -12,7 +15,8 @@ export function IfsWriteStream(opt) {
 util.inherits(IfsWriteStream, FlushWritable)
 
 IfsWriteStream.prototype._write = function (chunk, _, next) {
-  this._ifsWriteStream
+  const writeStream: Promise<IfsWriteStreamType> = this._ifsWriteStream
+  writeStream
     .then((stream) => {
       return stream.write(chunk)
     })
@@ -25,7 +29,8 @@ IfsWriteStream.prototype._write = function (chunk, _, next) {
 }
 
 IfsWriteStream.prototype._flush = function (done) {
-  this._ifsWriteStream
+  const writeStream: Promise<IfsWriteStreamType> = this._ifsWriteStream
+  writeStream
     .then((stream) => stream.flush())
     .then(() => {
       done()
