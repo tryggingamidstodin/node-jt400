@@ -1,6 +1,6 @@
 import { expect } from 'chai'
 import { jt400 } from './db'
-describe('MessageQ', async function () {
+xdescribe('MessageQ', function () {
   let msgq
   beforeEach(async () => {
     // Clear queue

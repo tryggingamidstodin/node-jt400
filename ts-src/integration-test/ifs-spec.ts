@@ -85,7 +85,7 @@ describe('ifs', () => {
         stream.on('error', done)
       })
       .on('error', done)
-  }).timeout(50000)
+  }).timeout(5000)
 
   it('should pipe image', () => {
     const rs = ifs().createReadStream('/atm/test/image.jpg')

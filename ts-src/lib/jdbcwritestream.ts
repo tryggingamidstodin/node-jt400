@@ -12,7 +12,7 @@ export function createJdbcWriteStream(batchUpdate, statement, bufferSize) {
       .then(() => {
         done()
       })
-      .fail(done)
+      .catch(done)
   }
 
   ws._write = function (chunck, _, next) {

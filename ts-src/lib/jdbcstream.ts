@@ -11,20 +11,21 @@ inherits(JdbcStream, Readable)
 
 function read(context) {
   if (context._closed) {
-    context._jdbcStream.close((err) => {
+    context._jdbcStream.close().catch((err) => {
       if (err) {
-        console.log('close error', err)
+        context.emit('error', err)
       }
     })
     context.push(null)
   } else {
-    context._jdbcStream.read((err, res) => {
-      if (err) {
-        context.emit('error', err)
-      } else {
+    context._jdbcStream
+      .read()
+      .then((res) => {
         context.push(res)
-      }
-    })
+      })
+      .catch((err) => {
+        context.emit('error', err)
+      })
   }
 }
 

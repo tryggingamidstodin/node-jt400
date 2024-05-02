@@ -3,11 +3,9 @@ package nodejt400;
 import java.sql.Connection;
 import java.sql.ResultSet;
 
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-public class TablesReadStream
-{
+public class TablesReadStream {
 	private final Connection c;
 
 	private final ResultSet rs;
@@ -18,23 +16,18 @@ public class TablesReadStream
 
 	private char sep = '[';
 
-	public TablesReadStream(Connection c, String catalog, String schema, String tableNamePattern) throws Exception
-	{
+	public TablesReadStream(Connection c, String catalog, String schema, String tableNamePattern) throws Exception {
 		this.c = c;
 		this.rs = c.getMetaData().getTables(catalog, schema, tableNamePattern, null);
 		this.next = rs.next();
 	}
 
-	public String read() throws Exception
-	{
-		if (next)
-		{
-			try
-			{
+	public String read() throws Exception {
+		if (next) {
+			try {
 				StringBuffer sb = new StringBuffer();
 				int i = 0;
-				while (next && i < bufferSize)
-				{
+				while (next && i < bufferSize) {
 					JSONObject table = new JSONObject();
 					String tableName = rs.getString(3);
 					table.put("table", tableName);
@@ -46,14 +39,11 @@ public class TablesReadStream
 					next = rs.next();
 					i++;
 				}
-				if(!next)
-				{
+				if (!next) {
 					sb.append(']');
 				}
 				return sb.toString();
-			}
-			catch (Exception ex)
-			{
+			} catch (Exception ex) {
 				c.close();
 				throw ex;
 			}
@@ -62,13 +52,11 @@ public class TablesReadStream
 		return null;
 	}
 
-	public String getMetaData() throws Exception
-	{
+	public String getMetaData() throws Exception {
 		return null;
 	}
 
-	public void close() throws Exception
-	{
+	public void close() throws Exception {
 		rs.close();
 		c.close();
 	}

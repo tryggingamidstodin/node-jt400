@@ -6,7 +6,7 @@ describe('MessageFileHandler', async function () {
     const file = await jt400.openMessageFile({ path: '/QSYS.LIB/QCPFMSG.MSGF' })
     const msg = await file.read({ messageId: 'CPF2105' })
     const expectedText = 'Object &1 in &2 type *&3 not found.'
-    expect(msg.getTextSync()).to.equal(expectedText)
-    expect(await msg.getTextPromise()).to.equal(expectedText)
+    const text = await msg.getText()
+    expect(text).to.equal(expectedText)
   }).timeout(5000)
 })

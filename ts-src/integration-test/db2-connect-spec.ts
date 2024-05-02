@@ -1,4 +1,4 @@
-import { connect } from '../lib/jt400'
+import { connect } from '..'
 import { expect } from 'chai'
 
 describe('connect', () => {
