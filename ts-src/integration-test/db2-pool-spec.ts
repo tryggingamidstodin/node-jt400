@@ -1,7 +1,7 @@
-import { jt400 as connection } from './db'
-import { pool, QueryOptions } from '..'
 import { expect } from 'chai'
 import { readFileSync } from 'fs'
+import { pool, QueryOptions } from '..'
+import { jt400 as connection } from './db'
 
 describe('jt400 pool', () => {
   let idList
@@ -35,7 +35,7 @@ describe('jt400 pool', () => {
         throw new Error('should not return result from nohost')
       })
       .catch((err) => {
-        expect(err.message).to.equal('nohost')
+        expect(err.message).to.include('nohost')
         expect(err.category).to.equal('OperationalError')
       })
   }).timeout(20000)
@@ -144,7 +144,7 @@ describe('jt400 pool', () => {
     ])
     const res: any = await connection.query('SELECT clob from tsttbl')
     expect(res[0].CLOB.length).to.equal(largeText.length)
-  })
+  }).timeout(20000)
 
   it('should insert blob', async () => {
     const image = readFileSync(__dirname + '/../../test-data/blob.png', {

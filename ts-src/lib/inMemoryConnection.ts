@@ -1,17 +1,22 @@
+import { JavaBridge } from '../java'
 import { createConnection } from './connection'
 import { Connection } from './connection.types'
 import { createStandardInsertList } from './insertList'
-import { JT400Factory } from '../java'
 
 export interface InMemoryConnection extends Connection {
   mockPgm: (programName: string, fn: (input: any) => any) => InMemoryConnection
 }
 
 export function createInMemoryConnection(
-  jt400Factory: JT400Factory
+  jt400Factory: JavaBridge
 ): InMemoryConnection {
   const javaCon = jt400Factory.createInMemoryConnection()
-  const instance = createConnection(javaCon, createStandardInsertList, true)
+  const instance = createConnection({
+    connection: javaCon,
+    insertListFun: createStandardInsertList,
+    bufferToJavaType: jt400Factory.bufferToJavaType,
+    inMemory: true,
+  })
   const pgmMockRegistry = {}
 
   const defaultPgm = instance.defineProgram

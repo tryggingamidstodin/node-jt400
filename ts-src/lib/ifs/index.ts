@@ -1,9 +1,10 @@
+import { basename, dirname } from 'path'
+import { BufferToJavaType } from '../../java'
 import { JT400 } from '../../java/JT400'
 import { IfsReadStream } from './read_stream'
 import { IfsWriteStream } from './write_stream'
-import { dirname, basename } from 'path'
 
-export function ifs(connection: JT400) {
+export function ifs(connection: JT400, bufferToJavaType: BufferToJavaType) {
   return {
     createReadStream: function (fileName: string | Promise<string>) {
       const javaStream = Promise.resolve(fileName).then(function (file) {
@@ -29,6 +30,7 @@ export function ifs(connection: JT400) {
       })
       return new IfsWriteStream({
         ifsWriteStream: javaStream,
+        bufferToJavaType,
       })
     },
     deleteFile: (fileName: string) => connection.deleteIfsFile(fileName),
