@@ -1,7 +1,7 @@
 {
   "name": "node-jt400",
   "author": "Tryggingamiðstöðin <bt.hugbunadargerd@tm.is>",
-  "version": "5.0.1",
+  "version": "5.0.2",
   "description": "JT400 (IBM Toolbox) for NodeJS",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
