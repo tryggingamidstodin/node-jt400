@@ -1,17 +1,19 @@
-import { ifs as createIfs } from './ifs'
 import { deprecate } from 'util'
-import JSONStream = require('JSONStream')
+import { BufferToJavaType } from '../java'
+import { JT400 } from '../java/JT400'
 import { createBaseConnection } from './baseConnection'
 import {
   Connection,
   JustNameMessageQ,
-  MessageQOptions,
   MessageFileHandlerOptions,
+  MessageQOptions,
   ProgramDefinitionOptions,
 } from './connection.types'
-import { JT400 } from '../java/JT400'
-import { JdbcStream } from './jdbcstream'
 import { handleError } from './handleError'
+import { ifs as createIfs } from './ifs'
+import { CreateInsertList } from './insertList'
+import { JdbcStream } from './jdbcstream'
+import JSONStream = require('JSONStream')
 
 const isJustNameMessageQ = function (
   opt: MessageQOptions
@@ -19,11 +21,17 @@ const isJustNameMessageQ = function (
   return (opt as JustNameMessageQ).name !== undefined
 }
 
-export function createConnection(
-  connection: JT400,
+export function createConnection({
+  connection,
   insertListFun,
+  bufferToJavaType,
+  inMemory,
+}: {
+  connection: JT400
+  insertListFun: CreateInsertList
+  bufferToJavaType: BufferToJavaType
   inMemory: boolean
-): Connection {
+}): Connection {
   const baseConnection = createBaseConnection(
     connection,
     insertListFun,
@@ -130,7 +138,7 @@ export function createConnection(
       }
     },
     ifs() {
-      return createIfs(connection)
+      return createIfs(connection, bufferToJavaType)
     },
     defineProgram(opt: ProgramDefinitionOptions) {
       const pgm = connection.pgmSync(

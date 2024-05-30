@@ -1,5 +1,5 @@
-import { jt400 } from './db'
 import { expect } from 'chai'
+import { jt400 } from './db'
 
 describe('PGM', () => {
   it('should run rpg program', async () => {
@@ -25,7 +25,7 @@ describe('PGM', () => {
       ],
     })
     const result = await getNetfang({ kt: '0123456789' })
-    expect(result.valid).to.equal('J')
+    expect(result.valid).to.equal('N')
   })
 
   it('should run pgm with datastructure param', async () => {

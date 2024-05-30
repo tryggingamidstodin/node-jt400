@@ -1,14 +1,14 @@
-import { initJT400Factory } from './java'
-import { Connection } from './lib/connection.types'
+import { initJavaBridge } from './java'
 import { createConnection } from './lib/connection'
-import { createInsertListInOneStatment } from './lib/insertList'
+import { Connection } from './lib/connection.types'
 import {
   InMemoryConnection,
   createInMemoryConnection,
 } from './lib/inMemoryConnection'
+import { createInsertListInOneStatment } from './lib/insertList'
 
-export * from './lib/connection.types'
 export * from './lib/baseConnection.types'
+export * from './lib/connection.types'
 export * from './lib/ifs/types'
 export { InMemoryConnection }
 
@@ -19,21 +19,31 @@ const defaultConfig = {
   naming: 'system',
 }
 
-const jt400Factory = initJT400Factory()
+const javaBridge = initJavaBridge()
 
 export function pool(config = {}): Connection {
-  const javaCon = jt400Factory.createPool(
+  const javaCon = javaBridge.createPool(
     JSON.stringify({ ...defaultConfig, ...config })
   )
-  return createConnection(javaCon, createInsertListInOneStatment, false)
+  return createConnection({
+    connection: javaCon,
+    insertListFun: createInsertListInOneStatment,
+    bufferToJavaType: javaBridge.bufferToJavaType,
+    inMemory: false,
+  })
 }
 export async function connect(config = {}): Promise<Connection> {
-  const javaCon = await jt400Factory.createConnection(
+  const javaCon = await javaBridge.createConnection(
     JSON.stringify({ ...defaultConfig, ...config })
   )
-  return createConnection(javaCon, createInsertListInOneStatment, false)
+  return createConnection({
+    connection: javaCon,
+    insertListFun: createInsertListInOneStatment,
+    bufferToJavaType: javaBridge.bufferToJavaType,
+    inMemory: false,
+  })
 }
 
 export function useInMemoryDb(): InMemoryConnection {
-  return createInMemoryConnection(jt400Factory)
+  return createInMemoryConnection(javaBridge)
 }

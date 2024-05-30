@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file. Please note that this changelog was added in version 4.0 so documentation on versions prior to that are incomplete.
 
+## [5.0.2] - 2024-05-30
+
+We had to revert form java-bridge back to the java dependency because of deadlock issues.
+
 ## [5.0.0] - 2024-04-18
 
 ### Changed
