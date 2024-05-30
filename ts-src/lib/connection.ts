@@ -1,5 +1,5 @@
 import { deprecate } from 'util'
-import { BufferToJavaType } from '../java'
+import { BufferToJavaType, JavaTypeToBuffer } from '../java'
 import { JT400 } from '../java/JT400'
 import { createBaseConnection } from './baseConnection'
 import {
@@ -25,11 +25,13 @@ export function createConnection({
   connection,
   insertListFun,
   bufferToJavaType,
+  javaTypeToBuffer,
   inMemory,
 }: {
   connection: JT400
   insertListFun: CreateInsertList
   bufferToJavaType: BufferToJavaType
+  javaTypeToBuffer: JavaTypeToBuffer
   inMemory: boolean
 }): Connection {
   const baseConnection = createBaseConnection(
@@ -138,7 +140,7 @@ export function createConnection({
       }
     },
     ifs() {
-      return createIfs(connection, bufferToJavaType)
+      return createIfs(connection, bufferToJavaType, javaTypeToBuffer)
     },
     defineProgram(opt: ProgramDefinitionOptions) {
       const pgm = connection.pgmSync(

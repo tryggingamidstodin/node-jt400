@@ -6,11 +6,14 @@ import { JT400 } from './JT400'
 
 export type BufferToJavaType = (buffer: Buffer) => any
 
+export type JavaTypeToBuffer = (javaType: any) => Buffer | null
+
 export interface JavaBridge {
   createConnection: (config: string) => Promise<JT400>
   createPool: (config: string) => JT400
   createInMemoryConnection: () => JT400
   bufferToJavaType: BufferToJavaType
+  javaTypeToBuffer: JavaTypeToBuffer
 }
 
 export const initJavaBridge = (): JavaBridge => {
@@ -46,6 +49,9 @@ export const initJavaBridge = (): JavaBridge => {
       const byteArray = jvm.newArray('byte', [...buffer])
       return byteArray
     },
+    javaTypeToBuffer: (javaType: any) => {
+      return javaType ? Buffer.from(javaType) : null
+    },
   }
 }
 
@@ -76,5 +82,6 @@ export const initJavaBridge = (): JavaBridge => {
 //     },
 //     createPool: (config: string) => JT400Class.createPoolSync(config),
 //     bufferToJavaType: (buffer: Buffer) => buffer,
+//     javaTypeToBuffer: (javaType: any) => javaType,
 //   }
 // }

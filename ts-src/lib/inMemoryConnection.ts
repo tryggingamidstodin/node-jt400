@@ -15,6 +15,7 @@ export function createInMemoryConnection(
     connection: javaCon,
     insertListFun: createStandardInsertList,
     bufferToJavaType: jt400Factory.bufferToJavaType,
+    javaTypeToBuffer: jt400Factory.javaTypeToBuffer,
     inMemory: true,
   })
   const pgmMockRegistry = {}

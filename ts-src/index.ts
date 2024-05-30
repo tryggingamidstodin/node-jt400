@@ -29,6 +29,7 @@ export function pool(config = {}): Connection {
     connection: javaCon,
     insertListFun: createInsertListInOneStatment,
     bufferToJavaType: javaBridge.bufferToJavaType,
+    javaTypeToBuffer: javaBridge.javaTypeToBuffer,
     inMemory: false,
   })
 }
@@ -40,6 +41,7 @@ export async function connect(config = {}): Promise<Connection> {
     connection: javaCon,
     insertListFun: createInsertListInOneStatment,
     bufferToJavaType: javaBridge.bufferToJavaType,
+    javaTypeToBuffer: javaBridge.javaTypeToBuffer,
     inMemory: false,
   })
 }
