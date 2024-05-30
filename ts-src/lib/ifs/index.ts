@@ -1,10 +1,14 @@
 import { basename, dirname } from 'path'
-import { BufferToJavaType } from '../../java'
+import { BufferToJavaType, JavaTypeToBuffer } from '../../java'
 import { JT400 } from '../../java/JT400'
 import { IfsReadStream } from './read_stream'
 import { IfsWriteStream } from './write_stream'
 
-export function ifs(connection: JT400, bufferToJavaType: BufferToJavaType) {
+export function ifs(
+  connection: JT400,
+  bufferToJavaType: BufferToJavaType,
+  javaTypeToBuffer: JavaTypeToBuffer
+) {
   return {
     createReadStream: function (fileName: string | Promise<string>) {
       const javaStream = Promise.resolve(fileName).then(function (file) {
@@ -12,6 +16,7 @@ export function ifs(connection: JT400, bufferToJavaType: BufferToJavaType) {
       })
       return new IfsReadStream({
         ifsReadStream: javaStream,
+        javaTypeToBuffer,
       })
     },
     createWriteStream: function (
