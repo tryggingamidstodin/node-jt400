@@ -1,0 +1,14 @@
+<component name="ArtifactManager">
+  <artifact name="nodejt400:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/nodejt400_jar</output-path>
+    <root id="root">
+      <element id="archive" name="nodejt400.jar">
+        <element id="module-output" name="nodejt400" />
+      </element>
+      <element id="library" level="module" name="hsqldb.jar" module-name="nodejt400" />
+      <element id="library" level="module" name="junit4" module-name="nodejt400" />
+      <element id="library" level="module" name="jt400.jar" module-name="nodejt400" />
+      <element id="library" level="module" name="json-simple-1.1.1.jar" module-name="nodejt400" />
+    </root>
+  </artifact>
+</component>
