@@ -83,24 +83,15 @@ public class JdbcJsonClient
 						case "NCHAR":
 						case "NVARCHAR":
 						case "LONGNVARCHAR":
+						case "DATE":
+						case "TIME":
+						case "TIMESTAMP":
 							String stringValue = rs.getString(i);
 							if(trim) {
 								json.put(metaData.getColumnLabel(i), trim(stringValue));
 							} else {
 								json.put(metaData.getColumnLabel(i), stringValue);
 							}
-							break;
-						case "DATE":
-							Date dateValue = rs.getDate(i);
-							json.put(metaData.getColumnLabel(i), dateValue);
-							break;
-						case "TIME":
-							Time timeValue = rs.getTime(i);
-							json.put(metaData.getColumnLabel(i), timeValue);
-							break;
-						case "TIMESTAMP":
-							Timestamp timestampValue = rs.getTimestamp(i);
-							json.put(metaData.getColumnLabel(i), timestampValue);
 							break;
 						case "BINARY":
 						case "VARBINARY":
