@@ -2,6 +2,7 @@ package nodejt400;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.Properties;
 
 import org.json.simple.JSONObject;
@@ -189,7 +190,17 @@ class Pool implements ConnectionProvider {
 		ds.setUser((String) jsonConf.get("user"));
 		ds.setPassword((String) jsonConf.get("password"));
 		ds.setProperties(connectionProps);
-		this.sqlPool = new AS400JDBCConnectionPool(ds);
+
+        try {
+			if(jsonConf.containsKey("login timeout")) {
+				int timeout = Integer.parseInt((String) jsonConf.get("login timeout"));
+				ds.setLoginTimeout(timeout);
+			}
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        this.sqlPool = new AS400JDBCConnectionPool(ds);
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
 			public void run() {
