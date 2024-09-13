@@ -1,28 +1,19 @@
 package nodejt400;
 
-import java.sql.Blob;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Types;
+import java.math.BigDecimal;
+import java.sql.*;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 import java.io.StringReader;
-import java.io.CharArrayReader;
-import java.io.BufferedReader;
-import java.io.Reader;
-import java.io.Writer;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 
 import java.util.Base64;
 import java.lang.IllegalArgumentException;
+import java.util.Date;
 
 public class JdbcJsonClient
 {
@@ -53,22 +44,76 @@ public class JdbcJsonClient
 				for (int i = 1; i <= columnCount; i++)
 				{
 					String typeName = metaData.getColumnTypeName(i);
-					if ("BLOB".equals(typeName)) {
-						Blob blob = rs.getBlob(i);
-						if (blob != null) {												
-							byte[] originalFileBytes = blob.getBytes(1, (int) blob.length());
-							byte[] base64Bytes = Base64.getEncoder().encode(originalFileBytes);
-							String text = new String(base64Bytes, StandardCharsets.UTF_8);
-							json.put(metaData.getColumnLabel(i), text);
-						} else {
-							json.put(metaData.getColumnLabel(i), null);
-						}
-					} else {
-						if (trim) {
-							json.put(metaData.getColumnLabel(i), trim(rs.getString(i)));
-						} else {
-							json.put(metaData.getColumnLabel(i), rs.getString(i));
-						}
+					switch (typeName) {
+						case "BOOLEAN":
+						case "BIT":
+							boolean booleanValue = rs.getBoolean(i);
+							json.put(metaData.getColumnLabel(i), booleanValue);
+							break;
+						case "TINYINT":
+						case "SMALLINT":
+							short shortValue = rs.getShort(i);
+							json.put(metaData.getColumnLabel(i), shortValue);
+							break;
+						case "INTEGER":
+							int intValue = rs.getInt(i);
+							json.put(metaData.getColumnLabel(i), intValue);
+							break;
+						case "BIGINT":
+							long longValue = rs.getLong(i);
+							json.put(metaData.getColumnLabel(i), longValue);
+							break;
+						case "FLOAT":
+						case "REAL":
+							float floatValue = rs.getFloat(i);
+							json.put(metaData.getColumnLabel(i), floatValue);
+							break;
+						case "DOUBLE":
+							double doubleValue = rs.getDouble(i);
+							json.put(metaData.getColumnLabel(i), doubleValue);
+							break;
+						case "NUMERIC":
+						case "DECIMAL":
+							BigDecimal bigDecimalValue = rs.getBigDecimal(i);
+							json.put(metaData.getColumnLabel(i), bigDecimalValue);
+							break;
+						case "CHAR":
+						case "VARCHAR":
+						case "LONGVARCHAR":
+						case "NCHAR":
+						case "NVARCHAR":
+						case "LONGNVARCHAR":
+						case "DATE":
+						case "TIME":
+						case "TIMESTAMP":
+							String stringValue = rs.getString(i);
+							if(trim) {
+								json.put(metaData.getColumnLabel(i), trim(stringValue));
+							} else {
+								json.put(metaData.getColumnLabel(i), stringValue);
+							}
+							break;
+						case "BINARY":
+						case "VARBINARY":
+						case "LONGVARBINARY":
+						case "BLOB":
+							Blob blob = rs.getBlob(i);
+							if (blob != null) {
+								byte[] originalFileBytes = blob.getBytes(1, (int) blob.length());
+								byte[] base64Bytes = Base64.getEncoder().encode(originalFileBytes);
+								String text = new String(base64Bytes, StandardCharsets.UTF_8);
+								json.put(metaData.getColumnLabel(i), text);
+							} else {
+								json.put(metaData.getColumnLabel(i), null);
+							}
+							break;
+						default:
+							if(trim) {
+								json.put(metaData.getColumnLabel(i), trim(rs.getString(i)));
+							} else {
+								json.put(metaData.getColumnLabel(i), rs.getString(i));
+							}
+							break;
 					}
 				}
 				array.add(json);
@@ -84,6 +129,7 @@ public class JdbcJsonClient
 				st.close();
 			pool.returnConnection(c);
 		}
+
 		return array.toJSONString();
 	}
 
