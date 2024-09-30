@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -214,6 +216,11 @@ class Pool implements ConnectionProvider {
 	public Connection getConnection() throws Exception {
 		long t = System.currentTimeMillis();
 		Connection c = sqlPool.getConnection();
+
+		Executor executor = Executors.newFixedThreadPool(2);
+		int timeoutSeconds = 60; // Seconds for network timeout
+		c.setNetworkTimeout(executor, timeoutSeconds * 1000);
+
 		t = System.currentTimeMillis() - t;
 		if (t >= logConnectionTimeThreshold) {
 			System.out.println("Connect time: " + t);

@@ -13,7 +13,6 @@ import java.nio.charset.StandardCharsets;
 
 import java.util.Base64;
 import java.lang.IllegalArgumentException;
-import java.util.Date;
 
 public class JdbcJsonClient
 {
@@ -35,6 +34,7 @@ public class JdbcJsonClient
 			JSONArray params = parseParams(paramsJson);
 			st = c.prepareStatement(sql);
 			setParams(params, st);
+			st.setQueryTimeout(10);
 			ResultSet rs = st.executeQuery();
 			ResultSetMetaData metaData = rs.getMetaData();
 			while (rs.next())
