@@ -108,6 +108,16 @@ public class JT400 {
 		return new IfsWriteStream(connectionProvider, folderPath, fileName, append, ccsid);
 	}
 
+	public String[] listIfsFiles(String folderName) throws Exception {
+		Connection connection = connectionProvider.getConnection();
+		AS400JDBCConnectionHandle handle = (AS400JDBCConnectionHandle) connection;
+		AS400 as400 = handle.getSystem();
+		IFSFile file = new IFSFile(as400, folderName);
+		String[] res = file.list();
+		connectionProvider.returnConnection(connection);
+		return res;
+	}
+
 	public boolean deleteIfsFile(String fileName) throws Exception {
 		Connection connection = connectionProvider.getConnection();
 		AS400JDBCConnectionHandle handle = (AS400JDBCConnectionHandle) connection;
