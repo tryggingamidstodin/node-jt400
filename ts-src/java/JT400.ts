@@ -114,6 +114,7 @@ export interface JT400 extends JDBCConnection {
     append: boolean,
     ccsid?: number
   ) => Promise<IfsWriteStream>
+  listIfsFiles: (folderName: string) => Promise<string[]>
   deleteIfsFile: (fileName: string) => Promise<boolean>
   getIfsFileMetadata: (fileName: string) => Promise<string>
   close: () => Promise<void>

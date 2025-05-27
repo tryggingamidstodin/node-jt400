@@ -26,6 +26,10 @@ describe('ifs', () => {
       length: 15,
     })
   })
+  it('should list files', async () => {
+    const files = await ifs().listFiles('/atm/test')
+    expect(files.length).to.be.above(0)
+  })
 
   it('should get metadata for file that does not exists', async () => {
     const metadata = await ifs().fileMetadata(

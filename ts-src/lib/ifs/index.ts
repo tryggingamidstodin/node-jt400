@@ -3,12 +3,13 @@ import { BufferToJavaType, JavaTypeToBuffer } from '../../java'
 import { JT400 } from '../../java/JT400'
 import { IfsReadStream } from './read_stream'
 import { IfsWriteStream } from './write_stream'
+import { Ifs } from './types'
 
 export function ifs(
   connection: JT400,
   bufferToJavaType: BufferToJavaType,
   javaTypeToBuffer: JavaTypeToBuffer
-) {
+): Ifs {
   return {
     createReadStream: function (fileName: string | Promise<string>) {
       const javaStream = Promise.resolve(fileName).then(function (file) {
@@ -38,6 +39,7 @@ export function ifs(
         bufferToJavaType,
       })
     },
+    listFiles: (folderName: string) => connection.listIfsFiles(folderName),
     deleteFile: (fileName: string) => connection.deleteIfsFile(fileName),
     fileMetadata: (fileName: string) =>
       connection.getIfsFileMetadata(fileName).then(JSON.parse),

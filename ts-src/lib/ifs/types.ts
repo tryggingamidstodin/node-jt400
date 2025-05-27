@@ -11,6 +11,7 @@ export interface Ifs {
     fileName: string | Promise<string>,
     options?: { append: boolean; ccsid?: number }
   ) => Writable
+  listFiles: (folderName: string) => Promise<string[]>
   deleteFile: (fileName: string) => Promise<boolean>
   fileMetadata: (fileName: string) => Promise<IfsFileMetadata>
 }
