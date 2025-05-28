@@ -26,9 +26,43 @@ describe('ifs', () => {
       length: 15,
     })
   })
-  it('should list files', async () => {
-    const files = await ifs().listFiles('/atm/test')
-    expect(files.length).to.be.above(0)
+  describe('list files', () => {
+    it('should list files', async () => {
+      const files = await ifs().listFiles('/atm/test')
+      expect(files.length).to.be.above(0)
+    })
+    it('should return empty array for empty folder', async () => {
+      const files = await ifs().listFiles('/atm/test/emptyFolder')
+      expect(files.length).to.equal(0)
+    })
+    it('should return empty array for a folder that does not exist', async () => {
+      const files = await ifs().listFiles('/atm/test/does-not-exist')
+      expect(files.length).to.equal(0)
+    })
+    it('should return empty array if the folder is a file', async () => {
+      const files = await ifs().listFiles('/atm/test/hello_world.txt')
+      expect(files.length).to.equal(0)
+    })
+  })
+  describe('move file', () => {
+    it('should return true if the file exist', async () => {
+      const res = await ifs().moveFile(
+        '/atm/test/file-to-move.txt',
+        '/atm/test/file-moved.txt'
+      )
+      expect(res).to.equal(true)
+      await ifs().moveFile(
+        '/atm/test/file-moved.txt',
+        '/atm/test/file-to-move.txt'
+      )
+    })
+    it('should return false if the file does not exist', async () => {
+      const res = await ifs().moveFile(
+        '/atm/test/does-not-exist.txt',
+        '/atm/test/does-not-exist2.txt'
+      )
+      expect(res).to.equal(false)
+    })
   })
 
   it('should get metadata for file that does not exists', async () => {
