@@ -118,6 +118,16 @@ public class JT400 {
 		return res;
 	}
 
+	public boolean moveIfsFile(String fileName, String newFileName) throws Exception {
+		Connection connection = connectionProvider.getConnection();
+		AS400JDBCConnectionHandle handle = (AS400JDBCConnectionHandle) connection;
+		AS400 as400 = handle.getSystem();
+		IFSFile file = new IFSFile(as400, fileName);
+		boolean res = file.renameTo(new IFSFile(as400, newFileName));
+		connectionProvider.returnConnection(connection);
+		return res;
+	}
+
 	public boolean deleteIfsFile(String fileName) throws Exception {
 		Connection connection = connectionProvider.getConnection();
 		AS400JDBCConnectionHandle handle = (AS400JDBCConnectionHandle) connection;
