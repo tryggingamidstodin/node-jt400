@@ -33,12 +33,13 @@ export const createBaseConnection = function (
         .catch(handleError({ sql, params }))
     },
 
-    createReadStream(sql, params) {
+    createReadStream(sql, params, options) {
       const jsonParams = paramsToJson(params || [])
       return new JdbcStream({
         jdbcStreamPromise: jdbcConnection
           .queryAsStream(sql, jsonParams, 100)
           .catch(handleError({ sql, params })),
+        objectMode: options?.objectMode
       })
     },
 
