@@ -17,9 +17,6 @@ export interface QueryOptions {
   trim: boolean
 }
 
-export interface CreateReadStreamOptions {
-  objectMode?: boolean
-}
 export interface Metadata {
   name: string
   typeName: string
@@ -32,6 +29,7 @@ export interface Statement {
   asArray: () => Promise<string[][]>
   asIterable: () => AsyncIterable<string[]>
   asStream: (options?: any) => Readable
+  asObjectStream: (options?: any) => Promise<Readable>
   updated: () => Promise<number>
   close: Close
 }
@@ -42,7 +40,7 @@ export type Query = <T>(
   options?: QueryOptions
 ) => Promise<T[]>
 export type Update = (sql: string, params?: Param[]) => Promise<number>
-export type CreateReadStream = (sql: string, params?: Param[], options?: CreateReadStreamOptions) => Readable
+export type CreateReadStream = (sql: string, params?: Param[]) => Readable
 export type InsertAndGetId = (sql: string, params?: Param[]) => Promise<number>
 
 export interface WriteStreamOptions {

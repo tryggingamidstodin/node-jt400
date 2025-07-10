@@ -2,7 +2,7 @@ import { inherits } from 'util'
 import { Readable } from 'stream'
 
 export function JdbcStream(opt) {
-  Readable.call(this, { objectMode: opt.objectMode ?? false })
+  Readable.call(this, { objectMode: false })
   this._jdbcStream = opt.jdbcStream
   this._jdbcStreamPromise = opt.jdbcStreamPromise
 }
@@ -21,7 +21,7 @@ function read(context) {
     context._jdbcStream
       .read()
       .then((res) => {
-        context.push(res)
+          context.push(res)
       })
       .catch((err) => {
         context.emit('error', err)
