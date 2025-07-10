@@ -3,7 +3,7 @@ import { arrayToObject } from '../lib/streamTransformers'
 import { parse } from 'JSONStream'
 import { expect } from 'chai'
 
-describe.only('streamTransformers', () => {
+describe('streamTransformers', () => {
   describe('arrayToObject', () => {
     it('should convert an array stream to objects', (done) => {
       const metadata = [
