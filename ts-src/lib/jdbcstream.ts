@@ -21,7 +21,7 @@ function read(context) {
     context._jdbcStream
       .read()
       .then((res) => {
-          context.push(res)
+        context.push(res)
       })
       .catch((err) => {
         context.emit('error', err)

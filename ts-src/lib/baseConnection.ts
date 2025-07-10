@@ -40,7 +40,7 @@ export const createBaseConnection = function (
       return new JdbcStream({
         jdbcStreamPromise: jdbcConnection
           .queryAsStream(sql, jsonParams, 100)
-          .catch(handleError({ sql, params }))
+          .catch(handleError({ sql, params })),
       })
     },
 
@@ -69,17 +69,22 @@ export const createBaseConnection = function (
               return stream
             },
             asObjectStream(options) {
-              options = options || {}   
-              const parseJSON = parse('*')           
+              options = options || {}
+              const parseJSON = parse('*')
 
-              return statement.getMetaData().then(JSON.parse).then((metadata) => {
-                const transformArrayToObject = arrayToObject(metadata)
-                stream = new JdbcStream({
-                  jdbcStream: statement.asStreamSync(options.bufferSize || 100),
+              return statement
+                .getMetaData()
+                .then(JSON.parse)
+                .then((metadata) => {
+                  const transformArrayToObject = arrayToObject(metadata)
+                  stream = new JdbcStream({
+                    jdbcStream: statement.asStreamSync(
+                      options.bufferSize || 100
+                    ),
+                  })
+
+                  return stream.pipe(parseJSON).pipe(transformArrayToObject)
                 })
-
-                return stream.pipe(parseJSON).pipe(transformArrayToObject)
-              })              
             },
             asIterable() {
               return {
