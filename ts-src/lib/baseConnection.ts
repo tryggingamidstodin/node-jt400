@@ -1,9 +1,11 @@
+import { parse } from 'JSONStream'
 import { JDBCConnection } from '../java/JT400'
 import { BaseConnection, Param } from './baseConnection.types'
 import { handleError } from './handleError'
 import { CreateInsertList } from './insertList'
 import { JdbcStream } from './jdbcstream'
 import { createJdbcWriteStream } from './jdbcwritestream'
+import { arrayToObject } from './streamTransformers'
 
 function convertDateValues(v: any) {
   return v instanceof Date
@@ -65,6 +67,24 @@ export const createBaseConnection = function (
                 jdbcStream: statement.asStreamSync(options.bufferSize || 100),
               })
               return stream
+            },
+            asObjectStream(options) {
+              options = options || {}
+              const parseJSON = parse('*')
+
+              return statement
+                .getMetaData()
+                .then(JSON.parse)
+                .then((metadata) => {
+                  const transformArrayToObject = arrayToObject(metadata)
+                  stream = new JdbcStream({
+                    jdbcStream: statement.asStreamSync(
+                      options.bufferSize || 100
+                    ),
+                  })
+
+                  return stream.pipe(parseJSON).pipe(transformArrayToObject)
+                })
             },
             asIterable() {
               return {

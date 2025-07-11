@@ -29,6 +29,7 @@ export interface Statement {
   asArray: () => Promise<string[][]>
   asIterable: () => AsyncIterable<string[]>
   asStream: (options?: any) => Readable
+  asObjectStream: (options?: any) => Promise<Readable>
   updated: () => Promise<number>
   close: Close
 }

@@ -294,6 +294,37 @@ describe('hsql in memory', () => {
         .catch(done)
     })
 
+    it('should get result as object stream', (done) => {
+      jt400
+        .execute('select * from testtbl')
+        .then((statement) => statement.asObjectStream())
+        .then((stream) => {
+          let data: any[] = []
+          stream.on('data', (chunk) => {
+            data.push(chunk)
+          })
+
+          stream.on('end', () => {
+            try {
+              expect(data).to.deep.equal([
+                {
+                  ID: '1234567891234',
+                  NAME: 'Foo bar baz',
+                  START: null,
+                  STAMP: null,
+                }                
+              ])
+              done()
+            } catch (err) {
+              done(err)
+            }
+          })
+
+          stream.on('error', done)
+        })
+        .catch(done)
+    })
+
     it('should get result as array', async () => {
       const statement = await jt400.execute('select * from testtbl')
       const data = await statement.asArray()
@@ -393,7 +424,7 @@ describe('hsql in memory', () => {
             stream.on('error', done)
           })
         })
-        .catch(done)
+        .catch(done)    
     })
   })
 

@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file. Please note that this changelog was added in version 4.0 so documentation on versions prior to that are incomplete.
 
+## [5.3.0] - 2025-07-11
+
+New statement function created: asObjectStream. This returns a stream of object array instead of array values (asStream)
+
 ## [5.0.2] - 2024-05-30
 
 We had to revert form java-bridge back to the java dependency because of deadlock issues.
