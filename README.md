@@ -259,6 +259,12 @@ pool
   .pipe(pool.createWriteStream('INSERT INTO FOO2 (F1, F2) VALUES(?, ?)'))
 ```
 
+#### asObjectStream
+
+```javascript
+  const streamOfObjects = await pool.execute('SELECT field1, field2 FROM foo', []).then(statement => statement.asObjectStream())  
+```
+
 ### iterable
 
 ```javascript
