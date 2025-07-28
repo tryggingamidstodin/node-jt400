@@ -6,10 +6,11 @@ export type Logger = {
 }
 
 export const createDefaultLogger = (): Logger => {
+  // Default logger that does nothing
   return {
-    debug: () => {}, // No-op for debug by default
-    info: () => {}, // No-op for debug by default
-    warn: () => {}, // No-op for debug by default
-    error: () => {}, // No-op for debug by default
+    debug: () => {},
+    info: () => {},
+    warn: () => {},
+    error: () => {},
   }
 }
