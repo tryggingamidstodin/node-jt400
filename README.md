@@ -58,6 +58,21 @@ const pool = require('node-jt400').pool(config)
 
 To close the connection pool you can call `pool.close()`
 
+### Logging
+
+You can also pass in you preferred logger. E.g. pino:
+
+```javascript
+import createLogger from 'pino'
+import { pool } from 'node-jt400'
+
+const config = {}
+const options = {
+  logger: createLogger()
+}
+const connection = pool(config, options)
+```
+
 # SQL / Database
 
 ## Query
