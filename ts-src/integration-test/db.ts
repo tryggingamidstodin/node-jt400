@@ -1,4 +1,5 @@
-import { pool, Connection } from '..'
+import { Connection, pool } from '..'
+
 export const jt400: Connection = pool({
   'date format': 'iso',
 })

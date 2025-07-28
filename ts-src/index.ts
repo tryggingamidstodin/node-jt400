@@ -2,10 +2,11 @@ import { initJavaBridge } from './java'
 import { createConnection } from './lib/connection'
 import { Connection } from './lib/connection.types'
 import {
-  InMemoryConnection,
   createInMemoryConnection,
+  InMemoryConnection,
 } from './lib/inMemoryConnection'
 import { createInsertListInOneStatment } from './lib/insertList'
+import { createDefaultLogger, Logger } from './lib/logger'
 
 export * from './lib/baseConnection.types'
 export * from './lib/connection.types'
@@ -21,7 +22,11 @@ const defaultConfig = {
 
 const javaBridge = initJavaBridge()
 
-export function pool(config = {}): Connection {
+export type JT400Options = {
+  logger?: Logger
+}
+
+export function pool(config = {}, options: JT400Options = {}): Connection {
   const javaCon = javaBridge.createPool(
     JSON.stringify({ ...defaultConfig, ...config })
   )
@@ -30,10 +35,14 @@ export function pool(config = {}): Connection {
     insertListFun: createInsertListInOneStatment,
     bufferToJavaType: javaBridge.bufferToJavaType,
     javaTypeToBuffer: javaBridge.javaTypeToBuffer,
+    logger: options.logger || createDefaultLogger(),
     inMemory: false,
   })
 }
-export async function connect(config = {}): Promise<Connection> {
+export async function connect(
+  config = {},
+  options: JT400Options = {}
+): Promise<Connection> {
   const javaCon = await javaBridge.createConnection(
     JSON.stringify({ ...defaultConfig, ...config })
   )
@@ -42,10 +51,14 @@ export async function connect(config = {}): Promise<Connection> {
     insertListFun: createInsertListInOneStatment,
     bufferToJavaType: javaBridge.bufferToJavaType,
     javaTypeToBuffer: javaBridge.javaTypeToBuffer,
+    logger: options.logger || createDefaultLogger(),
     inMemory: false,
   })
 }
 
-export function useInMemoryDb(): InMemoryConnection {
-  return createInMemoryConnection(javaBridge)
+export function useInMemoryDb(options: JT400Options = {}): InMemoryConnection {
+  return createInMemoryConnection(
+    javaBridge,
+    options.logger || createDefaultLogger()
+  )
 }

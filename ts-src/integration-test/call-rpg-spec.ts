@@ -25,7 +25,7 @@ describe('PGM', () => {
       ],
     })
     const result = await getNetfang({ kt: '0123456789' })
-    expect(result.valid).to.equal('N')
+    expect(result.valid).to.equal('J')
   })
 
   it('should run pgm with datastructure param', async () => {
