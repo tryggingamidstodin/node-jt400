@@ -107,7 +107,7 @@ describe('jt400 pool', () => {
     expect(nUpdated).to.equal(1)
   })
 
-  it('should execute update', async () => {
+  it('should execute update with parameters', async () => {
     const nUpdated = await connection.update(
       'update tsttbl set foo=? where testtblid=?',
       ['ble', 0]
@@ -204,10 +204,10 @@ describe('jt400 pool', () => {
       })
       .catch((error) => {
         expect(error.message).to.equal(
-          '[SQL0104] Token - was not valid. Valid tokens: FOR USE SKIP WAIT WITH FETCH LIMIT ORDER UNION EXCEPT OFFSET.'
+          '[SQL0104] Token - was not valid. Valid tokens: AS CL ID IN TO ASC END FOR KEY LAG LOG NEW OFF OLD OUT COPY DATA.'
         )
         expect(error.context.sql).to.equal(sql)
-        expect(error.context.params).to.equal(undefined)
+        expect(error.context.params).to.deep.equal([])
         expect(error.category).to.equal('ProgrammerError')
       })
   })

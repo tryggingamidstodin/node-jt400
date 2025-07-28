@@ -1,8 +1,8 @@
 'use strict'
-import { useInMemoryDb } from '..'
-import { Readable } from 'stream'
 import { parse } from 'JSONStream'
 import { expect } from 'chai'
+import { Readable } from 'stream'
+import { useInMemoryDb } from '..'
 
 const jt400 = useInMemoryDb()
 describe('hsql in memory', () => {
@@ -312,7 +312,7 @@ describe('hsql in memory', () => {
                   NAME: 'Foo bar baz',
                   START: null,
                   STAMP: null,
-                }                
+                },
               ])
               done()
             } catch (err) {
@@ -424,7 +424,7 @@ describe('hsql in memory', () => {
             stream.on('error', done)
           })
         })
-        .catch(done)    
+        .catch(done)
     })
   })
 

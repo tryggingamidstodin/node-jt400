@@ -2,13 +2,15 @@ import { JavaBridge } from '../java'
 import { createConnection } from './connection'
 import { Connection } from './connection.types'
 import { createStandardInsertList } from './insertList'
+import { Logger } from './logger'
 
 export interface InMemoryConnection extends Connection {
   mockPgm: (programName: string, fn: (input: any) => any) => InMemoryConnection
 }
 
 export function createInMemoryConnection(
-  jt400Factory: JavaBridge
+  jt400Factory: JavaBridge,
+  logger: Logger
 ): InMemoryConnection {
   const javaCon = jt400Factory.createInMemoryConnection()
   const instance = createConnection({
@@ -16,6 +18,7 @@ export function createInMemoryConnection(
     insertListFun: createStandardInsertList,
     bufferToJavaType: jt400Factory.bufferToJavaType,
     javaTypeToBuffer: jt400Factory.javaTypeToBuffer,
+    logger,
     inMemory: true,
   })
   const pgmMockRegistry = {}
