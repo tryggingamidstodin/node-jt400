@@ -11,7 +11,7 @@ import { createDefaultLogger, Logger } from './lib/logger'
 export * from './lib/baseConnection.types'
 export * from './lib/connection.types'
 export * from './lib/ifs/types'
-export { InMemoryConnection }
+export { InMemoryConnection, Logger }
 
 const defaultConfig = {
   host: process.env.AS400_HOST,
