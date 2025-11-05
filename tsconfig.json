@@ -14,7 +14,7 @@
         "removeComments": true,
         "preserveConstEnums": true,
         "sourceRoot": "./ts-src",
-        "outDir": "dist/esm",
+        "outDir": "esm-dist",
         "sourceMap": true
     },
     "exclude": [

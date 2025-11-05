@@ -4,7 +4,7 @@
  * This script tests the CommonJS build
  */
 
-const { pool } = require('./dist/cjs/index.js')
+const { pool } = require('./cjs-dist/index.js')
 
 console.log('Testing CommonJS build...')
 console.log('Current working directory:', process.cwd())

@@ -6,7 +6,7 @@
  * even when the module is installed in node_modules.
  */
 
-import { pool } from './dist/esm/index.js'
+import { pool } from './esm-dist/index.js'
 
 console.log('Testing module as if imported from node_modules...')
 console.log('Current working directory:', process.cwd())

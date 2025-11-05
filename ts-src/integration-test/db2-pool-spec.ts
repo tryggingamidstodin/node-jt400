@@ -4,8 +4,6 @@ import { getCurrentDir } from '../lib/pathUtils'
 import { pool, QueryOptions } from '../index'
 import { jt400 as connection } from './db'
 
-const currentDir = getCurrentDir()
-
 describe('jt400 pool', () => {
   let idList
 
@@ -140,7 +138,7 @@ describe('jt400 pool', () => {
 
   it('should insert clob', async () => {
     const largeText = readFileSync(
-      currentDir + '/test-data/clob.txt',
+      getCurrentDir() + '/test-data/clob.txt',
     ).toString()
     await connection.update('update tsttbl set clob=?', [
       { type: 'CLOB', value: largeText },
@@ -150,7 +148,7 @@ describe('jt400 pool', () => {
   }).timeout(20000)
 
   it('should insert blob', async () => {
-    const image = readFileSync(currentDir + '/test-data/blob.png', {
+    const image = readFileSync(getCurrentDir() + '/test-data/blob.png', {
       encoding: 'base64',
     })
 

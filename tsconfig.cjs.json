@@ -4,6 +4,6 @@
     "module": "CommonJS",
     "moduleResolution": "node",
     "target": "ES2019",
-    "outDir": "dist/cjs"
+    "outDir": "cjs-dist"
   }
 }

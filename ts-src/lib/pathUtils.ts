@@ -1,96 +1,84 @@
-import { dirname, join, resolve } from 'path'
-import { fileURLToPath } from 'url'
+import path from 'path'
 import { existsSync } from 'fs'
-
-// Store the module URL at load time
-// This works by creating a new Error and parsing the stack trace
-// In ESM, the stack trace contains file:// URLs, in CommonJS it contains file paths
-let moduleDir: string | undefined
-
-function initModuleDir(): string {
-  if (moduleDir) {
-    return moduleDir
-  }
-
-  // Try CommonJS __dirname first (most reliable when available)
-  try {
-    // eslint-disable-next-line no-eval
-    const dir = eval('typeof __dirname !== "undefined" ? __dirname : null')
-    if (dir) {
-      moduleDir = dir
-      return dir
-    }
-  } catch {
-    // Not in CommonJS
-  }
-
-  // For ESM: Use stack trace to find this file's location
-  try {
-    const stack = new Error().stack
-    if (stack) {
-      // Look for file:// URLs in the stack
-      const fileUrlMatch = stack.match(/file:\/\/[^\s):]+/g)
-      if (fileUrlMatch) {
-        for (const url of fileUrlMatch) {
-          // Find the one that points to pathUtils
-          if (url.includes('pathUtils')) {
-            // Remove line:column if present
-            let cleanUrl = url.split(':').slice(0, 3).join(':')
-            // Source maps may add /ts-src/ to the path, remove it
-            // e.g., /dist/esm/lib/ts-src/lib/pathUtils.ts -> /dist/esm/lib/pathUtils.js
-            cleanUrl = cleanUrl.replace(/\/ts-src\/[^/]+\//, '/')
-            // Also change .ts extension to .js if present (from source maps)
-            cleanUrl = cleanUrl.replace(/\.ts$/, '.js')
-            const dir = dirname(fileURLToPath(cleanUrl))
-            moduleDir = dir
-            return dir
-          }
-        }
-      }
-    }
-  } catch {
-    // Stack parsing failed
-  }
-
-  // Last resort fallback
-  const fallback = process.cwd()
-  moduleDir = fallback
-  return fallback
-}
-
-/**
- * Get the directory where this module file is located
- * Works for both ESM and CommonJS
- */
-function getModuleDir(): string {
-  return initModuleDir()
-}
+import { fileURLToPath } from 'url'
 
 /**
  * Find the package root directory by looking for java/lib/jt400.jar
  * This works whether the module is used directly or as a dependency
+ *
+ * This function is called at runtime when needed, which allows it to properly
+ * detect the module location in both ESM and CJS contexts
  */
 export function getCurrentDir(): string {
-  const currentDir = getModuleDir()
+  // Try CommonJS __dirname first
+  let moduleDir: string | null = null
+  try {
+    // eslint-disable-next-line no-eval
+    moduleDir = eval('typeof __dirname !== "undefined" ? __dirname : null')
+  } catch {
+    // Not in CommonJS or eval failed
+  }
 
-  // List of possible paths from different locations in the built package
-  const possiblePaths = [
-    currentDir, // Already at package root (shouldn't happen in dist)
-    join(currentDir, '..'), // dist/esm/ or dist/cjs/
-    join(currentDir, '../..'), // dist/esm/lib/ or dist/esm/java/
-    join(currentDir, '../../..'), // dist/esm/unit-test/ or dist/esm/integration-test/
-  ]
-
-  for (const testPath of possiblePaths) {
-    const resolvedPath = resolve(testPath)
-    const javaLibPath = join(resolvedPath, 'java/lib/jt400.jar')
-    if (existsSync(javaLibPath)) {
-      return resolvedPath
+  // Try to extract file location from Error stack (works in ESM)
+  if (!moduleDir) {
+    try {
+      const stack = new Error().stack
+      if (stack) {
+        // Look for file:// URLs in the stack trace (ESM modules)
+        // Stack trace format: "at <function> (file:///path/to/file.js:line:col)"
+        const matches = stack.matchAll(/file:\/\/([^\s:)]+)/g)
+        for (const match of matches) {
+          if (match[1]) {
+            const filePath = fileURLToPath('file://' + match[1])
+            // Check if this path leads to our package
+            const dir = path.dirname(filePath)
+            // Try this directory and parents
+            let testDir = dir
+            for (let i = 0; i < 5; i++) {
+              const jarPath = path.join(testDir, 'java/lib/jt400.jar')
+              if (existsSync(jarPath)) {
+                return testDir
+              }
+              const parentDir = path.dirname(testDir)
+              if (parentDir === testDir) break
+              testDir = parentDir
+            }
+          }
+        }
+      }
+    } catch {
+      // Stack parsing failed
     }
   }
 
-  // Fallback: use current directory (will likely fail but provides better error message)
+  // If we found a module directory from __dirname, search from there
+  if (moduleDir) {
+    let testDir = moduleDir
+    for (let i = 0; i < 5; i++) {
+      const jarPath = path.join(testDir, 'java/lib/jt400.jar')
+      if (existsSync(jarPath)) {
+        return testDir
+      }
+      const parentDir = path.dirname(testDir)
+      if (parentDir === testDir) break
+      testDir = parentDir
+    }
+  }
+
+  // Last resort: search up from process.cwd()
+  let searchDir = process.cwd()
+  for (let i = 0; i < 10; i++) {
+    const jarPath = path.join(searchDir, 'java/lib/jt400.jar')
+    if (existsSync(jarPath)) {
+      return searchDir
+    }
+    const parentDir = path.dirname(searchDir)
+    if (parentDir === searchDir) break
+    searchDir = parentDir
+  }
+
+  // Fallback error
   throw new Error(
-    `Could not locate package root with java/lib/jt400.jar. Searched from: ${currentDir}. Tried paths: ${possiblePaths.map((p) => resolve(p)).join(', ')}`,
+    `Could not locate package root with java/lib/jt400.jar. Searched from: ${moduleDir || process.cwd()}`,
   )
 }
