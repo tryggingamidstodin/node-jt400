@@ -4,6 +4,14 @@ NodeJS JT400 wrapper to connect to IBM iSeries and AS/400 systems (OS400 operati
 
 [![Version](https://img.shields.io/npm/v/node-jt400.svg)](https://npmjs.org/package/node-jt400)
 
+## Module System Support
+
+This package is published as a **dual-mode package** supporting both ESM (ECMAScript Modules) and CommonJS:
+
+- Use `import` in ESM projects (Node.js 16+)
+- Use `require()` in CommonJS projects
+- Full TypeScript support with type definitions for both formats
+
 ## About
 
 This package is built on the IBM Toolbox for Java (http://jt400.sourceforge.net/). It maps the java functions to node using node-java. Not all of the Java code has been mapped over to node. The reason is that this module was originally written for internal use-only for Tryggingadmidstodin. Therefore we only implemented what Tryggingamidstodin needed, for example program calls, but not stored procedures.
@@ -68,7 +76,7 @@ import { pool } from 'node-jt400'
 
 const config = {}
 const options = {
-  logger: createLogger()
+  logger: createLogger(),
 }
 const connection = pool(config, options)
 ```
@@ -99,7 +107,7 @@ pool
 try {
   const results = await pool.query(
     'SELECT field1, field2 FROM foo WHERE bar=? AND baz=?',
-    [1, 'a']
+    [1, 'a'],
   )
   console.log('result')
   const field1 = result[0].FIELD1
@@ -189,7 +197,7 @@ pool
 try {
   const id = await pool.insertAndGetId(
     'INSERT INTO foo (bar, baz) VALUES(?,?)',
-    [2, 'b']
+    [2, 'b'],
   )
   console.log('Inserted new row with id ' + id)
 } catch (error) {
@@ -252,7 +260,7 @@ pool
 try {
   const result = await pool.batchUpdate(
     'INSERT INTO FOO (FIELD1, FIELD2) VALUES(?,?)',
-    data
+    data,
   )
   console.log(result)
   // result is the number of updated rows for each row. [1, 1] in this case.
@@ -277,7 +285,9 @@ pool
 #### asObjectStream
 
 ```javascript
-  const streamOfObjects = await pool.execute('SELECT field1, field2 FROM foo', []).then(statement => statement.asObjectStream())  
+const streamOfObjects = await pool
+  .execute('SELECT field1, field2 FROM foo', [])
+  .then((statement) => statement.asObjectStream())
 ```
 
 ### iterable
@@ -285,7 +295,7 @@ pool
 ```javascript
 const statement = await pool.execute(
   'SELECT FIELD1, FIELD2 FROM FOO WHERE BAR=? AND BAZ=?',
-  [1, 'a']
+  [1, 'a'],
 )
 const rows = statement.asIterable()
 for await (const [field1, field2] of rows) {
