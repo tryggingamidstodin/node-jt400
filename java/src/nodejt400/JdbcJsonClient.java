@@ -26,6 +26,61 @@ import java.lang.IllegalArgumentException;
 
 public class JdbcJsonClient
 {
+	/**
+	 * JDBC fetch size applied to every statement that produces a result set.
+	 *
+	 * The Toolbox driver defaults to a small fetch size, so a query returning
+	 * a few thousand rows spends most of its time waiting on server
+	 * round-trips rather than on the database. Batching more rows per trip is
+	 * a substantial speedup on anything larger than a lookup, at the cost of
+	 * a proportionally larger client-side buffer.
+	 *
+	 * Override with the JT400_FETCH_SIZE environment variable or the
+	 * jt400.fetchSize system property. An unparsable value falls back to the
+	 * default rather than failing at class-init time.
+	 */
+	public static final int DEFAULT_FETCH_SIZE = readDefaultFetchSize();
+
+	private static final int FALLBACK_FETCH_SIZE = 500;
+
+	private static int readDefaultFetchSize()
+	{
+		String configured = System.getenv("JT400_FETCH_SIZE");
+		if (configured == null)
+		{
+			configured = System.getProperty("jt400.fetchSize");
+		}
+		if (configured == null)
+		{
+			return FALLBACK_FETCH_SIZE;
+		}
+		try
+		{
+			int parsed = Integer.parseInt(configured.trim());
+			return parsed > 0 ? parsed : FALLBACK_FETCH_SIZE;
+		}
+		catch (NumberFormatException ex)
+		{
+			return FALLBACK_FETCH_SIZE;
+		}
+	}
+
+	/**
+	 * setFetchSize is a hint. Drivers are allowed to ignore it, and some
+	 * throw instead, so a failure here must not fail the query itself.
+	 */
+	private static void applyFetchSize(Statement st)
+	{
+		try
+		{
+			st.setFetchSize(DEFAULT_FETCH_SIZE);
+		}
+		catch (Exception ignore)
+		{
+			// Keep the driver default.
+		}
+	}
+
 	private final ConnectionProvider pool;
 
 	public JdbcJsonClient(ConnectionProvider pool)
@@ -43,6 +98,7 @@ public class JdbcJsonClient
 		{
 			JSONArray params = parseParams(paramsJson);
 			st = c.prepareStatement(sql);
+			applyFetchSize(st);
 			setParams(params, st);
 			ResultSet rs = st.executeQuery();
 			ResultSetMetaData metaData = rs.getMetaData();
@@ -94,6 +150,7 @@ public class JdbcJsonClient
 		try {
 			JSONArray params = parseParams(paramsJson);
 			st = c.prepareStatement(sql);
+			applyFetchSize(st);
 			setParams(params, st);
 			ResultSet rs = st.executeQuery();
 			return new ResultStream(pool, c, st, rs, bufferSize);
@@ -111,6 +168,7 @@ public class JdbcJsonClient
 		{
 			JSONArray params = parseParams(paramsJson);
 			st = c.prepareStatement(sql);
+			applyFetchSize(st);
 			setParams(params, st);
 			return new StatementWrap(pool, c, st);
 		}
