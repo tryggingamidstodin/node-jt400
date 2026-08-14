@@ -65,6 +65,12 @@
       "pre-push": "npm run build && npm run test"
     }
   },
+  "overrides": {
+    "mocha": {
+      "diff": "8.0.4",
+      "serialize-javascript": "7.1.0"
+    }
+  },
   "dependencies": {
     "flushwritable": "^1.0.0",
     "java": "^0.18.0",
@@ -72,21 +78,21 @@
     "oops-error": "^2.6.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@types/mocha": "^10.0.10",
     "@types/node": "^24.10.0",
-    "@typescript-eslint/eslint-plugin": "^8.67.0",
-    "@typescript-eslint/parser": "^8.67.0",
-    "eslint": "^8.57.1",
-    "eslint-config-standard": "^17.1.0",
+    "eslint": "^9.39.5",
+    "globals": "^17.4.0",
     "husky": "^9.1.7",
-    "mocha": "^12.0.0-rc.6",
+    "mocha": "^11.8.0",
     "prettier": "^3.6.2",
     "source-map-support": "^0.5.21",
     "stream-equal": "^2.0.1",
     "tsdown": "^0.22.14",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "typescript-eslint": "^8.67.0"
   },
   "engines": {
-    "node": ">=16"
+    "node": ">=18"
   }
 }
