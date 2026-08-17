@@ -1,6 +1,6 @@
 {
   "name": "node-jt400",
-  "version": "6.0.2",
+  "version": "7.0.0",
   "description": "JT400 (IBM Toolbox) for NodeJS",
   "keywords": [
     "typescript",
@@ -93,6 +93,6 @@
     "typescript-eslint": "^8.67.0"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   }
 }
