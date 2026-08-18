@@ -25,6 +25,9 @@ jobs:
         with:
           java-version: '11'
           distribution: 'adopt'
+      - name: npm install
+        run: |
+          npm ci
       - name: build
         run: |
           npm run build-all
