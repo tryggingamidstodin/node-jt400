@@ -1,5 +1,6 @@
 import jvm from 'java'
-import { join as joinPath } from 'path'
+import { dirname, join as joinPath } from 'path'
+import { fileURLToPath } from 'url'
 import { JT400 } from './JT400.js'
 
 export type BufferToJavaType = (buffer: Buffer) => any
@@ -15,7 +16,7 @@ export interface JavaBridge {
 }
 
 export const initJavaBridge = (): JavaBridge => {
-  const currentDir = __dirname
+  const currentDir = dirname(fileURLToPath(import.meta.url))
 
   jvm.asyncOptions = {
     asyncSuffix: undefined,

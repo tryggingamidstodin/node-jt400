@@ -1,10 +1,11 @@
 import assert from 'assert'
 import { readFileSync } from 'fs'
+import { dirname, join } from 'path'
+import { fileURLToPath } from 'url'
 import { pool, QueryOptions } from '../index.js'
 import { jt400 as connection } from './db.js'
-import { join } from 'path'
 
-const currentDir = __dirname
+const currentDir = dirname(fileURLToPath(import.meta.url))
 
 describe('jt400 pool', () => {
   let idList
