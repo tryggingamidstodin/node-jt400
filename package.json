@@ -1,6 +1,6 @@
 {
   "name": "node-jt400",
-  "version": "7.0.0",
+  "version": "7.0.1",
   "description": "JT400 (IBM Toolbox) for NodeJS",
   "keywords": [
     "typescript",
@@ -56,7 +56,7 @@
     "lint": "eslint ts-src/**/*.ts",
     "test": "mocha -r source-map-support/register --exit dist-esm/unit-test -t 1000",
     "test-cjs": "mocha -r source-map-support/register --exit dist-cjs/unit-test -t 1000",
-    "test-compatibility": "node test-mjs.mjs && node test-cjs.cjs && cd /tmp && node $INIT_CWD/test-mjs.mjs && node $INIT_CWD/test-cjs.cjs",
+    "test-compatibility": "node test-mjs.mjs && node test-cjs.cjs && cd /tmp && node $INIT_CWD/test-mjs.mjs && node $INIT_CWD/test-cjs.cjs && node $INIT_CWD/test-consumers.mjs",
     "test-dev": "mocha dist-esm/unit-test --watch"
   },
   "husky": {
