@@ -246,8 +246,9 @@ await run('TypeScript node16 ESM consumer types resolve to dist-esm', async () =
     const containingFile = join(dir, 'consumer.mts')
     await writeFile(containingFile, "import { pool } from 'node-jt400'\n")
     const result = spawnSync(
-      join(pkgRoot, 'node_modules', '.bin', 'tsc'),
+      process.execPath,
       [
+        join(pkgRoot, 'node_modules', 'typescript', 'lib', 'tsc.js'),
         '--module',
         'nodenext',
         '--moduleResolution',
