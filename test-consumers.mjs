@@ -43,7 +43,11 @@ const setupConsumer = async ({ type } = {}) => {
     ),
   )
   await mkdir(join(dir, 'node_modules'))
-  await symlink(pkgRoot, join(dir, 'node_modules', 'node-jt400'))
+  await symlink(
+    pkgRoot,
+    join(dir, 'node_modules', 'node-jt400'),
+    process.platform === 'win32' ? 'junction' : 'dir',
+  )
   return dir
 }
 
