@@ -15,27 +15,71 @@ public class IfsReadStream {
 	private int bufferSize = 10000;
 	byte[] buffer = new byte[bufferSize];
 	private final IFSFileInputStream fis;
+	private boolean closed = false;
 
 	public IfsReadStream(ConnectionProvider connectionProvider, String fileName)
 			throws Exception {
 		this.connectionProvider = connectionProvider;
 		connection = connectionProvider.getConnection();
-		AS400JDBCConnectionHandle handle = (AS400JDBCConnectionHandle) connection;
-		AS400 as400 = handle.getSystem();
-		IFSFile file = new IFSFile(as400, fileName);
-		fis = new IFSFileInputStream(file);
+		boolean opened = false;
+		try {
+			AS400JDBCConnectionHandle handle = (AS400JDBCConnectionHandle) connection;
+			AS400 as400 = handle.getSystem();
+			IFSFile file = new IFSFile(as400, fileName);
+			fis = new IFSFileInputStream(file);
+			opened = true;
+		} finally {
+			if (!opened) {
+				// The caller never receives this object, so nothing else can
+				// return the connection on its behalf.
+				closed = true;
+				returnConnectionQuietly();
+			}
+		}
 	}
 
 	public byte[] read() throws Exception {
-		int n = fis.read(buffer);
-		if (n == -1) {
-			fis.close();
-			connectionProvider.returnConnection(connection);
-			return null;
-		} else if (n < bufferSize) {
-			return Arrays.copyOf(buffer, n);
+		try {
+			int n = fis.read(buffer);
+			if (n == -1) {
+				closeAndReturnConnection();
+				return null;
+			} else if (n < bufferSize) {
+				return Arrays.copyOf(buffer, n);
+			}
+			return buffer;
+		} catch (Exception ex) {
+			// The node side stops reading after a failure, so this is the last
+			// chance to hand the connection back.
+			closed = true;
+			try {
+				fis.close();
+			} catch (Exception ignore) {
+				// The connection matters more than the file handle.
+			}
+			returnConnectionQuietly();
+			throw ex;
 		}
-		return buffer;
+	}
 
+	private void closeAndReturnConnection() throws Exception {
+		if (closed) {
+			return;
+		}
+		closed = true;
+		try {
+			fis.close();
+		} catch (Exception ignore) {
+			// The connection matters more than the file handle.
+		}
+		connectionProvider.returnConnection(connection);
+	}
+
+	private void returnConnectionQuietly() {
+		try {
+			connectionProvider.returnConnection(connection);
+		} catch (Exception ignore) {
+			// Never mask the failure the caller is about to see.
+		}
 	}
 }
