@@ -1,11 +1,12 @@
-import { Readable } from 'stream'
-import { arrayToObject } from '../lib/streamTransformers.js'
-import { parse } from 'JSONStream'
 import assert from 'assert'
+import { describe, it } from 'node:test'
+import { Readable } from 'stream'
+import { parseJsonArray } from '../lib/parseJsonArray.js'
+import { arrayToObject } from '../lib/streamTransformers.js'
 
 describe('streamTransformers', () => {
   describe('arrayToObject', () => {
-    it('should convert an array stream to objects', (done) => {
+    it('should convert an array stream to objects', (_t, done) => {
       const metadata = [
         { name: 'id', typeName: 'INTEGER' },
         { name: 'name', typeName: 'VARCHAR' },
@@ -24,7 +25,7 @@ describe('streamTransformers', () => {
       })
 
       const transformArraysToObject = arrayToObject(metadata)
-      const parseJSON = parse('*')
+      const parseJSON = parseJsonArray()
 
       const objectStream = arrayStream
         .pipe(parseJSON)
@@ -46,7 +47,7 @@ describe('streamTransformers', () => {
       objectStream.on('error', done)
     })
 
-    it('should throw error when not true json array', (done) => {
+    it('should throw error when not true json array', (_t, done) => {
       const metadata = [
         { name: 'id', typeName: 'INTEGER' },
         { name: 'name', typeName: 'VARCHAR' },
@@ -78,7 +79,7 @@ describe('streamTransformers', () => {
       })
     })
 
-    it('should throw error when column length and stream data length do not match', (done) => {
+    it('should throw error when column length and stream data length do not match', (_t, done) => {
       const metadata = [
         { name: 'id', typeName: 'INTEGER' },
         { name: 'name', typeName: 'VARCHAR' },
@@ -97,7 +98,7 @@ describe('streamTransformers', () => {
       })
 
       const transformArraysToObject = arrayToObject(metadata)
-      const parseJSON = parse('*')
+      const parseJSON = parseJsonArray()
 
       const objectStream = arrayStream
         .pipe(parseJSON)

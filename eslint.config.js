@@ -19,7 +19,6 @@ export default tseslint.config(
       sourceType: 'module',
       globals: {
         ...globals.node,
-        ...globals.mocha,
       },
       parserOptions: {
         projectService: true,
@@ -42,6 +41,13 @@ export default tseslint.config(
       'no-use-before-define': 'off',
       'no-tabs': 'off',
       indent: ['error', 2],
+    },
+  },
+  {
+    files: ['ts-src/**/*spec.ts'],
+    rules: {
+      // node:test's describe/it return promises the runner handles.
+      '@typescript-eslint/no-floating-promises': 'off',
     },
   },
 )

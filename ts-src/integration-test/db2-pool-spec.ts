@@ -1,5 +1,6 @@
 import assert from 'assert'
 import { readFileSync } from 'fs'
+import { beforeEach, describe, it } from 'node:test'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 import { pool, QueryOptions } from '../index.js'
@@ -31,7 +32,7 @@ describe('jt400 pool', () => {
     assert.notStrictEqual(connection, pool({ host: 'foo' }))
   })
 
-  it('should configure host', () => {
+  it('should configure host', { timeout: 20000 }, () => {
     const db = pool({ host: 'nohost' })
     return db
       .query('select * from tsttbl')
@@ -42,7 +43,7 @@ describe('jt400 pool', () => {
         assert.ok(err.message.includes('nohost'))
         assert.strictEqual(err.category, 'OperationalError')
       })
-  }).timeout(20000)
+  })
 
   it('should insert records', () => {
     assert.strictEqual(idList.length, 2)
@@ -73,12 +74,11 @@ describe('jt400 pool', () => {
   })
 
   it('should trim values when trim is undefined', async () => {
-    let trim
     const data: any = await connection.query(
       'select * from tsttbl order by bar',
       [],
       {
-        trim,
+        trim: undefined,
       },
     )
     assert.strictEqual(data.length, 2)
@@ -98,9 +98,10 @@ describe('jt400 pool', () => {
   })
 
   it('should execute query with params', async () => {
-    const data = await connection.query('select * from tsttbl where baz=?', [
-      123.23,
-    ])
+    const data = await connection.query(
+      'select * from tsttbl where baz=?',
+      [123.23],
+    )
     assert.strictEqual(data.length, 1)
   })
 
@@ -139,7 +140,7 @@ describe('jt400 pool', () => {
       })
   })
 
-  it('should insert clob', async () => {
+  it('should insert clob', { timeout: 20000 }, async () => {
     const largeText = readFileSync(
       join(currentDir, '../../test-data/clob.txt'),
     ).toString()
@@ -148,7 +149,7 @@ describe('jt400 pool', () => {
     ])
     const res: any = await connection.query('SELECT clob from tsttbl')
     assert.strictEqual(res[0].CLOB.length, largeText.length)
-  }).timeout(20000)
+  })
 
   it('should insert blob', async () => {
     const image = readFileSync(join(currentDir, '../../test-data/blob.png'), {

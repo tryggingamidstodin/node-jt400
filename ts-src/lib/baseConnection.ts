@@ -1,4 +1,4 @@
-import { parse } from 'JSONStream'
+import { parseJsonArray } from './parseJsonArray.js'
 import { JDBCConnection } from '../java/JT400.js'
 import { BaseConnection, Param } from './baseConnection.types.js'
 import { handleError } from './handleError.js'
@@ -139,7 +139,7 @@ export const createBaseConnection = function (
             asObjectStream(options) {
               const startTime = process.hrtime.bigint()
               options = options || {}
-              const parseJSON = parse('*')
+              const parseJSON = parseJsonArray()
 
               return statement
                 .getMetaData()

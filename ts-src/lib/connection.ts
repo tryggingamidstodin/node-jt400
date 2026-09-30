@@ -13,8 +13,8 @@ import { handleError } from './handleError.js'
 import { ifs as createIfs } from './ifs/index.js'
 import { CreateInsertList } from './insertList.js'
 import { JdbcStream } from './jdbcstream.js'
-import JSONStream from 'JSONStream'
 import { Logger } from './logger.js'
+import { parseJsonArray } from './parseJsonArray.js'
 
 const isJustNameMessageQ = function (
   opt: MessageQOptions,
@@ -72,7 +72,7 @@ export function createConnection({
           opt.schema,
           opt.table || '%',
         ),
-      }).pipe(JSONStream.parse([true]))
+      }).pipe(parseJsonArray())
     },
     getColumns(opt) {
       return connection
