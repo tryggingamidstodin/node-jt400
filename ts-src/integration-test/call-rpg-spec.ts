@@ -1,8 +1,9 @@
 import assert from 'assert'
+import { describe, it } from 'node:test'
 import { jt400 } from './db.js'
 
 describe('PGM', () => {
-  it('should run rpg program', async () => {
+  it('should run rpg program', { timeout: 15000 }, async () => {
     const getIsk = jt400.defineProgram({
       programName: 'GET_ISK',
       paramsSchema: [{ name: 'mynt', size: 3 }],
@@ -13,7 +14,7 @@ describe('PGM', () => {
     ])
     assert.strictEqual(result[0].mynt, 'ISK')
     assert.strictEqual(result[1].mynt, 'EUR')
-  }).timeout(15000)
+  })
 
   it('should run GETNETFG', async () => {
     const getNetfang = jt400.defineProgram({

@@ -1,8 +1,9 @@
-import { jt400 } from './db.js'
 import assert from 'assert'
+import { describe, it } from 'node:test'
+import { jt400 } from './db.js'
 
 describe('keyed dataQ', () => {
-  it('should read and write', (done) => {
+  it('should read and write', { timeout: 5000 }, (_t, done) => {
     const dataQ = jt400.createKeyedDataQ({ name: 'SDQS1' })
 
     dataQ
@@ -13,9 +14,9 @@ describe('keyed dataQ', () => {
       .then(done, done)
 
     dataQ.write('mytestkey', 'ping')
-  }).timeout(5000)
+  })
 
-  it('should fail on timeout', (done) => {
+  it('should fail on timeout', (_t, done) => {
     const dataQ = jt400.createKeyedDataQ({ name: 'SDQS1' })
     dataQ
       .read({ key: 'mytestkey', wait: 1 /* sec */ })

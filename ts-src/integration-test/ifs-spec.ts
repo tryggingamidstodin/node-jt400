@@ -1,10 +1,11 @@
 import assert from 'assert'
-import streamEqual from 'stream-equal'
+import { buffer } from 'node:stream/consumers'
+import { describe, it } from 'node:test'
 import { jt400 } from './db.js'
 const { ifs } = jt400
 
 describe('ifs', () => {
-  it('should read file', (done) => {
+  it('should read file', { timeout: 50000 }, (_t, done) => {
     const stream = ifs().createReadStream('/atm/test/hello_world.txt')
     let data = ''
     stream.on('data', (chunk) => {
@@ -17,7 +18,7 @@ describe('ifs', () => {
     })
 
     stream.on('error', done)
-  }).timeout(50000)
+  })
 
   it('should get file metadata', async () => {
     const metadata = await ifs().fileMetadata('/atm/test/hello_world.txt')
@@ -76,7 +77,7 @@ describe('ifs', () => {
     })
   })
 
-  it('should read filename promise', (done) => {
+  it('should read filename promise', { timeout: 50000 }, (_t, done) => {
     const stream = ifs().createReadStream(
       Promise.resolve('/atm/test/hello_world.txt'),
     )
@@ -91,9 +92,9 @@ describe('ifs', () => {
     })
 
     stream.on('error', done)
-  }).timeout(50000)
+  })
 
-  it('should write file', (done) => {
+  it('should write file', { timeout: 5000 }, (_t, done) => {
     const rs = ifs().createReadStream('/atm/test/hello_world.txt')
     const ws = ifs().createWriteStream('/atm/test2/new_file.txt', {
       append: false,
@@ -123,9 +124,9 @@ describe('ifs', () => {
         stream.on('error', done)
       })
       .on('error', done)
-  }).timeout(5000)
+  })
 
-  it('should pipe image', () => {
+  it('should pipe image', { timeout: 50000 }, () => {
     const rs = ifs().createReadStream('/atm/test/image.jpg')
     const ws = ifs().createWriteStream('/atm/test2/image.jpg', {
       append: false,
@@ -135,9 +136,11 @@ describe('ifs', () => {
       const oldImage = ifs().createReadStream('/atm/test/image.jpg')
       const newImage = ifs().createReadStream('/atm/test2/image.jpg')
 
-      return streamEqual(oldImage, newImage).then((equal) => {
-        assert.strictEqual(equal, true)
-      })
+      return Promise.all([buffer(oldImage), buffer(newImage)]).then(
+        ([oldBytes, newBytes]) => {
+          assert.ok(oldBytes.equals(newBytes))
+        },
+      )
     })
-  }).timeout(50000)
+  })
 })
