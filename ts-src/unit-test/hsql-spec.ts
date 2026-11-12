@@ -1,6 +1,7 @@
 import { describe, it, beforeEach, afterEach } from 'node:test'
 import { useInMemoryDb } from '../index.js'
 import { Readable } from 'stream'
+import { pipeline } from 'stream/promises'
 import { parse } from 'JSONStream'
 import assert from 'assert'
 
@@ -116,7 +117,7 @@ describe('hsql in memory', () => {
       assert.deepStrictEqual(ids, [1234567891235])
     })
 
-    it('should create write stream', (_t, done) => {
+    it('should create write stream', async () => {
       const dataStream = new Readable({ objectMode: true })
       let c = 97
       dataStream._read = function () {
@@ -130,17 +131,10 @@ describe('hsql in memory', () => {
         'insert into testtbl (NAME) VALUES(?)',
         { bufferSize: 10 },
       )
-      dataStream
-        .pipe(ws)
-        .on('finish', () => {
-          jt400
-            .query('select name from testtbl')
-            .then((res) => {
-              assert.strictEqual(res.length, 27)
-            })
-            .then(done, done)
-        })
-        .on('error', done)
+      await pipeline(dataStream, ws)
+
+      const res = await jt400.query('select name from testtbl')
+      assert.strictEqual(res.length, 27)
     })
   })
 

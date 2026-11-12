@@ -3,27 +3,21 @@ import { jt400 } from './db.js'
 import assert from 'assert'
 
 describe('keyed dataQ', () => {
-  it('should read and write', { timeout: 5000 }, (_t, done) => {
+  it('should read and write', { timeout: 5000 }, async () => {
     const dataQ = jt400.createKeyedDataQ({ name: 'SDQS1' })
 
-    dataQ
-      .read('mytestkey')
-      .then((data) => {
-        assert.strictEqual(data, 'ping')
-      })
-      .then(done, done)
-
+    const result = dataQ.read('mytestkey')
     dataQ.write('mytestkey', 'ping')
+
+    assert.strictEqual(await result, 'ping')
   })
 
-  it('should fail on timeout', (_t, done) => {
+  it('should fail on timeout', async () => {
     const dataQ = jt400.createKeyedDataQ({ name: 'SDQS1' })
-    dataQ
-      .read({ key: 'mytestkey', wait: 1 /* sec */ })
-      .catch((err) => {
-        assert.ok(err.message.includes('timeout, key: mytestkey'))
-      })
-      .then(done, done)
+    await assert.rejects(
+      dataQ.read({ key: 'mytestkey', wait: 1 /* sec */ }),
+      (err: Error) => err.message.includes('timeout, key: mytestkey'),
+    )
   })
 
   it('should write to reponse', () => {
