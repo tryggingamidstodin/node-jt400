@@ -66,6 +66,8 @@ const pool = require('node-jt400').pool(config)
 
 To close the connection pool you can call `pool.close()`
 
+> NOTE: `close()` has no effect on the in-memory client (`useInMemoryDb()`). All in-memory clients in a process share one HSQLDB database, so the client stays usable after `close()`. To reset the data between tests, clear or drop your tables, or run `db.execute('SHUTDOWN')`. That discards all in-memory data for every in-memory client in the process, and the next query starts with an empty database.
+
 ### Logging
 
 You can also pass in you preferred logger. E.g. pino:
