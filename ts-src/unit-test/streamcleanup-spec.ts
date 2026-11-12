@@ -33,6 +33,23 @@ function createJdbcStream(fake: ReturnType<typeof fakeJavaStream>) {
 }
 
 describe('JdbcStream cleanup', () => {
+  it('close() releases the java stream immediately when nobody reads', async () => {
+    const fake = fakeJavaStream(['[1]'])
+    const s = new (JdbcStream as any)({ jdbcStream: fake.stream })
+    s.close()
+    await new Promise((resolve) => setImmediate(resolve))
+    assert.strictEqual(fake.closedCount(), 1)
+  })
+
+  it('close() ends the stream normally once consumed', async () => {
+    const fake = fakeJavaStream(['[1]'])
+    const s = new (JdbcStream as any)({ jdbcStream: fake.stream })
+    s.close()
+    s.resume()
+    await once(s, 'end')
+    assert.strictEqual(fake.closedCount(), 1)
+  })
+
   it('closes the java stream when destroyed before reading', async () => {
     const fake = fakeJavaStream()
     const s = createJdbcStream(fake)
@@ -79,6 +96,108 @@ describe('JdbcStream cleanup', () => {
     const s = createJdbcStream(fake)
     s.destroy()
     await once(s, 'close')
+  })
+
+  it('does not leave an unhandled rejection when a failed stream is never read', async () => {
+    let unhandled: unknown
+    const onUnhandled = (reason: unknown) => {
+      unhandled = reason
+    }
+    process.on('unhandledRejection', onUnhandled)
+    try {
+      new (JdbcStream as any)({
+        jdbcStreamPromise: Promise.reject(new Error('query failed')),
+      })
+      await new Promise((resolve) => setTimeout(resolve, 20))
+      assert.strictEqual(unhandled, undefined)
+    } finally {
+      process.off('unhandledRejection', onUnhandled)
+    }
+  })
+
+  it('close() during an in-flight read releases the java stream once', async () => {
+    let finishRead: (v: any) => void = () => {}
+    let closed = 0
+    const javaStream = {
+      read: () => new Promise<any>((resolve) => (finishRead = resolve)),
+      close: async () => {
+        closed++
+      },
+    }
+    const s = new (JdbcStream as any)({ jdbcStream: javaStream })
+    s.resume()
+    await new Promise((resolve) => setImmediate(resolve))
+    s.close()
+    // the read is still pending, so the java stream must not be closed yet
+    assert.strictEqual(closed, 0)
+    finishRead('[1]')
+    await once(s, 'end')
+    assert.strictEqual(closed, 1)
+  })
+
+  it('close() during an in-flight read still releases when nobody reads again', async () => {
+    let finishRead: (v: any) => void = () => {}
+    let closed = 0
+    const javaStream = {
+      read: () => new Promise<any>((resolve) => (finishRead = resolve)),
+      close: async () => {
+        closed++
+      },
+    }
+    // a one byte buffer fills on the first chunk, so no further _read is asked
+    const s = new (JdbcStream as any)({ jdbcStream: javaStream })
+    s._readableState.highWaterMark = 1
+    s.read(0)
+    await new Promise((resolve) => setImmediate(resolve))
+    s.close()
+    finishRead('[1, 2, 3]')
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    assert.strictEqual(closed, 1)
+  })
+
+  function recordingLogger() {
+    const errors: any[][] = []
+    return {
+      errors,
+      logger: {
+        debug: () => {},
+        info: () => {},
+        warn: () => {},
+        error: (...args: any[]) => {
+          errors.push(args)
+        },
+      },
+    }
+  }
+
+  it('logs a close failure during destroy', async () => {
+    const fake = fakeJavaStream()
+    fake.stream.close = async () => {
+      throw new Error('close failed')
+    }
+    const { errors, logger } = recordingLogger()
+    const s = new (JdbcStream as any)({
+      jdbcStreamPromise: Promise.resolve(fake.stream),
+      logger,
+    })
+    s.destroy()
+    await once(s, 'close')
+    assert.strictEqual(errors.length, 1)
+    assert.strictEqual(errors[0][0].err.message, 'close failed')
+  })
+
+  it('logs instead of emitting an error when close() fails', async () => {
+    const fake = fakeJavaStream(['[1]'])
+    fake.stream.close = async () => {
+      throw new Error('close failed')
+    }
+    const { errors, logger } = recordingLogger()
+    const s = new (JdbcStream as any)({ jdbcStream: fake.stream, logger })
+    s.on('error', () => assert.fail('must not emit error'))
+    s.close()
+    s.resume()
+    await once(s, 'end')
+    assert.strictEqual(errors.length, 1)
   })
 })
 

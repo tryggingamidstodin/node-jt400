@@ -65,6 +65,7 @@ export const createBaseConnection = function (
         jdbcStreamPromise: jdbcConnection
           .queryAsStream(sql, jsonParams, 100)
           .catch(handleError({ sql, params })),
+        logger,
       })
       stream.on('end', () => {
         logger.info(
@@ -122,6 +123,7 @@ export const createBaseConnection = function (
               options = options || {}
               stream = new JdbcStream({
                 jdbcStream: statement.asStreamSync(options.bufferSize || 100),
+                logger,
               })
               stream.on('end', () => {
                 logger.info(
@@ -150,6 +152,7 @@ export const createBaseConnection = function (
                     jdbcStream: statement.asStreamSync(
                       options.bufferSize || 100,
                     ),
+                    logger,
                   })
                   stream.on('end', () => {
                     logger.info(

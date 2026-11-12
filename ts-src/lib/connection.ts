@@ -72,6 +72,7 @@ export function createConnection({
           opt.schema,
           opt.table || '%',
         ),
+        logger,
       }).pipe(parseJsonArray())
     },
     getColumns(opt) {

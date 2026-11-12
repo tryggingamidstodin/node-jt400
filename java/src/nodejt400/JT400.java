@@ -199,6 +199,7 @@ class SimpleConnection implements ConnectionProvider {
 class Pool implements ConnectionProvider {
 	private final AS400JDBCConnectionPool sqlPool;
 	private final long logConnectionTimeThreshold;
+	private final Thread shutdownHook;
 
 	public Pool(JSONObject jsonConf) {
 		Properties connectionProps = new Properties();
@@ -219,13 +220,14 @@ class Pool implements ConnectionProvider {
 		ds.setPassword((String) jsonConf.get("password"));
 		ds.setProperties(connectionProps);
 		this.sqlPool = new AS400JDBCConnectionPool(ds);
-		Runtime.getRuntime().addShutdownHook(new Thread() {
+		shutdownHook = new Thread() {
 			@Override
 			public void run() {
 				System.out.println("close connectionpool.");
 				sqlPool.close();
 			}
-		});
+		};
+		Runtime.getRuntime().addShutdownHook(shutdownHook);
 	}
 
 	@Override
@@ -247,5 +249,12 @@ class Pool implements ConnectionProvider {
 	@Override
 	public void close() {
 		sqlPool.close();
+		// The hook references this pool. Left registered it would keep every
+		// closed pool reachable until the JVM exits.
+		try {
+			Runtime.getRuntime().removeShutdownHook(shutdownHook);
+		} catch (IllegalStateException ignored) {
+			// The JVM is already shutting down and the hook is running.
+		}
 	}
 }

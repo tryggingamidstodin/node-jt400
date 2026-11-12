@@ -173,6 +173,73 @@ describe('java connection handling', () => {
     })
   })
 
+  describe('StatementWrap', () => {
+    it('asArray returns the connection exactly once', async () => {
+      const st = await sqlClient.execute('select * from leaktbl', '[]')
+      await st.asArray()
+      await st.close()
+      assert.strictEqual(borrowed, 1)
+      assert.strictEqual(returned, 1)
+    })
+
+    it('close is idempotent', async () => {
+      const st = await sqlClient.execute('select * from leaktbl', '[]')
+      await st.close()
+      await st.close()
+      assert.strictEqual(returned, 1)
+    })
+
+    it('does not return the connection twice after asStream', async () => {
+      const st = await sqlClient.execute('select * from leaktbl', '[]')
+      const stream = await st.asStream(10)
+      await stream.close()
+      await st.close()
+      assert.strictEqual(borrowed, 1)
+      assert.strictEqual(returned, 1)
+    })
+  })
+
+  describe('Transaction', () => {
+    const Transaction = () => jvm.import('nodejt400.Transaction')
+
+    it('end returns the connection', async () => {
+      const t = new (Transaction())(provider)
+      assert.strictEqual(outstanding(), 1)
+      await t.end()
+      assert.strictEqual(outstanding(), 0)
+    })
+
+    it('end returns the connection even when setAutoCommit fails', async () => {
+      const t = new (Transaction())(provider)
+      // closing the underlying connection makes setAutoCommit(true) throw
+      t.getConnectionSync().closeSync()
+      await assert.rejects(() => t.end())
+      assert.strictEqual(outstanding(), 0)
+    })
+
+    it('constructor returns the connection when setAutoCommit fails', async () => {
+      const DriverManager = jvm.import('java.sql.DriverManager')
+      const closed = DriverManager.getConnectionSync(
+        'jdbc:hsqldb:mem:test',
+        'quser',
+        '',
+      )
+      closed.closeSync()
+      const failing = jvm.newProxy('nodejt400.ConnectionProvider', {
+        getConnection: () => {
+          borrowed++
+          return closed
+        },
+        returnConnection: () => {
+          returned++
+        },
+        close: () => {},
+      })
+      await assert.rejects(async () => new (Transaction())(failing))
+      assert.strictEqual(outstanding(), 0)
+    })
+  })
+
   describe('classes that require an AS400 connection', () => {
     // The HSQLDB connection cannot be cast to AS400JDBCConnectionHandle, which
     // makes these calls throw. The connection must still be handed back.

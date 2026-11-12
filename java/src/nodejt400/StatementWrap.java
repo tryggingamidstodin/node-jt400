@@ -15,6 +15,7 @@ public class StatementWrap {
 	private boolean isQuery;
 	private ResultSet rs;
 	private int updated = -1;
+	private boolean closed = false;
 
 	public StatementWrap(ConnectionProvider connectionProvider, Connection c,
 			PreparedStatement st) throws Exception {
@@ -31,12 +32,22 @@ public class StatementWrap {
 		return isQuery;
 	}
 
-	public void close() throws Exception {
-		if (rs != null) {
-			rs.close();
+	public synchronized void close() throws Exception {
+		if (closed) {
+			return;
 		}
-		st.close();
-		connectionProvider.returnConnection(c);
+		closed = true;
+		try {
+			try {
+				if (rs != null) {
+					rs.close();
+				}
+			} finally {
+				st.close();
+			}
+		} finally {
+			connectionProvider.returnConnection(c);
+		}
 	}
 
 	public int updated() throws Exception {
@@ -74,7 +85,10 @@ public class StatementWrap {
 		}
 	}
 
-	public ResultStream asStream(int bufferSize) throws Exception {
+	public synchronized ResultStream asStream(int bufferSize) throws Exception {
+		// The stream takes over closing the statement and returning the
+		// connection, so this wrapper must not do it a second time.
+		closed = true;
 		return new ResultStream(connectionProvider, c, st, rs, bufferSize);
 	}
 
@@ -95,9 +109,6 @@ public class StatementWrap {
 				array.add(toJSOnArray());
 			}
 			return array.toJSONString();
-		} catch (Exception e) {
-			close();
-			throw e;
 		} finally {
 			close();
 		}
