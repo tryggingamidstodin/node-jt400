@@ -1,8 +1,11 @@
-import FlushWritable from 'flushwritable'
+import { Writable } from 'stream'
 
 export function createJdbcWriteStream(batchUpdate, statement, bufferSize) {
   bufferSize = bufferSize || 100
-  const ws = new FlushWritable({ objectMode: true })
+  const ws = new Writable({
+    objectMode: true,
+    final: (done) => ws._flush(done),
+  }) as Writable & { _flush: (done: (err?: Error | null) => void) => void }
   let dataBuffer: any[] = []
 
   function flush(done) {

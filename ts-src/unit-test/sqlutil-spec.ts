@@ -1,3 +1,4 @@
+import { describe, it } from 'node:test'
 import { toInsertSql } from '../lib/sqlutil.js'
 import assert from 'assert'
 

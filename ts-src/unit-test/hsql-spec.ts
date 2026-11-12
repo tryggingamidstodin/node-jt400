@@ -1,3 +1,4 @@
+import { describe, it, beforeEach, afterEach } from 'node:test'
 import { useInMemoryDb } from '../index.js'
 import { Readable } from 'stream'
 import { parse } from 'JSONStream'
@@ -34,7 +35,7 @@ describe('hsql in memory', () => {
       assert.ok('MYNAME' in res[0])
     })
 
-    it('should query as stream', (done) => {
+    it('should query as stream', (_t, done) => {
       const stream = jt400.createReadStream('select * from testtbl')
       const jsonStream = stream.pipe(parse([true]))
       const data: any[] = []
@@ -55,7 +56,7 @@ describe('hsql in memory', () => {
       stream.on('error', done)
     })
 
-    it('should fail queryAsStream with oops error', (done) => {
+    it('should fail queryAsStream with oops error', (_t, done) => {
       const sql = 'select * from testtbl'
       const params = ['a']
       const stream = jt400.createReadStream(sql, params)
@@ -115,7 +116,7 @@ describe('hsql in memory', () => {
       assert.deepStrictEqual(ids, [1234567891235])
     })
 
-    it('should create write stream', (done) => {
+    it('should create write stream', (_t, done) => {
       const dataStream = new Readable({ objectMode: true })
       let c = 97
       dataStream._read = function () {
@@ -267,7 +268,7 @@ describe('hsql in memory', () => {
       ])
     })
 
-    it('should get result as stream', (done) => {
+    it('should get result as stream', (_t, done) => {
       jt400
         .execute('select * from testtbl')
         .then((statement) => {
@@ -296,7 +297,7 @@ describe('hsql in memory', () => {
         .catch(done)
     })
 
-    it('should get result as object stream', (done) => {
+    it('should get result as object stream', (_t, done) => {
       jt400
         .execute('select * from testtbl')
         .then((statement) => statement.asObjectStream())
@@ -350,7 +351,7 @@ describe('hsql in memory', () => {
       assert.strictEqual(count, 1)
     })
 
-    it('should pipe to JSONStream', (done) => {
+    it('should pipe to JSONStream', (_t, done) => {
       let i = 1
       const data: any[] = []
 
@@ -396,7 +397,7 @@ describe('hsql in memory', () => {
       assert.strictEqual(updated, 1)
     })
 
-    it('should close stream', (done) => {
+    it('should close stream', (_t, done) => {
       let i = 1
       const data: any[] = []
 
@@ -438,7 +439,7 @@ describe('hsql in memory', () => {
   })
 
   describe('metadata', () => {
-    it('should return table metadata as stream', (done) => {
+    it('should return table metadata as stream', (_t, done) => {
       const stream = jt400.getTablesAsStream({
         schema: 'PUBLIC',
       })

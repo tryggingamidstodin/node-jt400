@@ -1,21 +1,22 @@
 import { BufferToJavaType } from '../../java/index.js'
 import { IfsWriteStream as IfsWriteStreamType } from '../../java/JT400.js'
 import util from 'util'
-import FlushWritable from 'flushwritable'
+import { Writable } from 'stream'
 
 export function IfsWriteStream(opt: {
   ifsWriteStream: Promise<IfsWriteStreamType>
   bufferToJavaType: BufferToJavaType
 }) {
-  FlushWritable.call(this, {
+  Writable.call(this, {
     objectMode: false,
+    final: (done) => this._flush(done),
   })
   this._ifsWriteStream = opt.ifsWriteStream
   this._bufferToJavaType = opt.bufferToJavaType
   this._buffer = []
 }
 
-util.inherits(IfsWriteStream, FlushWritable)
+util.inherits(IfsWriteStream, Writable)
 
 IfsWriteStream.prototype._write = function (chunk, _, next) {
   const writeStream: Promise<IfsWriteStreamType> = this._ifsWriteStream
