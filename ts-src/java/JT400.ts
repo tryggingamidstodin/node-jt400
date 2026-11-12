@@ -83,11 +83,13 @@ export interface MessageFileHandler {
 }
 
 export interface IfsReadStream {
+  close: () => Promise<void>
   read: () => Promise<Buffer>
 }
 
 export interface IfsWriteStream {
   write: (data: Buffer) => Promise<void>
+  close: () => Promise<void>
   flush: () => Promise<void>
 }
 

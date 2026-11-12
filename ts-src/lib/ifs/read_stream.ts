@@ -28,10 +28,20 @@ IfsReadStream.prototype._read = function () {
           this.push(this._javaTypeToBuffer(res))
         })
         .catch((err) => {
-          _this.emit('error', err)
+          _this.destroy(err)
         })
     })
     .catch((err) => {
-      this.emit('error', err)
+      this.destroy(err)
     })
+}
+
+IfsReadStream.prototype._destroy = function (err, callback) {
+  const streamPromise: Promise<IfsReadStreamType> = this._ifsReadStream
+  void streamPromise
+    .then((stream) => stream.close())
+    .catch(() => {
+      // the original error (if any) is more relevant than a failed cleanup
+    })
+    .then(() => callback(err))
 }

@@ -15,27 +15,53 @@ public class IfsReadStream {
 	private int bufferSize = 10000;
 	byte[] buffer = new byte[bufferSize];
 	private final IFSFileInputStream fis;
+	private boolean closed = false;
 
 	public IfsReadStream(ConnectionProvider connectionProvider, String fileName)
 			throws Exception {
 		this.connectionProvider = connectionProvider;
 		connection = connectionProvider.getConnection();
-		AS400JDBCConnectionHandle handle = (AS400JDBCConnectionHandle) connection;
-		AS400 as400 = handle.getSystem();
-		IFSFile file = new IFSFile(as400, fileName);
-		fis = new IFSFileInputStream(file);
+		IFSFileInputStream stream = null;
+		try {
+			AS400JDBCConnectionHandle handle = (AS400JDBCConnectionHandle) connection;
+			AS400 as400 = handle.getSystem();
+			IFSFile file = new IFSFile(as400, fileName);
+			stream = new IFSFileInputStream(file);
+		} catch (Exception e) {
+			connectionProvider.returnConnection(connection);
+			throw e;
+		}
+		fis = stream;
 	}
 
-	public byte[] read() throws Exception {
-		int n = fis.read(buffer);
-		if (n == -1) {
-			fis.close();
-			connectionProvider.returnConnection(connection);
-			return null;
-		} else if (n < bufferSize) {
-			return Arrays.copyOf(buffer, n);
+	public synchronized void close() throws Exception {
+		if (closed) {
+			return;
 		}
-		return buffer;
+		closed = true;
+		try {
+			fis.close();
+		} finally {
+			connectionProvider.returnConnection(connection);
+		}
+	}
+
+	public synchronized byte[] read() throws Exception {
+		if (closed) {
+			return null;
+		}
+		int n;
+		try {
+			n = fis.read(buffer);
+		} catch (Exception e) {
+			close();
+			throw e;
+		}
+		if (n == -1) {
+			close();
+			return null;
+		}
+		return Arrays.copyOf(buffer, n);
 
 	}
 }

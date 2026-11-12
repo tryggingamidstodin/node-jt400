@@ -13,7 +13,7 @@ function read(context) {
   if (context._closed) {
     context._jdbcStream.close().catch((err) => {
       if (err) {
-        context.emit('error', err)
+        context.destroy(err)
       }
     })
     context.push(null)
@@ -24,7 +24,7 @@ function read(context) {
         context.push(res)
       })
       .catch((err) => {
-        context.emit('error', err)
+        context.destroy(err)
       })
   }
 }
@@ -41,9 +41,18 @@ JdbcStream.prototype._read = function () {
         read(this)
       })
       .catch((err) => {
-        this.emit('error', err)
+        this.destroy(err)
       })
   } else {
     read(this)
   }
+}
+
+JdbcStream.prototype._destroy = function (err, callback) {
+  void Promise.resolve(this._jdbcStream ?? this._jdbcStreamPromise)
+    .then((stream) => stream && stream.close())
+    .catch(() => {
+      // the original error (if any) is more relevant than a failed cleanup
+    })
+    .then(() => callback(err))
 }

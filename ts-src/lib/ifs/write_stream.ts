@@ -28,8 +28,18 @@ IfsWriteStream.prototype._write = function (chunk, _, next) {
       next()
     })
     .catch((err) => {
-      this.emit('error', err)
+      next(err)
     })
+}
+
+IfsWriteStream.prototype._destroy = function (err, callback) {
+  const writeStream: Promise<IfsWriteStreamType> = this._ifsWriteStream
+  void writeStream
+    .then((stream) => stream.close())
+    .catch(() => {
+      // the original error (if any) is more relevant than a failed cleanup
+    })
+    .then(() => callback(err))
 }
 
 IfsWriteStream.prototype._flush = function (done) {
