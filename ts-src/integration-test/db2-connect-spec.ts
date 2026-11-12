@@ -1,6 +1,6 @@
+import assert from 'assert'
 import { describe, it } from 'node:test'
 import { connect } from '../index.js'
-import assert from 'assert'
 
 describe('connect', () => {
   it('should connect', { timeout: 10000 }, async () => {

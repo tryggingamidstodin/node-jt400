@@ -1,11 +1,7 @@
-import { Writable } from 'stream'
+import { Writable } from 'node:stream'
 
 export function createJdbcWriteStream(batchUpdate, statement, bufferSize) {
   bufferSize = bufferSize || 100
-  const ws = new Writable({
-    objectMode: true,
-    final: (done) => ws._flush(done),
-  }) as Writable & { _flush: (done: (err?: Error | null) => void) => void }
   let dataBuffer: any[] = []
 
   function flush(done) {
@@ -18,22 +14,22 @@ export function createJdbcWriteStream(batchUpdate, statement, bufferSize) {
       .catch(done)
   }
 
-  ws._write = function (chunck, _, next) {
-    dataBuffer.push(chunck)
-    if (dataBuffer.length >= bufferSize) {
-      flush(next)
-    } else {
-      next()
-    }
-  }
-
-  ws._flush = function (done) {
-    if (dataBuffer.length) {
-      flush(done)
-    } else {
-      done()
-    }
-  }
-
-  return ws
+  return new Writable({
+    objectMode: true,
+    write(chunk, _, next) {
+      dataBuffer.push(chunk)
+      if (dataBuffer.length >= bufferSize) {
+        flush(next)
+      } else {
+        next()
+      }
+    },
+    final(done) {
+      if (dataBuffer.length) {
+        flush(done)
+      } else {
+        done()
+      }
+    },
+  })
 }

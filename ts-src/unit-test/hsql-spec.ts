@@ -1,9 +1,9 @@
-import { describe, it, beforeEach, afterEach } from 'node:test'
-import { useInMemoryDb } from '../index.js'
+import assert from 'assert'
 import { Readable } from 'stream'
 import { pipeline } from 'stream/promises'
-import { parse } from 'JSONStream'
-import assert from 'assert'
+import { parseJsonArray } from '../lib/parseJsonArray.js'
+import { afterEach, beforeEach, describe, it } from 'node:test'
+import { useInMemoryDb } from '../index.js'
 
 const jt400 = useInMemoryDb()
 describe('hsql in memory', () => {
@@ -38,7 +38,7 @@ describe('hsql in memory', () => {
 
     it('should query as stream', (_t, done) => {
       const stream = jt400.createReadStream('select * from testtbl')
-      const jsonStream = stream.pipe(parse([true]))
+      const jsonStream = stream.pipe(parseJsonArray())
       const data: any[] = []
 
       jsonStream.on('data', (row) => {
@@ -61,7 +61,7 @@ describe('hsql in memory', () => {
       const sql = 'select * from testtbl'
       const params = ['a']
       const stream = jt400.createReadStream(sql, params)
-      const jsonStream = stream.pipe(parse([true]))
+      const jsonStream = stream.pipe(parseJsonArray())
 
       jsonStream.on('end', () => {
         stream.emit('error', new Error('wrong error'))
@@ -345,7 +345,7 @@ describe('hsql in memory', () => {
       assert.strictEqual(count, 1)
     })
 
-    it('should pipe to JSONStream', (_t, done) => {
+    it('should pipe parsed rows', (_t, done) => {
       let i = 1
       const data: any[] = []
 
@@ -360,7 +360,7 @@ describe('hsql in memory', () => {
           )
         }, Promise.resolve())
         .then(() => jt400.execute('select NAME from testtbl order by ID'))
-        .then((statement) => statement.asStream().pipe(parse([true])))
+        .then((statement) => statement.asStream().pipe(parseJsonArray()))
         .then((stream) => {
           const res: any[] = []
           stream.on('data', (row) => {
@@ -411,7 +411,7 @@ describe('hsql in memory', () => {
               .asStream({
                 bufferSize: 10,
               })
-              .pipe(parse([true]))
+              .pipe(parseJsonArray())
 
             stream.on('data', (row) => {
               res.push(row)

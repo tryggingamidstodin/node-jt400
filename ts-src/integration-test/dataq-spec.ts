@@ -1,6 +1,6 @@
+import assert from 'assert'
 import { describe, it } from 'node:test'
 import { jt400 } from './db.js'
-import assert from 'assert'
 
 describe('keyed dataQ', () => {
   it('should read and write', { timeout: 5000 }, async () => {

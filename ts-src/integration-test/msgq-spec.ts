@@ -1,5 +1,5 @@
-import { describe, it, beforeEach } from 'node:test'
 import assert from 'assert'
+import { beforeEach, describe, it } from 'node:test'
 import { jt400 } from './db.js'
 describe.skip('MessageQ', function () {
   let msgq

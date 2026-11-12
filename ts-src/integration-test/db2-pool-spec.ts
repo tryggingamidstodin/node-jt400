@@ -1,7 +1,7 @@
-import { describe, it, beforeEach } from 'node:test'
 import assert from 'assert'
 import { once } from 'events'
 import { readFileSync } from 'fs'
+import { beforeEach, describe, it } from 'node:test'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 import { pool, QueryOptions } from '../index.js'

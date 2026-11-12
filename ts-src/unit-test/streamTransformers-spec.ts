@@ -1,8 +1,8 @@
+import assert from 'assert'
 import { describe, it } from 'node:test'
 import { Readable } from 'stream'
+import { parseJsonArray } from '../lib/parseJsonArray.js'
 import { arrayToObject } from '../lib/streamTransformers.js'
-import { parse } from 'JSONStream'
-import assert from 'assert'
 
 describe('streamTransformers', () => {
   describe('arrayToObject', () => {
@@ -25,7 +25,7 @@ describe('streamTransformers', () => {
       })
 
       const transformArraysToObject = arrayToObject(metadata)
-      const parseJSON = parse('*')
+      const parseJSON = parseJsonArray()
 
       const objectStream = arrayStream
         .pipe(parseJSON)
@@ -98,7 +98,7 @@ describe('streamTransformers', () => {
       })
 
       const transformArraysToObject = arrayToObject(metadata)
-      const parseJSON = parse('*')
+      const parseJSON = parseJsonArray()
 
       const objectStream = arrayStream
         .pipe(parseJSON)

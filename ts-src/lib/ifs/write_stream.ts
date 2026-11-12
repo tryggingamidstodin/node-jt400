@@ -1,7 +1,7 @@
+import { Writable } from 'node:stream'
+import util from 'util'
 import { BufferToJavaType } from '../../java/index.js'
 import { IfsWriteStream as IfsWriteStreamType } from '../../java/JT400.js'
-import util from 'util'
-import { Writable } from 'stream'
 
 export function IfsWriteStream(opt: {
   ifsWriteStream: Promise<IfsWriteStreamType>
@@ -9,7 +9,6 @@ export function IfsWriteStream(opt: {
 }) {
   Writable.call(this, {
     objectMode: false,
-    final: (done) => this._flush(done),
   })
   this._ifsWriteStream = opt.ifsWriteStream
   this._bufferToJavaType = opt.bufferToJavaType
@@ -42,7 +41,7 @@ IfsWriteStream.prototype._destroy = function (err, callback) {
     .then(() => callback(err))
 }
 
-IfsWriteStream.prototype._flush = function (done) {
+IfsWriteStream.prototype._final = function (done) {
   const writeStream: Promise<IfsWriteStreamType> = this._ifsWriteStream
   writeStream
     .then((stream) => stream.flush())

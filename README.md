@@ -273,12 +273,14 @@ try {
 ### SQL stream
 
 ```javascript
+import { parseJsonArray } from 'node-jt400'
+
 pool
   .createReadStream('SELECT FIELD1, FIELD2 FROM FOO WHERE BAR=? AND BAZ=?', [
     1,
     'a',
   ])
-  .pipe(JSONStream.parse([true]))
+  .pipe(parseJsonArray())
   .pipe(pool.createWriteStream('INSERT INTO FOO2 (F1, F2) VALUES(?, ?)'))
 ```
 

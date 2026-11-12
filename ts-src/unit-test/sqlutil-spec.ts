@@ -1,6 +1,6 @@
+import assert from 'assert'
 import { describe, it } from 'node:test'
 import { toInsertSql } from '../lib/sqlutil.js'
-import assert from 'assert'
 
 describe('sql helpers', () => {
   it('should create sql statement', () => {

@@ -1,5 +1,5 @@
-import { describe, it } from 'node:test'
 import assert from 'assert'
+import { describe, it } from 'node:test'
 import { jt400 } from './db.js'
 
 describe('PGM', () => {
