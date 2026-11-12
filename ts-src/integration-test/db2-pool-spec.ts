@@ -1,5 +1,6 @@
 import { describe, it, beforeEach } from 'node:test'
 import assert from 'assert'
+import { once } from 'events'
 import { readFileSync } from 'fs'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
@@ -233,5 +234,43 @@ describe('jt400 pool', () => {
         assert.strictEqual(error.context.params, params)
         assert.strictEqual(error.category, 'ProgrammerError')
       })
+  })
+
+  describe('createWriteStream', () => {
+    const sql = 'insert into tsttbl (foo, bar) values(?, ?)'
+
+    async function writeRows(count: number, bufferSize: number) {
+      const ws = connection.createWriteStream(sql, { bufferSize })
+      for (let i = 0; i < count; i++) {
+        ws.write(['ws-test', i])
+      }
+      ws.end()
+      await once(ws, 'finish')
+    }
+
+    it('should flush a final partial batch', async () => {
+      await writeRows(25, 10)
+      const rows = await connection.query(
+        "select * from tsttbl where foo = 'ws-test'",
+      )
+      assert.strictEqual(rows.length, 25)
+    })
+
+    it('should finish without writing when stream is empty', async () => {
+      await writeRows(0, 10)
+      const rows = await connection.query(
+        "select * from tsttbl where foo = 'ws-test'",
+      )
+      assert.strictEqual(rows.length, 0)
+    })
+
+    it('should emit error when a batch fails', async () => {
+      const ws = connection.createWriteStream(sql, { bufferSize: 10 })
+      // foo is VARCHAR(20), this value is too long
+      ws.write(['x'.repeat(100), 1])
+      ws.end()
+      const [err] = await once(ws, 'error')
+      assert.ok(err)
+    })
   })
 })

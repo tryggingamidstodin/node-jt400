@@ -1,5 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'assert'
+import { once } from 'events'
 import { buffer } from 'stream/consumers'
 import { jt400 } from './db.js'
 const { ifs } = jt400
@@ -142,5 +143,14 @@ describe('ifs', () => {
         },
       )
     })
+  })
+
+  it('should create an empty file when nothing is written', async () => {
+    const path = '/atm/test2/empty_file.txt'
+    const ws = ifs().createWriteStream(path, { append: false })
+    ws.end()
+    await once(ws, 'finish')
+    const metadata = await ifs().fileMetadata(path)
+    assert.deepStrictEqual(metadata, { exists: true, length: 0 })
   })
 })
