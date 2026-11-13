@@ -58,8 +58,24 @@ function read(context) {
  */
 JdbcStream.prototype.close = function () {
   this._closed = true
-  if (this._jdbcStream && !this._reading && !this.destroyed) {
-    read(this)
+  if (this.destroyed) {
+    return
+  }
+  if (this._jdbcStream) {
+    if (!this._reading) {
+      read(this)
+    }
+  } else if (this._jdbcStreamPromise) {
+    // Acquisition is still pending and no read may ever happen, so release
+    // the resource as soon as it resolves instead of waiting for _read.
+    this._jdbcStreamPromise
+      .then((stream) => {
+        this._jdbcStream = stream
+        if (!this._reading && !this.destroyed) {
+          read(this)
+        }
+      })
+      .catch((err) => this.destroy(err))
   }
 }
 
