@@ -1,12 +1,13 @@
 import assert from 'assert'
 import { describe, it } from 'node:test'
+import { once } from 'events'
 import { Readable } from 'stream'
 import { parseJsonArray } from '../lib/parseJsonArray.js'
 import { arrayToObject } from '../lib/streamTransformers.js'
 
 describe('streamTransformers', () => {
   describe('arrayToObject', () => {
-    it('should convert an array stream to objects', (_t, done) => {
+    it('should convert an array stream to objects', async () => {
       const metadata = [
         { name: 'id', typeName: 'INTEGER' },
         { name: 'name', typeName: 'VARCHAR' },
@@ -32,22 +33,15 @@ describe('streamTransformers', () => {
         .pipe(transformArraysToObject)
 
       const results: any[] = []
-      objectStream.on('data', (data) => {
-        results.push(data)
-      })
+      for await (const data of objectStream) results.push(data)
 
-      objectStream.on('end', () => {
-        assert.deepStrictEqual(results, [
-          { id: 1, name: 'Jón' },
-          { id: 2, name: 'Gunna' },
-        ])
-        done()
-      })
-
-      objectStream.on('error', done)
+      assert.deepStrictEqual(results, [
+        { id: 1, name: 'Jón' },
+        { id: 2, name: 'Gunna' },
+      ])
     })
 
-    it('should throw error when not true json array', (_t, done) => {
+    it('should throw error when not true json array', async () => {
       const metadata = [
         { name: 'id', typeName: 'INTEGER' },
         { name: 'name', typeName: 'VARCHAR' },
@@ -69,17 +63,11 @@ describe('streamTransformers', () => {
 
       const objectStream = arrayStream.pipe(transformArraysToObject)
 
-      objectStream.on('error', (err) => {
-        try {
-          assert.strictEqual(err.message, 'Expected an array chunk as input')
-          done()
-        } catch (e) {
-          done(e)
-        }
-      })
+      const [err] = await once(objectStream, 'error')
+      assert.strictEqual(err.message, 'Expected an array chunk as input')
     })
 
-    it('should throw error when column length and stream data length do not match', (_t, done) => {
+    it('should throw error when column length and stream data length do not match', async () => {
       const metadata = [
         { name: 'id', typeName: 'INTEGER' },
         { name: 'name', typeName: 'VARCHAR' },
@@ -104,17 +92,11 @@ describe('streamTransformers', () => {
         .pipe(parseJSON)
         .pipe(transformArraysToObject)
 
-      objectStream.on('error', (err) => {
-        try {
-          assert.strictEqual(
-            err.message,
-            'Array chunk length 3 does not match columns length 2',
-          )
-          done()
-        } catch (e) {
-          done(e)
-        }
-      })
+      const [err] = await once(objectStream, 'error')
+      assert.strictEqual(
+        err.message,
+        'Array chunk length 3 does not match columns length 2',
+      )
     })
   })
 })

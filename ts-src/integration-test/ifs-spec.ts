@@ -1,24 +1,16 @@
 import assert from 'assert'
 import { describe, it } from 'node:test'
 import { once } from 'events'
+import { pipeline } from 'stream/promises'
 import { buffer } from 'stream/consumers'
 import { jt400 } from './db.js'
 const { ifs } = jt400
 
 describe('ifs', () => {
-  it('should read file', { timeout: 50000 }, (_t, done) => {
+  it('should read file', { timeout: 50000 }, async () => {
     const stream = ifs().createReadStream('/atm/test/hello_world.txt')
-    let data = ''
-    stream.on('data', (chunk) => {
-      data += chunk
-    })
-
-    stream.on('end', () => {
-      assert.strictEqual(data, 'Halló heimur!\n')
-      done()
-    })
-
-    stream.on('error', done)
+    const data = (await buffer(stream)).toString()
+    assert.strictEqual(data, 'Halló heimur!\n')
   })
 
   it('should get file metadata', async () => {
@@ -78,71 +70,37 @@ describe('ifs', () => {
     })
   })
 
-  it('should read filename promise', { timeout: 50000 }, (_t, done) => {
+  it('should read filename promise', { timeout: 50000 }, async () => {
     const stream = ifs().createReadStream(
       Promise.resolve('/atm/test/hello_world.txt'),
     )
-    let data = ''
-    stream.on('data', (chunk) => {
-      data += chunk
-    })
-
-    stream.on('end', () => {
-      assert.strictEqual(data, 'Halló heimur!\n')
-      done()
-    })
-
-    stream.on('error', done)
+    const data = (await buffer(stream)).toString()
+    assert.strictEqual(data, 'Halló heimur!\n')
   })
 
-  it('should write file', { timeout: 5000 }, (_t, done) => {
+  it('should write file', { timeout: 5000 }, async () => {
     const rs = ifs().createReadStream('/atm/test/hello_world.txt')
     const ws = ifs().createWriteStream('/atm/test2/new_file.txt', {
       append: false,
     })
+    await pipeline(rs, ws)
 
-    rs.pipe(ws)
-      .on('finish', () => {
-        const stream = ifs().createReadStream('/atm/test2/new_file.txt')
-        let data = ''
-        stream.on('data', (chunk) => {
-          data += chunk
-        })
-
-        stream.on('end', () => {
-          assert.strictEqual(data, 'Halló heimur!\n')
-          done()
-          /*
-                        ifs().deleteFile('/atm/test2/new_file.txt')
-                            .then((res) => {
-                                assert.strictEqual(res, true);
-                                done();
-                            })
-                            .catch(done);
-        */
-        })
-
-        stream.on('error', done)
-      })
-      .on('error', done)
+    const stream = ifs().createReadStream('/atm/test2/new_file.txt')
+    const data = (await buffer(stream)).toString()
+    assert.strictEqual(data, 'Halló heimur!\n')
   })
 
-  it('should pipe image', { timeout: 50000 }, () => {
+  it('should pipe image', { timeout: 50000 }, async () => {
     const rs = ifs().createReadStream('/atm/test/image.jpg')
     const ws = ifs().createWriteStream('/atm/test2/image.jpg', {
       append: false,
     })
+    await pipeline(rs, ws)
 
-    rs.pipe(ws).on('finish', () => {
-      const oldImage = ifs().createReadStream('/atm/test/image.jpg')
-      const newImage = ifs().createReadStream('/atm/test2/image.jpg')
-
-      return Promise.all([buffer(oldImage), buffer(newImage)]).then(
-        ([a, b]) => {
-          assert.strictEqual(a.equals(b), true)
-        },
-      )
-    })
+    const oldImage = ifs().createReadStream('/atm/test/image.jpg')
+    const newImage = ifs().createReadStream('/atm/test2/image.jpg')
+    const [a, b] = await Promise.all([buffer(oldImage), buffer(newImage)])
+    assert.strictEqual(a.equals(b), true)
   })
 
   it('should create an empty file when nothing is written', async () => {
