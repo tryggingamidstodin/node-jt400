@@ -98,6 +98,13 @@ public class JdbcJsonClient
 			ResultSet rs = st.executeQuery();
 			return new ResultStream(pool, c, st, rs, bufferSize);
 		} catch (Exception e) {
+			if (st != null) {
+				try {
+					st.close();
+				} catch (Exception ignored) {
+				}
+			}
+			pool.returnConnection(c);
 			throw e;
 		}
 	}
@@ -129,7 +136,7 @@ public class JdbcJsonClient
 		Connection c = pool.getConnection();
 		try
 		{
-			return new TablesReadStream(c, catalog, schema, tableNamePattern);
+			return new TablesReadStream(pool, c, catalog, schema, tableNamePattern);
 		}
 		catch (Exception e)
 		{
@@ -146,6 +153,7 @@ public class JdbcJsonClient
 		{
 			JSONArray columns = new JSONArray();
 			ResultSet crs = c.getMetaData().getColumns(catalog, schema, tableNamePattern, columnNamePattern);
+			try {
 			while(crs.next())
 			{
 				JSONObject column = new JSONObject();
@@ -160,14 +168,14 @@ public class JdbcJsonClient
 					column.put("remarks", remarks);
 				}
 			}
-			crs.close();
-			pool.returnConnection(c);
+			} finally {
+				crs.close();
+			}
 			return columns.toJSONString();
 		}
-		catch (Exception e)
+		finally
 		{
 			pool.returnConnection(c);
-			throw e;
 		}
 	}
 
@@ -179,20 +187,21 @@ public class JdbcJsonClient
 		{
 			JSONArray columns = new JSONArray();
 			ResultSet crs = c.getMetaData().getPrimaryKeys(catalog, schema, table);
-			while(crs.next())
-			{
-				JSONObject column = new JSONObject();
-				columns.add(column);
-				column.put("name", crs.getString(4));
+			try {
+				while(crs.next())
+				{
+					JSONObject column = new JSONObject();
+					columns.add(column);
+					column.put("name", crs.getString(4));
+				}
+			} finally {
+				crs.close();
 			}
-			crs.close();
-			pool.returnConnection(c);
 			return columns.toJSONString();
 		}
-		catch (Exception e)
+		finally
 		{
 			pool.returnConnection(c);
-			throw e;
 		}
 	}
 

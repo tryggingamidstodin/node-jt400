@@ -1,7 +1,11 @@
-import { useInMemoryDb } from '../index.js'
-import { Readable } from 'stream'
-import { parse } from 'JSONStream'
 import assert from 'assert'
+import { once } from 'events'
+import { buffer } from 'stream/consumers'
+import { Readable } from 'stream'
+import { pipeline } from 'stream/promises'
+import { parseJsonArray } from '../lib/parseJsonArray.js'
+import { afterEach, beforeEach, describe, it } from 'node:test'
+import { useInMemoryDb } from '../index.js'
 
 const jt400 = useInMemoryDb()
 describe('hsql in memory', () => {
@@ -34,48 +38,30 @@ describe('hsql in memory', () => {
       assert.ok('MYNAME' in res[0])
     })
 
-    it('should query as stream', (done) => {
+    it('should query as stream', async () => {
       const stream = jt400.createReadStream('select * from testtbl')
-      const jsonStream = stream.pipe(parse([true]))
       const data: any[] = []
-
-      jsonStream.on('data', (row) => {
-        data.push(row)
+      await pipeline(stream, parseJsonArray(), async (rows) => {
+        for await (const row of rows) data.push(row)
       })
-
-      jsonStream.on('end', () => {
-        try {
-          assert.strictEqual(data.length, 1)
-          done()
-        } catch (e) {
-          done(e)
-        }
-      })
-
-      stream.on('error', done)
+      assert.strictEqual(data.length, 1)
     })
 
-    it('should fail queryAsStream with oops error', (done) => {
+    it('should fail queryAsStream with oops error', async () => {
       const sql = 'select * from testtbl'
       const params = ['a']
       const stream = jt400.createReadStream(sql, params)
-      const jsonStream = stream.pipe(parse([true]))
+      const jsonStream = stream.pipe(parseJsonArray())
 
       jsonStream.on('end', () => {
         stream.emit('error', new Error('wrong error'))
       })
 
-      stream.on('error', (err) => {
-        try {
-          assert.strictEqual(
-            err.message,
-            'Invalid argument in JDBC call: parameter index out of range: 1',
-          )
-          done()
-        } catch (e) {
-          done(e)
-        }
-      })
+      const [err] = await once(stream, 'error')
+      assert.strictEqual(
+        err.message,
+        'Invalid argument in JDBC call: parameter index out of range: 1',
+      )
     })
   })
 
@@ -115,7 +101,7 @@ describe('hsql in memory', () => {
       assert.deepStrictEqual(ids, [1234567891235])
     })
 
-    it('should create write stream', (done) => {
+    it('should create write stream', async () => {
       const dataStream = new Readable({ objectMode: true })
       let c = 97
       dataStream._read = function () {
@@ -129,17 +115,10 @@ describe('hsql in memory', () => {
         'insert into testtbl (NAME) VALUES(?)',
         { bufferSize: 10 },
       )
-      dataStream
-        .pipe(ws)
-        .on('finish', () => {
-          jt400
-            .query('select name from testtbl')
-            .then((res) => {
-              assert.strictEqual(res.length, 27)
-            })
-            .then(done, done)
-        })
-        .on('error', done)
+      await pipeline(dataStream, ws)
+
+      const res = await jt400.query('select name from testtbl')
+      assert.strictEqual(res.length, 27)
     })
   })
 
@@ -183,8 +162,8 @@ describe('hsql in memory', () => {
   })
 
   describe('pgm call mock', () => {
-    let callFoo
-    let input
+    let callFoo: (input: any) => Promise<any>
+    let input: { bar: string; baz: number }
 
     beforeEach(() => {
       callFoo = jt400.defineProgram({
@@ -267,64 +246,26 @@ describe('hsql in memory', () => {
       ])
     })
 
-    it('should get result as stream', (done) => {
-      jt400
-        .execute('select * from testtbl')
-        .then((statement) => {
-          const stream = statement.asStream()
-          let data = ''
-          assert.strictEqual(statement.isQuery(), true)
-
-          stream.on('data', (chunk) => {
-            data += chunk
-          })
-
-          stream.on('end', () => {
-            try {
-              assert.strictEqual(
-                data,
-                '[["1234567891234","Foo bar baz",null,null]]',
-              )
-              done()
-            } catch (err) {
-              done(err)
-            }
-          })
-
-          stream.on('error', done)
-        })
-        .catch(done)
+    it('should get result as stream', async () => {
+      const statement = await jt400.execute('select * from testtbl')
+      assert.strictEqual(statement.isQuery(), true)
+      const data = (await buffer(statement.asStream())).toString()
+      assert.strictEqual(data, '[["1234567891234","Foo bar baz",null,null]]')
     })
 
-    it('should get result as object stream', (done) => {
-      jt400
-        .execute('select * from testtbl')
-        .then((statement) => statement.asObjectStream())
-        .then((stream) => {
-          const data: any[] = []
-          stream.on('data', (chunk) => {
-            data.push(chunk)
-          })
-
-          stream.on('end', () => {
-            try {
-              assert.deepStrictEqual(data, [
-                {
-                  ID: '1234567891234',
-                  NAME: 'Foo bar baz',
-                  START: null,
-                  STAMP: null,
-                },
-              ])
-              done()
-            } catch (err) {
-              done(err)
-            }
-          })
-
-          stream.on('error', done)
-        })
-        .catch(done)
+    it('should get result as object stream', async () => {
+      const statement = await jt400.execute('select * from testtbl')
+      const stream = await statement.asObjectStream()
+      const data: any[] = []
+      for await (const row of stream) data.push(row)
+      assert.deepStrictEqual(data, [
+        {
+          ID: '1234567891234',
+          NAME: 'Foo bar baz',
+          START: null,
+          STAMP: null,
+        },
+      ])
     })
 
     it('should get result as array', async () => {
@@ -350,41 +291,23 @@ describe('hsql in memory', () => {
       assert.strictEqual(count, 1)
     })
 
-    it('should pipe to JSONStream', (done) => {
-      let i = 1
-      const data: any[] = []
-
-      while (i < 110) {
-        data.push(i++)
+    it('should pipe parsed rows', async () => {
+      for (let i = 1; i < 110; i++) {
+        await jt400.update('insert into testtbl (NAME) values(?)', ['n' + i])
       }
-
-      data
-        .reduce((memo, item) => {
-          return memo.then(() =>
-            jt400.update('insert into testtbl (NAME) values(?)', ['n' + item]),
-          )
-        }, Promise.resolve())
-        .then(() => jt400.execute('select NAME from testtbl order by ID'))
-        .then((statement) => statement.asStream().pipe(parse([true])))
-        .then((stream) => {
-          const res: any[] = []
-          stream.on('data', (row) => {
-            res.push(row)
-          })
-
-          stream.on('end', () => {
-            assert.strictEqual(res.length, 110)
-            res.forEach((row, index) => {
-              if (index > 0) {
-                assert.deepStrictEqual(row[0], 'n' + index)
-              }
-            })
-            done()
-          })
-
-          stream.on('error', done)
-        })
-        .catch(done)
+      const statement = await jt400.execute(
+        'select NAME from testtbl order by ID',
+      )
+      const res: any[] = []
+      await pipeline(statement.asStream(), parseJsonArray(), async (rows) => {
+        for await (const row of rows) res.push(row)
+      })
+      assert.strictEqual(res.length, 110)
+      res.forEach((row, index) => {
+        if (index > 0) {
+          assert.deepStrictEqual(row[0], 'n' + index)
+        }
+      })
     })
 
     it('should get update count', async () => {
@@ -396,70 +319,73 @@ describe('hsql in memory', () => {
       assert.strictEqual(updated, 1)
     })
 
-    it('should close stream', (done) => {
-      let i = 1
-      const data: any[] = []
-
-      while (i < 40) {
-        data.push(i++)
-      }
-
-      Promise.all(
-        data.map((item) =>
-          jt400.update('insert into testtbl (NAME) values(?)', ['n' + item]),
+    it('should close stream', async () => {
+      await Promise.all(
+        Array.from({ length: 39 }, (_, i) =>
+          jt400.update('insert into testtbl (NAME) values(?)', ['n' + (i + 1)]),
         ),
       )
-        .then(() => {
-          const res: any[] = []
-          return jt400.execute('select NAME from testtbl').then((statement) => {
-            const stream = statement
-              .asStream({
-                bufferSize: 10,
-              })
-              .pipe(parse([true]))
-
-            stream.on('data', (row) => {
-              res.push(row)
-              if (res.length >= 10) {
-                statement.close()
-              }
-            })
-
-            stream.on('end', () => {
-              assert.ok(res.length < 21)
-              done()
-            })
-
-            stream.on('error', done)
-          })
+      const res: any[] = []
+      const statement = await jt400.execute('select NAME from testtbl')
+      const stream = statement
+        .asStream({
+          bufferSize: 10,
         })
-        .catch(done)
+        .pipe(parseJsonArray())
+
+      stream.on('data', (row) => {
+        res.push(row)
+        if (res.length >= 10) {
+          statement.close()
+        }
+      })
+
+      await once(stream, 'end')
+      assert.ok(res.length < 21)
     })
   })
 
   describe('metadata', () => {
-    it('should return table metadata as stream', (done) => {
+    it('should return table metadata as stream', async () => {
       const stream = jt400.getTablesAsStream({
         schema: 'PUBLIC',
       })
 
       const schema: any[] = []
-      stream.on('data', (data) => {
-        schema.push(data)
+      for await (const table of stream) schema.push(table)
+      assert.deepStrictEqual(schema, [
+        {
+          schema: 'PUBLIC',
+          table: 'TESTTBL',
+          remarks: '',
+        },
+      ])
+    })
+
+    describe('connection cleanup', () => {
+      const openSessions = async () => {
+        const rows = await jt400.query<any>(
+          'select count(*) as CNT from INFORMATION_SCHEMA.SYSTEM_SESSIONS',
+        )
+        return Number(rows[0].CNT)
+      }
+
+      it('should close the connection when the table stream completes', async () => {
+        const before = await openSessions()
+        const stream = jt400.getTablesAsStream({ schema: 'PUBLIC' })
+        for await (const _ of stream) {
+          // consume
+        }
+        assert.strictEqual(await openSessions(), before)
       })
 
-      stream.on('end', () => {
-        assert.deepStrictEqual(schema, [
-          {
-            schema: 'PUBLIC',
-            table: 'TESTTBL',
-            remarks: '',
-          },
-        ])
-        done()
+      it('should close the connection when the table stream is destroyed', async () => {
+        const before = await openSessions()
+        const stream = jt400.getTablesAsStream({ schema: 'PUBLIC' })
+        stream.destroy()
+        await once(stream, 'close')
+        assert.strictEqual(await openSessions(), before)
       })
-
-      stream.on('error', done)
     })
 
     it('should return columns', async () => {
@@ -508,7 +434,7 @@ describe('hsql in memory', () => {
 
   describe('transaction', () => {
     it('should commit', () => {
-      let rowId
+      let rowId: number
       return jt400
         .transaction((transaction) => {
           return transaction
@@ -533,7 +459,7 @@ describe('hsql in memory', () => {
 
     it('should rollback', () => {
       const fakeError = new Error('fake error')
-      let rowId
+      let rowId: number
       return jt400
         .transaction((transaction) => {
           return transaction

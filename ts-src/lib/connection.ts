@@ -1,3 +1,4 @@
+import { pipeline } from 'stream'
 import { deprecate } from 'util'
 import { BufferToJavaType, JavaTypeToBuffer } from '../java/index.js'
 import { JT400 } from '../java/JT400.js'
@@ -13,8 +14,8 @@ import { handleError } from './handleError.js'
 import { ifs as createIfs } from './ifs/index.js'
 import { CreateInsertList } from './insertList.js'
 import { JdbcStream } from './jdbcstream.js'
-import JSONStream from 'JSONStream'
 import { Logger } from './logger.js'
+import { parseJsonArray } from './parseJsonArray.js'
 
 const isJustNameMessageQ = function (
   opt: MessageQOptions,
@@ -66,13 +67,17 @@ export function createConnection({
       }
     },
     getTablesAsStream(opt) {
-      return new JdbcStream({
+      const source = new JdbcStream({
         jdbcStream: connection.getTablesAsStreamSync(
           opt.catalog,
           opt.schema,
           opt.table || '%',
         ),
-      }).pipe(JSONStream.parse([true]))
+        logger,
+      })
+      // pipeline destroys every stage (including the JDBC source) on
+      // cancellation or error; errors surface on the returned stream.
+      return pipeline(source, parseJsonArray(), () => undefined)
     },
     getColumns(opt) {
       return connection
@@ -106,7 +111,11 @@ export function createConnection({
     },
     createKeyedDataQ(opt) {
       const dq = connection.createKeyedDataQSync(opt.name)
-      const readRes = async function (key, wait, writeKeyLength) {
+      const readRes = async function (
+        key: string,
+        wait: number,
+        writeKeyLength: number,
+      ) {
         const res = await dq.readResponse(key, wait, writeKeyLength)
         const data = await res.getData()
         return {
@@ -121,7 +130,7 @@ export function createConnection({
         read() {
           let wait = -1
           let key: string
-          let writeKeyLength
+          let writeKeyLength: number | undefined
           if (arguments[0] === Object(arguments[0])) {
             key = arguments[0].key
             wait = arguments[0].wait || wait
@@ -154,14 +163,19 @@ export function createConnection({
         opt.libraryName || '*LIBL',
         opt.ccsid,
       )
-      return function run(params, timeout = 3) {
+      return function run(params: unknown, timeout = 3) {
         return pgm
           .run(JSON.stringify(params), timeout)
           .then(JSON.parse)
           .catch(handleError({ programName: opt.programName, params, timeout }))
       }
     },
-    pgm: deprecate(function (programName, paramsSchema, libraryName) {
+    pgm: deprecate(function (
+      this: Connection,
+      programName,
+      paramsSchema,
+      libraryName,
+    ) {
       return this.defineProgram({
         programName,
         paramsSchema,

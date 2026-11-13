@@ -1,14 +1,15 @@
-import { connect } from '../index.js'
 import assert from 'assert'
+import { describe, it } from 'node:test'
+import { connect } from '../index.js'
 
 describe('connect', () => {
-  it('should connect', async () => {
+  it('should connect', { timeout: 10000 }, async () => {
     const db = await connect()
     const nUpdated = await db.update('delete from tsttbl')
     assert.ok(nUpdated >= 0)
-  }).timeout(10000)
+  })
 
-  it('should close', async () => {
+  it('should close', { timeout: 6000 }, async () => {
     const db = await connect()
     db.close()
 
@@ -21,5 +22,5 @@ describe('connect', () => {
         assert.strictEqual(err.message, 'The connection does not exist.')
         assert.strictEqual(err.category, 'OperationalError')
       })
-  }).timeout(6000)
+  })
 })

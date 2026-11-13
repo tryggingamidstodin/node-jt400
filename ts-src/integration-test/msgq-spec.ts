@@ -1,7 +1,9 @@
 import assert from 'assert'
+import { beforeEach, describe, it } from 'node:test'
+import { MessageQ } from '../lib/connection.types.js'
 import { jt400 } from './db.js'
-xdescribe('MessageQ', function () {
-  let msgq
+describe.skip('MessageQ', function () {
+  let msgq: MessageQ
   beforeEach(async () => {
     // Clear queue
     msgq = await jt400.openMessageQ({
@@ -18,9 +20,13 @@ xdescribe('MessageQ', function () {
     await readnext()
   })
 
-  it('should open a message queue and write/read a message.', async () => {
-    const testMessage = 'Test Message'
-    await msgq.sendInformational(testMessage)
-    assert.strictEqual(await msgq.read(), testMessage)
-  }).timeout(5000)
+  it(
+    'should open a message queue and write/read a message.',
+    { timeout: 5000 },
+    async () => {
+      const testMessage = 'Test Message'
+      await msgq.sendInformational(testMessage)
+      assert.strictEqual(await msgq.read(), testMessage)
+    },
+  )
 })

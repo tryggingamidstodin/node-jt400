@@ -1,11 +1,28 @@
-import { Readable } from 'stream'
-import { arrayToObject } from '../lib/streamTransformers.js'
-import { parse } from 'JSONStream'
 import assert from 'assert'
+import { describe, it } from 'node:test'
+import { once } from 'events'
+import { Readable } from 'stream'
+import { parseJsonArray } from '../lib/parseJsonArray.js'
+import { arrayToObject } from '../lib/streamTransformers.js'
 
 describe('streamTransformers', () => {
+  describe('parseJsonArray', () => {
+    it('should preserve UTF-8 characters split across chunks', async () => {
+      const bytes = Buffer.from('[["é"]]')
+      const split = bytes.indexOf(0xc3) + 1
+      const stream = Readable.from(
+        [bytes.subarray(0, split), bytes.subarray(split)],
+        { objectMode: false },
+      ).pipe(parseJsonArray())
+
+      const results: any[] = []
+      for await (const data of stream) results.push(data)
+      assert.deepStrictEqual(results, [['é']])
+    })
+  })
+
   describe('arrayToObject', () => {
-    it('should convert an array stream to objects', (done) => {
+    it('should convert an array stream to objects', async () => {
       const metadata = [
         { name: 'id', typeName: 'INTEGER' },
         { name: 'name', typeName: 'VARCHAR' },
@@ -24,29 +41,22 @@ describe('streamTransformers', () => {
       })
 
       const transformArraysToObject = arrayToObject(metadata)
-      const parseJSON = parse('*')
+      const parseJSON = parseJsonArray()
 
       const objectStream = arrayStream
         .pipe(parseJSON)
         .pipe(transformArraysToObject)
 
       const results: any[] = []
-      objectStream.on('data', (data) => {
-        results.push(data)
-      })
+      for await (const data of objectStream) results.push(data)
 
-      objectStream.on('end', () => {
-        assert.deepStrictEqual(results, [
-          { id: 1, name: 'Jón' },
-          { id: 2, name: 'Gunna' },
-        ])
-        done()
-      })
-
-      objectStream.on('error', done)
+      assert.deepStrictEqual(results, [
+        { id: 1, name: 'Jón' },
+        { id: 2, name: 'Gunna' },
+      ])
     })
 
-    it('should throw error when not true json array', (done) => {
+    it('should throw error when not true json array', async () => {
       const metadata = [
         { name: 'id', typeName: 'INTEGER' },
         { name: 'name', typeName: 'VARCHAR' },
@@ -68,17 +78,11 @@ describe('streamTransformers', () => {
 
       const objectStream = arrayStream.pipe(transformArraysToObject)
 
-      objectStream.on('error', (err) => {
-        try {
-          assert.strictEqual(err.message, 'Expected an array chunk as input')
-          done()
-        } catch (e) {
-          done(e)
-        }
-      })
+      const [err] = await once(objectStream, 'error')
+      assert.strictEqual(err.message, 'Expected an array chunk as input')
     })
 
-    it('should throw error when column length and stream data length do not match', (done) => {
+    it('should throw error when column length and stream data length do not match', async () => {
       const metadata = [
         { name: 'id', typeName: 'INTEGER' },
         { name: 'name', typeName: 'VARCHAR' },
@@ -97,23 +101,17 @@ describe('streamTransformers', () => {
       })
 
       const transformArraysToObject = arrayToObject(metadata)
-      const parseJSON = parse('*')
+      const parseJSON = parseJsonArray()
 
       const objectStream = arrayStream
         .pipe(parseJSON)
         .pipe(transformArraysToObject)
 
-      objectStream.on('error', (err) => {
-        try {
-          assert.strictEqual(
-            err.message,
-            'Array chunk length 3 does not match columns length 2',
-          )
-          done()
-        } catch (e) {
-          done(e)
-        }
-      })
+      const [err] = await once(objectStream, 'error')
+      assert.strictEqual(
+        err.message,
+        'Array chunk length 3 does not match columns length 2',
+      )
     })
   })
 })

@@ -25,6 +25,9 @@ public class HsqlClient implements ConnectionProvider
 	@Override
 	public void returnConnection(Connection c) throws Exception
 	{
+		if (c != null) {
+			c.close();
+		}
 	}
 
 	@Override
