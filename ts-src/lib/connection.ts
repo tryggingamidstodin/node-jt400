@@ -1,3 +1,4 @@
+import { pipeline } from 'stream'
 import { deprecate } from 'util'
 import { BufferToJavaType, JavaTypeToBuffer } from '../java/index.js'
 import { JT400 } from '../java/JT400.js'
@@ -66,14 +67,17 @@ export function createConnection({
       }
     },
     getTablesAsStream(opt) {
-      return new JdbcStream({
+      const source = new JdbcStream({
         jdbcStream: connection.getTablesAsStreamSync(
           opt.catalog,
           opt.schema,
           opt.table || '%',
         ),
         logger,
-      }).pipe(parseJsonArray())
+      })
+      // pipeline destroys every stage (including the JDBC source) on
+      // cancellation or error; errors surface on the returned stream.
+      return pipeline(source, parseJsonArray(), () => undefined)
     },
     getColumns(opt) {
       return connection

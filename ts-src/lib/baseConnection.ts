@@ -1,3 +1,4 @@
+import { pipeline } from 'stream'
 import { parseJsonArray } from './parseJsonArray.js'
 import { JDBCConnection } from '../java/JT400.js'
 import { BaseConnection, Param } from './baseConnection.types.js'
@@ -166,7 +167,12 @@ export const createBaseConnection = function (
                     )
                   })
 
-                  return stream.pipe(parseJSON).pipe(transformArrayToObject)
+                  return pipeline(
+                    stream,
+                    parseJSON,
+                    transformArrayToObject,
+                    () => undefined,
+                  )
                 })
             },
             asIterable() {
