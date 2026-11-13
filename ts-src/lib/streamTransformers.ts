@@ -26,7 +26,7 @@ export function arrayToObject(metadata) {
 
         callback(null, obj)
       } catch (err) {
-        callback(err)
+        callback(err as Error)
       }
     },
   })

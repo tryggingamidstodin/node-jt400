@@ -1,54 +1,55 @@
 import { Writable } from 'node:stream'
-import util from 'util'
 import { BufferToJavaType } from '../../java/index.js'
 import { IfsWriteStream as IfsWriteStreamType } from '../../java/JT400.js'
 
-export function IfsWriteStream(opt: {
-  ifsWriteStream: Promise<IfsWriteStreamType>
-  bufferToJavaType: BufferToJavaType
-}) {
-  Writable.call(this, {
-    objectMode: false,
-  })
-  this._ifsWriteStream = opt.ifsWriteStream
-  this._bufferToJavaType = opt.bufferToJavaType
-  this._buffer = []
-}
+export class IfsWriteStream extends Writable {
+  private _ifsWriteStream: Promise<IfsWriteStreamType>
+  private _bufferToJavaType: BufferToJavaType
 
-util.inherits(IfsWriteStream, Writable)
+  constructor(opt: {
+    ifsWriteStream: Promise<IfsWriteStreamType>
+    bufferToJavaType: BufferToJavaType
+  }) {
+    super({ objectMode: false })
+    this._ifsWriteStream = opt.ifsWriteStream
+    this._bufferToJavaType = opt.bufferToJavaType
+  }
 
-IfsWriteStream.prototype._write = function (chunk, _, next) {
-  const writeStream: Promise<IfsWriteStreamType> = this._ifsWriteStream
-  writeStream
-    .then((stream) => {
-      return stream.write(this._bufferToJavaType(chunk))
-    })
-    .then(() => {
-      next()
-    })
-    .catch((err) => {
-      next(err)
-    })
-}
+  override _write(
+    chunk: Buffer,
+    _encoding: BufferEncoding,
+    next: (error?: Error | null) => void,
+  ) {
+    this._ifsWriteStream
+      .then((stream) => stream.write(this._bufferToJavaType(chunk)))
+      .then(() => {
+        next()
+      })
+      .catch((err) => {
+        next(err)
+      })
+  }
 
-IfsWriteStream.prototype._destroy = function (err, callback) {
-  const writeStream: Promise<IfsWriteStreamType> = this._ifsWriteStream
-  void writeStream
-    .then((stream) => stream.close())
-    .catch(() => {
-      // the original error (if any) is more relevant than a failed cleanup
-    })
-    .then(() => callback(err))
-}
+  override _destroy(
+    err: Error | null,
+    callback: (error?: Error | null) => void,
+  ) {
+    void this._ifsWriteStream
+      .then((stream) => stream.close())
+      .catch(() => {
+        // the original error (if any) is more relevant than a failed cleanup
+      })
+      .then(() => callback(err))
+  }
 
-IfsWriteStream.prototype._final = function (done) {
-  const writeStream: Promise<IfsWriteStreamType> = this._ifsWriteStream
-  writeStream
-    .then((stream) => stream.flush())
-    .then(() => {
-      done()
-    })
-    .catch((err) => {
-      done(err)
-    })
+  override _final(done: (error?: Error | null) => void) {
+    this._ifsWriteStream
+      .then((stream) => stream.flush())
+      .then(() => {
+        done()
+      })
+      .catch((err) => {
+        done(err)
+      })
+  }
 }

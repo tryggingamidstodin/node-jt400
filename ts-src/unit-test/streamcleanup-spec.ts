@@ -27,7 +27,7 @@ function fakeJavaStream(chunks: any[] = [], opts: { readError?: Error } = {}) {
 }
 
 function createJdbcStream(fake: ReturnType<typeof fakeJavaStream>) {
-  return new (JdbcStream as any)({
+  return new JdbcStream({
     jdbcStreamPromise: Promise.resolve(fake.stream),
   })
 }
@@ -35,7 +35,7 @@ function createJdbcStream(fake: ReturnType<typeof fakeJavaStream>) {
 describe('JdbcStream cleanup', () => {
   it('close() releases the java stream immediately when nobody reads', async () => {
     const fake = fakeJavaStream(['[1]'])
-    const s = new (JdbcStream as any)({ jdbcStream: fake.stream })
+    const s = new JdbcStream({ jdbcStream: fake.stream })
     s.close()
     await new Promise((resolve) => setImmediate(resolve))
     assert.strictEqual(fake.closedCount(), 1)
@@ -43,7 +43,7 @@ describe('JdbcStream cleanup', () => {
 
   it('close() ends the stream normally once consumed', async () => {
     const fake = fakeJavaStream(['[1]'])
-    const s = new (JdbcStream as any)({ jdbcStream: fake.stream })
+    const s = new JdbcStream({ jdbcStream: fake.stream })
     s.close()
     s.resume()
     await once(s, 'end')
@@ -80,8 +80,8 @@ describe('JdbcStream cleanup', () => {
   it('closes the java stream when the stream promise resolves after destroy', async () => {
     const fake = fakeJavaStream()
     let resolve!: (v: any) => void
-    const promise = new Promise((r) => (resolve = r))
-    const s = new (JdbcStream as any)({ jdbcStreamPromise: promise })
+    const promise = new Promise<any>((r) => (resolve = r))
+    const s = new JdbcStream({ jdbcStreamPromise: promise })
     s.destroy()
     resolve(fake.stream)
     await once(s, 'close')
@@ -105,7 +105,7 @@ describe('JdbcStream cleanup', () => {
     }
     process.on('unhandledRejection', onUnhandled)
     try {
-      new (JdbcStream as any)({
+      new JdbcStream({
         jdbcStreamPromise: Promise.reject(new Error('query failed')),
       })
       await new Promise((resolve) => setTimeout(resolve, 20))
@@ -124,7 +124,7 @@ describe('JdbcStream cleanup', () => {
         closed++
       },
     }
-    const s = new (JdbcStream as any)({ jdbcStream: javaStream })
+    const s = new JdbcStream({ jdbcStream: javaStream })
     s.resume()
     await new Promise((resolve) => setImmediate(resolve))
     s.close()
@@ -145,8 +145,8 @@ describe('JdbcStream cleanup', () => {
       },
     }
     // a one byte buffer fills on the first chunk, so no further _read is asked
-    const s = new (JdbcStream as any)({ jdbcStream: javaStream })
-    s._readableState.highWaterMark = 1
+    const s = new JdbcStream({ jdbcStream: javaStream })
+    ;(s as any)._readableState.highWaterMark = 1
     s.read(0)
     await new Promise((resolve) => setImmediate(resolve))
     s.close()
@@ -176,7 +176,7 @@ describe('JdbcStream cleanup', () => {
       throw new Error('close failed')
     }
     const { errors, logger } = recordingLogger()
-    const s = new (JdbcStream as any)({
+    const s = new JdbcStream({
       jdbcStreamPromise: Promise.resolve(fake.stream),
       logger,
     })
@@ -192,7 +192,7 @@ describe('JdbcStream cleanup', () => {
       throw new Error('close failed')
     }
     const { errors, logger } = recordingLogger()
-    const s = new (JdbcStream as any)({ jdbcStream: fake.stream, logger })
+    const s = new JdbcStream({ jdbcStream: fake.stream, logger })
     s.on('error', () => assert.fail('must not emit error'))
     s.close()
     s.resume()
@@ -203,7 +203,7 @@ describe('JdbcStream cleanup', () => {
 
 describe('IfsReadStream cleanup', () => {
   function create(fake: ReturnType<typeof fakeJavaStream>) {
-    return new (IfsReadStream as any)({
+    return new IfsReadStream({
       ifsReadStream: Promise.resolve(fake.stream),
       javaTypeToBuffer: (b: any) => (b === null ? null : Buffer.from(b)),
     })
@@ -239,7 +239,7 @@ describe('IfsWriteStream cleanup', () => {
       },
       flush: async () => {},
     }
-    const ws = new (IfsWriteStream as any)({
+    const ws = new IfsWriteStream({
       ifsWriteStream: Promise.resolve(stream),
       bufferToJavaType: (b: Buffer) => b.toString(),
     })

@@ -162,7 +162,12 @@ export function createConnection({
           .catch(handleError({ programName: opt.programName, params, timeout }))
       }
     },
-    pgm: deprecate(function (programName, paramsSchema, libraryName) {
+    pgm: deprecate(function (
+      this: Connection,
+      programName,
+      paramsSchema,
+      libraryName,
+    ) {
       return this.defineProgram({
         programName,
         paramsSchema,
