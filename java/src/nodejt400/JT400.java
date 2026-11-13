@@ -2,6 +2,7 @@ package nodejt400;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.Properties;
 
 import org.json.simple.JSONObject;
@@ -199,6 +200,7 @@ class SimpleConnection implements ConnectionProvider {
 class Pool implements ConnectionProvider {
 	private final AS400JDBCConnectionPool sqlPool;
 	private final long logConnectionTimeThreshold;
+	private static final int MAX_RECONNECT_ATTEMPTS = 4;
 	private final Thread shutdownHook;
 
 	public Pool(JSONObject jsonConf) {
@@ -233,12 +235,44 @@ class Pool implements ConnectionProvider {
 	@Override
 	public Connection getConnection() throws Exception {
 		long t = System.currentTimeMillis();
-		Connection c = sqlPool.getConnection();
+		Connection c = getLiveConnection();
 		t = System.currentTimeMillis() - t;
 		if (t >= logConnectionTimeThreshold) {
 			System.out.println("Connect time: " + t);
 		}
 		return c;
+	}
+
+	/**
+	 * A pooled connection can already be dead when it is handed out, e.g. when
+	 * the AS400 side dropped it while it sat idle. The pool then fails here,
+	 * before any statement has been prepared or executed, and discards the dead
+	 * connection. Retrying is therefore safe for every kind of operation and
+	 * gets a different (or a new) connection. Failures that happen later, while
+	 * a statement is running, are never retried.
+	 */
+	private Connection getLiveConnection() throws Exception {
+		for (int reconnects = 0;; reconnects++) {
+			try {
+				return sqlPool.getConnection();
+			} catch (Exception e) {
+				if (reconnects >= MAX_RECONNECT_ATTEMPTS || !isConnectionLost(e)) {
+					throw e;
+				}
+			}
+		}
+	}
+
+	private static boolean isConnectionLost(Throwable e) {
+		for (int depth = 0; e != null && depth < 10; depth++, e = e.getCause()) {
+			if (e instanceof SQLException) {
+				String state = ((SQLException) e).getSQLState();
+				if (state != null && state.startsWith("08")) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	@Override
