@@ -6,6 +6,21 @@ import { parseJsonArray } from '../lib/parseJsonArray.js'
 import { arrayToObject } from '../lib/streamTransformers.js'
 
 describe('streamTransformers', () => {
+  describe('parseJsonArray', () => {
+    it('should preserve UTF-8 characters split across chunks', async () => {
+      const bytes = Buffer.from('[["é"]]')
+      const split = bytes.indexOf(0xc3) + 1
+      const stream = Readable.from(
+        [bytes.subarray(0, split), bytes.subarray(split)],
+        { objectMode: false },
+      ).pipe(parseJsonArray())
+
+      const results: any[] = []
+      for await (const data of stream) results.push(data)
+      assert.deepStrictEqual(results, [['é']])
+    })
+  })
+
   describe('arrayToObject', () => {
     it('should convert an array stream to objects', async () => {
       const metadata = [

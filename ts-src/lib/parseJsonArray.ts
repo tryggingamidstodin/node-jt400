@@ -1,8 +1,10 @@
 import { Transform } from 'node:stream'
+import { StringDecoder } from 'node:string_decoder'
 
 const whitespace = new Set([' ', '\n', '\r', '\t'])
 
 export function parseJsonArray() {
+  const decoder = new StringDecoder('utf8')
   let text = ''
   let index = 0
   let depth = 0
@@ -21,7 +23,7 @@ export function parseJsonArray() {
   return new Transform({
     readableObjectMode: true,
     transform(chunk, _encoding, callback) {
-      text += typeof chunk === 'string' ? chunk : chunk.toString()
+      text += typeof chunk === 'string' ? chunk : decoder.write(chunk)
       try {
         while (index < text.length) {
           const char = text[index]
@@ -94,6 +96,8 @@ export function parseJsonArray() {
       }
     },
     flush(callback) {
+      // drain any incomplete trailing bytes held by the decoder
+      text += decoder.end()
       callback()
     },
   })
