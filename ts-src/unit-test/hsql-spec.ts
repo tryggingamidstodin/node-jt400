@@ -362,6 +362,32 @@ describe('hsql in memory', () => {
       ])
     })
 
+    describe('connection cleanup', () => {
+      const openSessions = async () => {
+        const rows = await jt400.query<any>(
+          'select count(*) as CNT from INFORMATION_SCHEMA.SYSTEM_SESSIONS',
+        )
+        return Number(rows[0].CNT)
+      }
+
+      it('should close the connection when the table stream completes', async () => {
+        const before = await openSessions()
+        const stream = jt400.getTablesAsStream({ schema: 'PUBLIC' })
+        for await (const _ of stream) {
+          // consume
+        }
+        assert.strictEqual(await openSessions(), before)
+      })
+
+      it('should close the connection when the table stream is destroyed', async () => {
+        const before = await openSessions()
+        const stream = jt400.getTablesAsStream({ schema: 'PUBLIC' })
+        stream.destroy()
+        await once(stream, 'close')
+        assert.strictEqual(await openSessions(), before)
+      })
+    })
+
     it('should return columns', async () => {
       const res = await jt400.getColumns({
         schema: 'PUBLIC',
