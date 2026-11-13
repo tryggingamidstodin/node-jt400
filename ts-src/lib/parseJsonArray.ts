@@ -63,6 +63,9 @@ export function parseJsonArray() {
               emitElement(this, index)
             }
             depth--
+            if (depth === 1 && elementStart >= 0) {
+              emitElement(this, index + 1)
+            }
             index++
             continue
           }
