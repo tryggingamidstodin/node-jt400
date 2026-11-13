@@ -1,6 +1,6 @@
 {
   "name": "node-jt400",
-  "version": "7.1.0",
+  "version": "8.0.0",
   "description": "JT400 (IBM Toolbox) for NodeJS",
   "keywords": [
     "typescript",
