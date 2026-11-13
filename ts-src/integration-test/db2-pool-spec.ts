@@ -10,7 +10,7 @@ import { jt400 as connection } from './db.js'
 const currentDir = dirname(fileURLToPath(import.meta.url))
 
 describe('jt400 pool', () => {
-  let idList
+  let idList: number[]
 
   beforeEach(() => {
     return connection

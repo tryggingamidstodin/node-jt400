@@ -80,7 +80,7 @@ describe('PGM', () => {
       .then(() => {
         throw new Error('Not the correct error')
       })
-      .catch((e) => {
+      .catch((e: Error & { category?: string }) => {
         assert.strictEqual(e.category, 'OperationalError')
         assert.notStrictEqual(e, null)
         assert.ok(e.message.includes('Connection was dropped unexpectedly.'))

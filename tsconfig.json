@@ -9,8 +9,6 @@
         "declaration": true,
         "noUnusedParameters": true,
         "strict": true,
-        "noImplicitAny": false,
-        "strictNullChecks": true,
         "target": "ES2022",
         "lib": ["ES2022", "ESNext.Disposable"],
         "types": ["node"],

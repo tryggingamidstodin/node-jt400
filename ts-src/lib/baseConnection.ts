@@ -92,7 +92,7 @@ export const createBaseConnection = function (
         .execute(sql, jsonParams)
         .then((statement) => {
           const isQuery = statement.isQuerySync()
-          let stream
+          let stream: JdbcStream | undefined
           const stWrap = {
             isQuery() {
               return isQuery
@@ -119,7 +119,7 @@ export const createBaseConnection = function (
                   return result
                 })
             },
-            asStream(options) {
+            asStream(options?: { bufferSize?: number }) {
               const startTime = process.hrtime.bigint()
               options = options || {}
               stream = new JdbcStream({
@@ -139,7 +139,7 @@ export const createBaseConnection = function (
               })
               return stream
             },
-            asObjectStream(options) {
+            asObjectStream(options?: { bufferSize?: number }) {
               const startTime = process.hrtime.bigint()
               options = options || {}
               const parseJSON = parseJsonArray()

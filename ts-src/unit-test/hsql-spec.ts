@@ -162,8 +162,8 @@ describe('hsql in memory', () => {
   })
 
   describe('pgm call mock', () => {
-    let callFoo
-    let input
+    let callFoo: (input: any) => Promise<any>
+    let input: { bar: string; baz: number }
 
     beforeEach(() => {
       callFoo = jt400.defineProgram({
@@ -434,7 +434,7 @@ describe('hsql in memory', () => {
 
   describe('transaction', () => {
     it('should commit', () => {
-      let rowId
+      let rowId: number
       return jt400
         .transaction((transaction) => {
           return transaction
@@ -459,7 +459,7 @@ describe('hsql in memory', () => {
 
     it('should rollback', () => {
       const fakeError = new Error('fake error')
-      let rowId
+      let rowId: number
       return jt400
         .transaction((transaction) => {
           return transaction

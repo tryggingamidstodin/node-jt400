@@ -4,8 +4,10 @@ import { Connection } from './connection.types.js'
 import { createStandardInsertList } from './insertList.js'
 import { Logger } from './logger.js'
 
+type PgmMock = (input: any) => any
+
 export interface InMemoryConnection extends Connection {
-  mockPgm: (programName: string, fn: (input: any) => any) => InMemoryConnection
+  mockPgm: (programName: string, fn: PgmMock) => InMemoryConnection
 }
 
 export function createInMemoryConnection(
@@ -21,12 +23,13 @@ export function createInMemoryConnection(
     logger,
     inMemory: true,
   })
-  const pgmMockRegistry = {}
+  const pgmMockRegistry: Record<string, (input: any, timeout: number) => any> =
+    {}
 
   const defaultPgm = instance.defineProgram
   instance.defineProgram = function (opt) {
     const defaultFunc = defaultPgm(opt)
-    return function (params, timeout = 3) {
+    return function (params: unknown, timeout = 3) {
       const mockFunc = pgmMockRegistry[opt.programName]
 
       if (mockFunc) {

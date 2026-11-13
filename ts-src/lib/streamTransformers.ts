@@ -1,6 +1,7 @@
 import { Transform } from 'stream'
+import { Metadata } from './baseConnection.types.js'
 
-export function arrayToObject(metadata) {
+export function arrayToObject(metadata: Pick<Metadata, 'name'>[]) {
   const columnNames = metadata.map((md) => md.name)
 
   const transformer = new Transform({
@@ -19,7 +20,7 @@ export function arrayToObject(metadata) {
           )
         }
 
-        const obj = {}
+        const obj: Record<string, unknown> = {}
         for (let i = 0; i < columnNames.length; i++) {
           obj[columnNames[i]] = chunk[i]
         }

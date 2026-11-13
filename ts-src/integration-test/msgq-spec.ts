@@ -1,8 +1,9 @@
 import assert from 'assert'
 import { beforeEach, describe, it } from 'node:test'
+import { MessageQ } from '../lib/connection.types.js'
 import { jt400 } from './db.js'
 describe.skip('MessageQ', function () {
-  let msgq
+  let msgq: MessageQ
   beforeEach(async () => {
     // Clear queue
     msgq = await jt400.openMessageQ({

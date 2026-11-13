@@ -1,4 +1,4 @@
-function recordToValues(record) {
+function recordToValues(record: Record<string, unknown>) {
   const str = Object.keys(record)
     .map(() => '?')
     .join(', ')

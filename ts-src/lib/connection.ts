@@ -111,7 +111,11 @@ export function createConnection({
     },
     createKeyedDataQ(opt) {
       const dq = connection.createKeyedDataQSync(opt.name)
-      const readRes = async function (key, wait, writeKeyLength) {
+      const readRes = async function (
+        key: string,
+        wait: number,
+        writeKeyLength: number,
+      ) {
         const res = await dq.readResponse(key, wait, writeKeyLength)
         const data = await res.getData()
         return {
@@ -126,7 +130,7 @@ export function createConnection({
         read() {
           let wait = -1
           let key: string
-          let writeKeyLength
+          let writeKeyLength: number | undefined
           if (arguments[0] === Object(arguments[0])) {
             key = arguments[0].key
             wait = arguments[0].wait || wait
@@ -159,7 +163,7 @@ export function createConnection({
         opt.libraryName || '*LIBL',
         opt.ccsid,
       )
-      return function run(params, timeout = 3) {
+      return function run(params: unknown, timeout = 3) {
         return pgm
           .run(JSON.stringify(params), timeout)
           .then(JSON.parse)

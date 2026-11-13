@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'assert'
 import { once } from 'events'
+import { ResultStream } from '../java/JT400.js'
 import { JdbcStream } from '../lib/jdbcstream.js'
 import { IfsReadStream } from '../lib/ifs/read_stream.js'
 import { IfsWriteStream } from '../lib/ifs/write_stream.js'
@@ -79,8 +80,8 @@ describe('JdbcStream cleanup', () => {
 
   it('closes the java stream when the stream promise resolves after destroy', async () => {
     const fake = fakeJavaStream()
-    let resolve!: (v: any) => void
-    const promise = new Promise<any>((r) => (resolve = r))
+    let resolve!: (v: ResultStream) => void
+    const promise = new Promise<ResultStream>((r) => (resolve = r))
     const s = new JdbcStream({ jdbcStreamPromise: promise })
     s.destroy()
     resolve(fake.stream)
