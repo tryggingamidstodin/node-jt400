@@ -8,7 +8,7 @@ NodeJS JT400 wrapper to connect to IBM iSeries and AS/400 systems (OS400 operati
 
 This package is published as a **dual-mode package** supporting both ESM (ECMAScript Modules) and CommonJS:
 
-- Use `import` in ESM projects (Node.js 16+)
+- Use `import` in ESM projects
 - Use `require()` in CommonJS projects
 - Full TypeScript support with type definitions for both formats
 
@@ -23,6 +23,11 @@ We are always open to suggestions on how to improve and welcome most pull-reques
 ## Changes
 
 Check out our [changelog.md](https://github.com/tryggingamidstodin/node-jt400/blob/master/CHANGELOG.md) to see changes to this project. Please note that this changelog was added in version 4.0 so documentation on versions prior to that are incomplete. Feel free to add to this changelog and report an issue if you're having troubles with updating this package.
+
+## Requirements
+
+- Node.js `^22.22.2 || ^24.15.0 || >=26.0.0` (see `engines` in `package.json`)
+- A Java runtime (JDK/JRE) available on the machine, required by the `java` dependency
 
 ## Install
 
