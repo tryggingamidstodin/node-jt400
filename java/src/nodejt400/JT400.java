@@ -189,6 +189,10 @@ public class JT400 {
 		return new KeyedDataQ(connectionProvider, name);
 	}
 
+	public DataQ createDataQ(String name, Boolean isPath) throws Exception {
+		return new DataQ(connectionProvider, name, isPath);
+	}
+
 	public MessageFileHandler openMessageFile(String path) throws Exception {
 		return new MessageFileHandler(connectionProvider, path);
 	}

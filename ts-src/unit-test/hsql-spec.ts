@@ -490,4 +490,13 @@ describe('hsql in memory', () => {
       assert.deepStrictEqual(res, [1, 1])
     })
   })
+
+  describe('data queue', () => {
+    it('should fail with a clear error', () => {
+      assert.throws(
+        () => jt400.createDataQ({ name: 'SDQP1' }),
+        /Data queues are not supported by the in-memory database/,
+      )
+    })
+  })
 })

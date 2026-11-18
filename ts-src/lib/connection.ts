@@ -144,6 +144,17 @@ export function createConnection({
         },
       }
     },
+    createDataQ(opt) {
+      const dq =
+        'path' in opt
+          ? connection.createDataQSync(opt.path, true)
+          : connection.createDataQSync(opt.name, false)
+      return {
+        write: (data) => dq.write(data),
+        read: (params) => dq.read(params?.wait ?? 0),
+        peek: (params) => dq.peek(params?.wait ?? 0),
+      }
+    },
     async openMessageFile(opt: MessageFileHandlerOptions) {
       const messageFile = await connection.openMessageFile(opt.path)
       return {

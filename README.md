@@ -501,6 +501,48 @@ let queue = jt400.createKeyedDataQ({ name })
 let m = await queue.read({ key: inboxKey, wait: 2 })
 ```
 
+## Data Queues
+
+[IBM DataQueue Reference](https://javadoc.midrange.com/jtopen/index.html?com/ibm/as400/access/DataQueue.html)
+
+Plain (sequential, non-keyed) data queues. Entries are read in the order the queue was created with (FIFO or LIFO).
+
+```javascript
+const jt400 = pool(jt400config)
+// Find the data queue in the library list...
+const queue = jt400.createDataQ({ name: 'MYDTAQ' })
+// ...or give its full path
+const queue2 = jt400.createDataQ({
+  path: '/QSYS.LIB/MYLIB.LIB/MYDTAQ.DTAQ',
+})
+
+await queue.write('ping')
+
+// Remove the next entry and return it, or null when the queue is empty.
+// Does not wait by default.
+const entry = await queue.read()
+
+// Look at the next entry without removing it.
+const next = await queue.peek()
+
+// Wait up to 2 seconds for an entry.
+const waited = await queue.read({ wait: 2 })
+
+// A consumer: wait in bounded steps rather than forever.
+while (!stopping) {
+  const msg = await queue.read({ wait: 30 })
+  if (msg !== null) handle(msg)
+}
+```
+
+`read` and `peek` resolve with `null` when the queue has no entry within the wait. `wait` is in seconds: `0` does not wait and `-1` waits until there is an entry. Both `read` and `peek` default to `0`.
+
+A waiting `read` or `peek` holds a connection from the pool until it returns, so a few consumers waiting with `-1` can exhaust the pool. Prefer a bounded `wait` in a loop.
+
+Entries are read and written as text, converted with the connection's CCSID. Binary data is not supported.
+
+Data queues are not supported by the in-memory database: `createDataQ` throws there.
+
 ## Message Queues
 
 [IBM MessageQueue Reference](https://javadoc.midrange.com/jtopen/index.html?com/ibm/as400/access/MessageQueue.html)
