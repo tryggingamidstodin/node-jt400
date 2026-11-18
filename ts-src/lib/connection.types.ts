@@ -68,6 +68,32 @@ export interface KeyedDataQ {
   read: (params: DataQReadOptions | string) => Promise<any>
 }
 
+export interface DataQPathOptions {
+  /** Data queue location, e.g. /QSYS.LIB/YOURLIBRARY.LIB/YOURDTAQ.DTAQ */
+  path: string
+}
+export interface DataQWaitOptions {
+  /**
+   * Seconds to wait for an entry. Defaults to 0, which does not wait. -1 waits
+   * until there is one, holding a pooled connection the whole time.
+   */
+  wait?: number
+}
+/** A plain (sequential, non-keyed) data queue. */
+export interface DataQ {
+  write: (data: string) => Promise<void>
+  /**
+   * Removes the next entry from the queue and returns it. Resolves with null
+   * when there is no entry within the wait. Does not wait by default.
+   */
+  read: (params?: DataQWaitOptions) => Promise<string | null>
+  /**
+   * Returns the next entry without removing it from the queue. Resolves with
+   * null when there is no entry within the wait. Does not wait by default.
+   */
+  peek: (params?: DataQWaitOptions) => Promise<string | null>
+}
+
 export interface AS400Message {
   getText: () => Promise<string>
 }
@@ -91,6 +117,7 @@ export interface Connection extends BaseConnection {
   transaction: (fn: TransactionFun) => Promise<any>
   openMessageQ: (params: MessageQOptions) => Promise<MessageQ>
   createKeyedDataQ: (params: DataQOptions) => KeyedDataQ
+  createDataQ: (params: DataQOptions | DataQPathOptions) => DataQ
   openMessageFile: (
     params: MessageFileHandlerOptions,
   ) => Promise<MessageFileHandler>

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. Please note that this changelog was added in version 4.0 so documentation on versions prior to that are incomplete.
 
+## [Unreleased]
+
+### Added
+
+- `createDataQ` for plain (sequential, non-keyed) data queues, with `write`, `read` and `peek`. The queue is given by `name` (found in the library list) or by `path` (see README). The types `DataQ`, `DataQPathOptions` and `DataQWaitOptions` are exported.
+
 ## [8.0.0] - 2026-11-13
 
 ### Added
