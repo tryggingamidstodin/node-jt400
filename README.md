@@ -531,6 +531,29 @@ The oops-error has few properties:
 - message: The basic error message.
 - cause: the original error.
 - fullstack: function that returns the fullstack of causes.
+- context: the input of the failed call (e.g. `sql` and `params`) and, for SQL errors, `sqlError` (see below).
+
+## SQL state and error code
+
+Error messages differ between DB2 releases and server language settings, so do not match on them. When the error was caused by a SQL exception, `error.context.sqlError` identifies it instead:
+
+- sqlState: the SQLSTATE, e.g. `'23505'` for a duplicate key.
+- errorCode: the vendor error code (the SQLCODE on DB2 for i), e.g. `-803`.
+- chained: `message`, `sqlState` and `errorCode` of the exceptions chained behind the first one (at most 5). DB2 for i often puts the detail that explains a failure there.
+
+Values the exception does not have are left out, and `sqlError` is missing altogether when the error is not a SQL exception (e.g. errors from `pgm` calls), so read it with optional chaining.
+
+```javascript
+try {
+  await pool.insertAndGetId('INSERT INTO foo (bar) VALUES (?)', [1])
+} catch (error) {
+  if (error.context?.sqlError?.sqlState === '23505') {
+    // duplicate key
+  } else {
+    throw error
+  }
+}
+```
 
 ## Examples
 

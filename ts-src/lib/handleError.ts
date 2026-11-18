@@ -22,6 +22,37 @@ function safeSyncCall(obj: any, method: string): any {
   return undefined
 }
 
+/** Structured diagnostics of one java.sql.SQLException in a chain. */
+export interface ChainedSqlError {
+  message?: string
+  sqlState?: string
+  errorCode?: number
+}
+
+/**
+ * Structured diagnostics of the SQL exception behind an error, available as
+ * `context.sqlError` on the Oops. Fields the exception does not provide are
+ * omitted.
+ */
+export interface SqlErrorInfo {
+  sqlState?: string
+  errorCode?: number
+  chained?: ChainedSqlError[]
+}
+
+/** Calls a Java accessor and treats a Java null like a missing value. */
+function readValue(obj: any, method: string): any {
+  const value = safeSyncCall(obj, method)
+  return value === null ? undefined : value
+}
+
+/** Copies the given entries, leaving out the ones without a value. */
+function withoutMissing<T extends object>(obj: T): T {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, value]) => value !== undefined),
+  ) as T
+}
+
 /**
  * Extracts the parts of a Java exception that identify a database error --
  * SQLSTATE, vendor error code and the exception class -- along with any
@@ -29,63 +60,35 @@ function safeSyncCall(obj: any, method: string): any {
  * actually explains a failure in those chained exceptions rather than in the
  * first message.
  *
- * Returns undefined when there is nothing Java-shaped to report.
+ * The message of the exception itself is not included, it is already the
+ * message of the Oops.
+ *
+ * Returns undefined when the error is not a SQL exception, i.e. when it has
+ * none of these.
  */
-function extractJavaCauseInfo(cause: any): any {
-  if (!cause) {
+function extractSqlErrorInfo(javaError: any): SqlErrorInfo | undefined {
+  if (!javaError) {
     return undefined
   }
-  const message = safeSyncCall(cause, 'getMessageSync')
-  const sqlState = safeSyncCall(cause, 'getSQLStateSync')
-  const errorCode = safeSyncCall(cause, 'getErrorCodeSync')
-
-  let javaClass: string | undefined
-  const cls = safeSyncCall(cause, 'getClassSync')
-  if (cls) {
-    const name = safeSyncCall(cls, 'getNameSync')
-    if (typeof name === 'string') {
-      javaClass = name
-    }
-  }
-
-  const chained: any[] = []
-  let next = safeSyncCall(cause, 'getNextExceptionSync')
+  const chained: ChainedSqlError[] = []
+  let next = readValue(javaError, 'getNextExceptionSync')
   while (next && chained.length < MAX_CHAINED_EXCEPTIONS) {
-    const link: any = {}
-    const linkMessage = safeSyncCall(next, 'getMessageSync')
-    const linkSqlState = safeSyncCall(next, 'getSQLStateSync')
-    const linkErrorCode = safeSyncCall(next, 'getErrorCodeSync')
-    if (linkMessage !== undefined) {
-      link.message = linkMessage
-    }
-    if (linkSqlState !== undefined) {
-      link.sqlState = linkSqlState
-    }
-    if (linkErrorCode !== undefined) {
-      link.errorCode = linkErrorCode
-    }
+    const link = withoutMissing<ChainedSqlError>({
+      message: readValue(next, 'getMessageSync'),
+      sqlState: readValue(next, 'getSQLStateSync'),
+      errorCode: readValue(next, 'getErrorCodeSync'),
+    })
     if (Object.keys(link).length > 0) {
       chained.push(link)
     }
-    next = safeSyncCall(next, 'getNextExceptionSync')
+    next = readValue(next, 'getNextExceptionSync')
   }
 
-  const info: any = {}
-  if (message !== undefined) {
-    info.message = message
-  }
-  if (sqlState !== undefined) {
-    info.sqlState = sqlState
-  }
-  if (errorCode !== undefined) {
-    info.errorCode = errorCode
-  }
-  if (javaClass !== undefined) {
-    info.javaClass = javaClass
-  }
-  if (chained.length > 0) {
-    info.chained = chained
-  }
+  const info = withoutMissing<SqlErrorInfo>({
+    sqlState: readValue(javaError, 'getSQLStateSync'),
+    errorCode: readValue(javaError, 'getErrorCodeSync'),
+    chained: chained.length > 0 ? chained : undefined,
+  })
   return Object.keys(info).length > 0 ? info : undefined
 }
 
@@ -105,10 +108,10 @@ export function handleError(context: { [key: string]: any }) {
         : 'ProgrammerError'
     // The Java exception is either wrapped by the bridge or is the error
     // itself, matching how errMsg is resolved above.
-    const cause = extractJavaCauseInfo(err.cause) || extractJavaCauseInfo(err)
+    const sqlError = extractSqlErrorInfo(err.cause) || extractSqlErrorInfo(err)
     throw new Oops({
       message,
-      context: cause ? { ...context, cause } : context,
+      context: sqlError ? { ...context, sqlError } : context,
       category,
       cause: err,
     })

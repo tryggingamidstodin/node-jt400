@@ -1,4 +1,5 @@
 import assert from 'assert'
+import { describe, it } from 'node:test'
 import { handleError } from '../lib/handleError.js'
 
 /**
@@ -8,17 +9,14 @@ import { handleError } from '../lib/handleError.js'
  */
 function javaSqlException(opt: {
   message?: string
-  sqlState?: string
+  sqlState?: string | null
   errorCode?: number
-  className?: string
   next?: any
 }) {
   return {
     getMessageSync: () => opt.message,
     getSQLStateSync: () => opt.sqlState,
     getErrorCodeSync: () => opt.errorCode,
-    getClassSync: () =>
-      opt.className ? { getNameSync: () => opt.className } : undefined,
     getNextExceptionSync: () => opt.next,
   }
 }
@@ -69,21 +67,18 @@ describe('handleError', () => {
     assert.strictEqual(oops.category, 'OperationalError')
   })
 
-  it('should add sqlState, errorCode and class to the context', () => {
+  it('should add sqlState and errorCode to the context', () => {
     const oops = captureOops({
       cause: javaSqlException({
         message: 'java.sql.SQLException: Column not found: NOPE\n\tat com.ibm',
         sqlState: '42703',
         errorCode: -206,
-        className: 'com.ibm.as400.access.AS400JDBCSQLSyntaxErrorException',
       }),
     })
 
-    assert.deepStrictEqual(oops.context.cause, {
-      message: 'java.sql.SQLException: Column not found: NOPE\n\tat com.ibm',
+    assert.deepStrictEqual(oops.context.sqlError, {
       sqlState: '42703',
       errorCode: -206,
-      javaClass: 'com.ibm.as400.access.AS400JDBCSQLSyntaxErrorException',
     })
     // The caller's own context is preserved alongside it.
     assert.strictEqual(oops.context.sql, 'select 1 from x')
@@ -103,7 +98,7 @@ describe('handleError', () => {
       }),
     })
 
-    assert.deepStrictEqual(oops.context.cause.chained, [
+    assert.deepStrictEqual(oops.context.sqlError.chained, [
       { message: 'second', sqlState: '42703', errorCode: -206 },
       { message: 'third', sqlState: '22001' },
     ])
@@ -115,7 +110,7 @@ describe('handleError', () => {
 
     const oops = captureOops({ cause: looping })
 
-    assert.strictEqual(oops.context.cause.chained.length, 5)
+    assert.strictEqual(oops.context.sqlError.chained.length, 5)
   })
 
   it('should read diagnostics when the error itself is the java exception', () => {
@@ -126,7 +121,36 @@ describe('handleError', () => {
       }),
     )
 
-    assert.strictEqual(oops.context.cause.sqlState, '02000')
+    assert.strictEqual(oops.context.sqlError.sqlState, '02000')
+  })
+
+  it('should omit values that are null in java', () => {
+    const oops = captureOops({
+      cause: {
+        ...javaSqlException({
+          message: 'java.sql.SQLException: no state\n\tat com.ibm',
+          sqlState: null,
+          errorCode: 0,
+        }),
+        getNextExceptionSync: () => null,
+      },
+    })
+
+    assert.deepStrictEqual(oops.context.sqlError, {
+      errorCode: 0,
+    })
+  })
+
+  it('should leave the context untouched for a java exception that is not a sql exception', () => {
+    const oops = captureOops({
+      cause: {
+        getMessageSync: () => 'java.lang.Exception: program failed\n\tat x',
+        getClassSync: () => ({ getNameSync: () => 'java.lang.Exception' }),
+      },
+    })
+
+    assert.strictEqual(oops.message, 'program failed')
+    assert.deepStrictEqual(oops.context, { sql: 'select 1 from x' })
   })
 
   it('should leave the context untouched when there is nothing java-shaped', () => {
@@ -144,9 +168,6 @@ describe('handleError', () => {
       getErrorCodeSync: () => {
         throw new Error('bridge failure')
       },
-      getClassSync: () => {
-        throw new Error('bridge failure')
-      },
       getNextExceptionSync: () => {
         throw new Error('bridge failure')
       },
@@ -155,8 +176,7 @@ describe('handleError', () => {
     const oops = captureOops({ cause: hostile })
 
     assert.strictEqual(oops.message, 'broken')
-    assert.deepStrictEqual(oops.context.cause, {
-      message: 'java.sql.SQLException: broken\n\tat com.ibm',
-    })
+    // Nothing could be read, so there is nothing to report.
+    assert.deepStrictEqual(oops.context, { sql: 'select 1 from x' })
   })
 })

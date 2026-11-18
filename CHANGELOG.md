@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file. Please note
 ### Added
 
 - Optional `fetch size` connection config, applied with JDBC `setFetchSize` to statements created by `query`, `createReadStream` and `execute`. Behaviour is unchanged when it is not set. Because the driver only uses the fetch size when `block size` is `0`, setting it also sets `block size` to `'0'` unless the config sets a block size (see README).
+- Errors caused by a SQL exception now carry structured diagnostics on `error.context.sqlError`: `sqlState`, `errorCode` and `chained` (the exceptions behind `getNextException`). Use these instead of matching on the error message (see README).
 
 ### Changed
 
