@@ -83,6 +83,39 @@ public class JT400 {
 		return props;
 	}
 
+	/**
+	 * SQLSTATE the driver reports when the pool hands out a connection that
+	 * is already closed ("connection does not exist").
+	 */
+	static final String DEAD_POOLED_CONNECTION_STATE = "08003";
+
+	/**
+	 * Tells whether getting a connection from the pool failed because the
+	 * pooled connection was already dead, which is the only failure worth
+	 * retrying.
+	 *
+	 * The other connection states must not be retried: 08004 is a rejected
+	 * sign-on (e.g. a wrong password), where every retry is another failed
+	 * sign-on attempt and can disable the user profile, and 08001 is a
+	 * failed connect (e.g. an unreachable host), where retrying only
+	 * multiplies the time until the caller sees the error.
+	 */
+	public static boolean isDeadPooledConnection(Throwable e) {
+		for (int depth = 0; e != null && depth < 10; depth++, e = e.getCause()) {
+			if (e instanceof SQLException
+					&& DEAD_POOLED_CONNECTION_STATE.equals(((SQLException) e).getSQLState())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** Reads a config value as a String, whatever JSON type it has. */
+	static String configString(JSONObject conf, String key) {
+		Object value = conf.get(key);
+		return value == null ? null : String.valueOf(value);
+	}
+
 	public static final JT400 createConnection(String jsonConf)
 			throws Exception {
 		JSONObject conf = (JSONObject) JSONValue.parse(jsonConf);
@@ -275,9 +308,9 @@ class Pool implements ConnectionProvider {
 		logConnectionTimeThreshold = Long.parseLong(conTimeThresshold);
 
 		AS400JDBCConnectionPoolDataSource ds = new AS400JDBCConnectionPoolDataSource();
-		ds.setServerName((String) jsonConf.get("host"));
-		ds.setUser((String) jsonConf.get("user"));
-		ds.setPassword((String) jsonConf.get("password"));
+		ds.setServerName(JT400.configString(jsonConf, "host"));
+		ds.setUser(JT400.configString(jsonConf, "user"));
+		ds.setPassword(JT400.configString(jsonConf, "password"));
 		ds.setProperties(connectionProps);
 		this.sqlPool = new AS400JDBCConnectionPool(ds);
 		shutdownHook = new Thread() {
@@ -314,23 +347,11 @@ class Pool implements ConnectionProvider {
 			try {
 				return sqlPool.getConnection();
 			} catch (Exception e) {
-				if (reconnects >= MAX_RECONNECT_ATTEMPTS || !isConnectionLost(e)) {
+				if (reconnects >= MAX_RECONNECT_ATTEMPTS || !JT400.isDeadPooledConnection(e)) {
 					throw e;
 				}
 			}
 		}
-	}
-
-	private static boolean isConnectionLost(Throwable e) {
-		for (int depth = 0; e != null && depth < 10; depth++, e = e.getCause()) {
-			if (e instanceof SQLException) {
-				String state = ((SQLException) e).getSQLState();
-				if (state != null && state.startsWith("08")) {
-					return true;
-				}
-			}
-		}
-		return false;
 	}
 
 	@Override

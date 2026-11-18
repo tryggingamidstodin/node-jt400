@@ -34,6 +34,7 @@ export default tseslint.config(
         'error',
         {
           argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
         },
       ],
       'comma-dangle': ['error', 'always-multiline'],

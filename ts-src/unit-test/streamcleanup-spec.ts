@@ -187,6 +187,19 @@ describe('JdbcStream cleanup', () => {
     assert.strictEqual(errors[0][0].err.message, 'close failed')
   })
 
+  it('does not log a failed query as a close failure', async () => {
+    const { errors, logger } = recordingLogger()
+    const s = new JdbcStream({
+      jdbcStreamPromise: Promise.reject(new Error('query failed')),
+      logger,
+    })
+    s.resume()
+    const [err] = await once(s, 'error')
+    assert.strictEqual(err.message, 'query failed')
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    assert.deepStrictEqual(errors, [])
+  })
+
   it('logs instead of emitting an error when close() fails', async () => {
     const fake = fakeJavaStream(['[1]'])
     fake.stream.close = async () => {

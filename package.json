@@ -47,7 +47,7 @@
     "build-all": "npm run build && npm run build-java",
     "build-dev": "tsdown --watch",
     "build-java": "ant archive -buildfile ./java",
-    "ci": "npm run clean && npm run build && npm run test && npm run test-cjs && npm run integration-test && npm run integration-cjs-test && npm run test-compatibility",
+    "ci": "npm run lint && npm run format-verify && npm run clean && npm run build && npm run test && npm run test-cjs && npm run integration-test && npm run integration-cjs-test && npm run test-compatibility",
     "clean": "rm -rf dist-esm dist-cjs",
     "format": "prettier --write ./ts-src/**/*.ts",
     "format-verify": "prettier --check ./ts-src/**/*.ts",

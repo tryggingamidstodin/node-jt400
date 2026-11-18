@@ -109,6 +109,9 @@ export class JdbcStream extends Readable {
     callback: (error?: Error | null) => void,
   ) {
     void Promise.resolve(this._jdbcStream ?? this._jdbcStreamPromise)
+      // A failed acquisition leaves nothing to close. It is not a cleanup
+      // failure, so it must not be logged as one below.
+      .catch(() => undefined)
       .then((stream) => {
         if (stream && !this._javaClosed) {
           this._javaClosed = true

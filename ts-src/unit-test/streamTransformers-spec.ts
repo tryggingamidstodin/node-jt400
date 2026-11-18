@@ -19,6 +19,43 @@ describe('streamTransformers', () => {
       for await (const data of stream) results.push(data)
       assert.deepStrictEqual(results, [['é']])
     })
+
+    const parse = async (...chunks: string[]) => {
+      const stream = Readable.from(chunks, { objectMode: false }).pipe(
+        parseJsonArray(),
+      )
+      const results: any[] = []
+      for await (const data of stream) results.push(data)
+      return results
+    }
+
+    it('should skip null elements', async () => {
+      assert.deepStrictEqual(await parse('[1,null,2, null ]'), [1, 2])
+      assert.deepStrictEqual(await parse('[[1,null],null,[null]]'), [
+        [1, null],
+        [null],
+      ])
+    })
+
+    it('should fail when the input ends inside an element', async () => {
+      for (const truncated of ['[[1,"a"],[2,"b"', '[[1,"a"],[2,"b', '[1,2']) {
+        await assert.rejects(
+          () => parse(truncated),
+          /Unexpected end of JSON input/,
+          truncated,
+        )
+      }
+    })
+
+    it('should accept input that ends between elements or is empty', async () => {
+      assert.deepStrictEqual(await parse('[[1,"a"],', '[2,"b"]'), [
+        [1, 'a'],
+        [2, 'b'],
+      ])
+      assert.deepStrictEqual(await parse('[[1,"a"]'), [[1, 'a']])
+      assert.deepStrictEqual(await parse(), [])
+      assert.deepStrictEqual(await parse('[]'), [])
+    })
   })
 
   describe('arrayToObject', () => {

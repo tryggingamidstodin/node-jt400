@@ -328,6 +328,64 @@ describe('java connection handling', () => {
     })
   })
 
+  describe('pool reconnect', () => {
+    const sqlException = (state: string | null) =>
+      jvm.newInstanceSync('java.sql.SQLException', 'failed', state)
+
+    // The pool wraps the driver's SQLException, like ConnectionPoolException.
+    const wrapped = (state: string | null) =>
+      jvm.newInstanceSync('java.lang.Exception', 'wrapped', sqlException(state))
+
+    it('retries a pooled connection that is already dead', () => {
+      assert.strictEqual(
+        JT400.isDeadPooledConnectionSync(sqlException('08003')),
+        true,
+      )
+      assert.strictEqual(
+        JT400.isDeadPooledConnectionSync(wrapped('08003')),
+        true,
+      )
+    })
+
+    it('does not retry a rejected sign-on, a failed connect or other errors', () => {
+      // 08004: e.g. wrong password, retrying could disable the user profile
+      // 08001: e.g. unreachable host
+      for (const state of ['08004', '08001', '08S01', '42704', null]) {
+        assert.strictEqual(
+          JT400.isDeadPooledConnectionSync(sqlException(state)),
+          false,
+          String(state),
+        )
+        assert.strictEqual(
+          JT400.isDeadPooledConnectionSync(wrapped(state)),
+          false,
+          String(state),
+        )
+      }
+      assert.strictEqual(
+        JT400.isDeadPooledConnectionSync(
+          jvm.newInstanceSync('java.lang.Exception', '08003'),
+        ),
+        false,
+      )
+    })
+
+    it('accepts host, user and password that are not strings', () => {
+      const jt400 = JT400.createPoolSync(
+        '{"host":"h","user":"u","password":123456}',
+      )
+      jt400.closeSync()
+    })
+
+    it('execute returns the connection when the statement fails', async () => {
+      await assert.rejects(() =>
+        sqlClient.execute('select * from nonexisting', '[]'),
+      )
+      assert.strictEqual(borrowed, 1)
+      assert.strictEqual(outstanding(), 0)
+    })
+  })
+
   describe('StatementWrap', () => {
     it('asArray returns the connection exactly once', async () => {
       const st = await sqlClient.execute('select * from leaktbl', '[]')

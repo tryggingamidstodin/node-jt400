@@ -3,6 +3,16 @@ import { StringDecoder } from 'node:string_decoder'
 
 const whitespace = new Set([' ', '\n', '\r', '\t'])
 
+/**
+ * Transform that parses a stream of JSON text holding one array and emits its
+ * elements one at a time, e.g. the rows of `createReadStream`.
+ *
+ * - `null` elements are skipped: an object mode stream uses `null` to signal
+ *   its end, so they cannot be emitted.
+ * - Input that ends in the middle of an element fails with an error. Input
+ *   that ends between two elements is accepted, because that is what a result
+ *   stream that was closed early looks like.
+ */
 export function parseJsonArray() {
   const decoder = new StringDecoder('utf8')
   let text = ''
@@ -16,7 +26,10 @@ export function parseJsonArray() {
     const raw = text.slice(elementStart, end).trim()
     elementStart = -1
     if (raw) {
-      stream.push(JSON.parse(raw))
+      const element = JSON.parse(raw)
+      if (element !== null) {
+        stream.push(element)
+      }
     }
   }
 
@@ -101,6 +114,10 @@ export function parseJsonArray() {
     flush(callback) {
       // drain any incomplete trailing bytes held by the decoder
       text += decoder.end()
+      if (depth > 1 || inString || elementStart >= 0) {
+        callback(new Error('Unexpected end of JSON input inside an element'))
+        return
+      }
       callback()
     },
   })

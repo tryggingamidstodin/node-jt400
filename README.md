@@ -312,6 +312,8 @@ pool
   .pipe(pool.createWriteStream('INSERT INTO FOO2 (F1, F2) VALUES(?, ?)'))
 ```
 
+`createReadStream` emits the result as the text of one JSON array of rows. `parseJsonArray()` turns that into a stream of rows (each an array of column values). It skips `null` elements and emits an error when the input ends in the middle of an element. It replaces `JSONStream.parse([true])`, which earlier versions of this example used; `JSONStream` is no longer installed with this package.
+
 #### asObjectStream
 
 ```javascript
@@ -411,6 +413,8 @@ const readStream = ifs.createReadStream('/new.txt') // Reading bar.txt from IFS
 
 readStream.pipe(writeStream) // Piping from IFS to nodeJS
 ```
+
+The file is read in chunks of up to 65536 bytes, one round trip to the server per chunk. To change the chunk size, set the `JT400_IFS_READ_BUFFER` environment variable (in bytes) before the first IFS read stream is created, or the Java system property `jt400.ifs.readBuffer`. The environment variable wins when both are set, and a value that is not a positive integer is ignored.
 
 ### IFS write
 
@@ -542,6 +546,8 @@ Error messages differ between DB2 releases and server language settings, so do n
 - chained: `message`, `sqlState` and `errorCode` of the exceptions chained behind the first one (at most 5). DB2 for i often puts the detail that explains a failure there.
 
 Values the exception does not have are left out, and `sqlError` is missing altogether when the error is not a SQL exception (e.g. errors from `pgm` calls), so read it with optional chaining.
+
+TypeScript users can import the `SqlErrorInfo` and `ChainedSqlError` types from `node-jt400`.
 
 ```javascript
 try {

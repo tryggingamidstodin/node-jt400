@@ -2,33 +2,31 @@
 
 All notable changes to this project will be documented in this file. Please note that this changelog was added in version 4.0 so documentation on versions prior to that are incomplete.
 
-## [Unreleased]
+## [8.0.0] - 2026-11-13
 
 ### Added
 
 - Optional `fetch size` connection config, applied with JDBC `setFetchSize` to statements created by `query`, `createReadStream` and `execute`. Behaviour is unchanged when it is not set. Because the driver only uses the fetch size when `block size` is `0`, setting it also sets `block size` to `'0'` unless the config sets a block size (see README).
-- Errors caused by a SQL exception now carry structured diagnostics on `error.context.sqlError`: `sqlState`, `errorCode` and `chained` (the exceptions behind `getNextException`). Use these instead of matching on the error message (see README).
+- Errors caused by a SQL exception now carry structured diagnostics on `error.context.sqlError`: `sqlState`, `errorCode` and `chained` (the exceptions behind `getNextException`). Use these instead of matching on the error message (see README). The types `SqlErrorInfo` and `ChainedSqlError` are exported.
+- The IFS read buffer size can be set with the `JT400_IFS_READ_BUFFER` environment variable or the `jt400.ifs.readBuffer` Java system property (see README).
+- `parseJsonArray` is exported. It turns the output of `createReadStream` into a stream of rows, skips `null` elements and fails when the input ends in the middle of an element (see README).
 
 ### Changed
 
 - **Required Node.js versions:** `^22.22.2 || ^24.15.0 || >=26.0.0` (was `>=22`). Older Node 22 releases, Node 23 and Node 25 are no longer supported.
+- `JSONStream` was replaced with the internal JSON array parser `parseJsonArray`. `JSONStream` and `flushwritable` are no longer dependencies, so add them to your own dependencies if you relied on them being installed with this package.
 - Streams are now wired with `stream.pipeline` instead of `pipe`, so errors propagate and resources are cleaned up when a stream is closed or destroyed early.
-- Types are stricter (`strict`, no implicit any), which may surface new compile errors in consumers.
+- Types are stricter (`strict`, no implicit any), which may surface new compile errors in consumers. The `rows` argument of `insertList` is now typed as `Record<string, Param>[]` (was `any[]`).
+- IFS read streams read the file in chunks of up to 65536 bytes (was 10000), which means fewer round trips to the server. The `data` events of `ifs().createReadStream` carry larger chunks as a result.
+- The Java jar was rebuilt.
 
 ### Fixed
 
-- Connection config values that are not strings (e.g. `'block size': 512` or `prompt: false`) are now passed to the driver. They were silently ignored before, so only string values such as `'512'` took effect. If your config contains such values they will start to apply.
-- Pooled connections that are dead when handed out (SQL state `08xxx`) are now discarded and retried (up to 4 times) instead of failing the query.
-- In-memory (hsql) connections are now closed when returned. Call `close()` on an in-memory client when done (see README).
-- Streams that are closed while not reading no longer leak.
-
-## [8.0.0] - 2026-11-13
-
-### Changed
-
-- Resource leak fixes in query/IFS read/write streams, and the Java jar was rebuilt. Streams now clean up the underlying Java objects when destroyed.
-- `JSONStream` was replaced with an internal JSON array parser (no longer a dependency).
-- Optional logger support is covered by additional tests.
+- Resource leaks in query and IFS read/write streams. Streams now clean up the underlying Java objects when they are destroyed or closed, also while not reading.
+- Connection config values that are not strings (e.g. `'block size': 512` or `prompt: false`) are now passed to the driver. They were silently ignored before, so only string values such as `'512'` took effect. If your config contains such values they will start to apply. `host`, `user` and `password` may also be given as non-strings.
+- Pooled connections that are dead when handed out (SQL state `08003`) are now discarded and retried (up to 4 times) instead of failing the query. A rejected sign-on (`08004`) or a failed connect (`08001`) is not retried.
+- In-memory (hsql) connections are now closed when returned, so they no longer pile up as open sessions.
+- `execute` returns its connection to the pool when the statement fails, also when closing the failed statement fails.
 
 ## [7.0.0] - 2026-08-21
 

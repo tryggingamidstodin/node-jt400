@@ -150,8 +150,12 @@ public class JdbcJsonClient
 		}
 		catch (Exception e)
 		{
-			if(st!=null) {
-				st.close();
+			if (st != null) {
+				try {
+					st.close();
+				} catch (Exception ignored) {
+					// Must not keep the connection from being returned.
+				}
 			}
 			pool.returnConnection(c);
 			throw e;

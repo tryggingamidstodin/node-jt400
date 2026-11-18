@@ -15,6 +15,7 @@ export * from './lib/baseConnection.types.js'
 export * from './lib/connection.types.js'
 export * from './lib/ifs/types.js'
 export type { InMemoryConnection, Logger }
+export type { ChainedSqlError, SqlErrorInfo } from './lib/handleError.js'
 
 const defaultConfig = {
   host: process.env.AS400_HOST,
