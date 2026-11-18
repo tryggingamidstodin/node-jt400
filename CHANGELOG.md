@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. Please note
 
 ## [Unreleased]
 
+### Added
+
+- Optional `fetch size` connection config, applied with JDBC `setFetchSize` to statements created by `query`, `createReadStream` and `execute`. Behaviour is unchanged when it is not set. Because the driver only uses the fetch size when `block size` is `0`, setting it also sets `block size` to `'0'` unless the config sets a block size (see README).
+
 ### Changed
 
 - **Required Node.js versions:** `^22.22.2 || ^24.15.0 || >=26.0.0` (was `>=22`). Older Node 22 releases, Node 23 and Node 25 are no longer supported.
@@ -12,6 +16,7 @@ All notable changes to this project will be documented in this file. Please note
 
 ### Fixed
 
+- Connection config values that are not strings (e.g. `'block size': 512` or `prompt: false`) are now passed to the driver. They were silently ignored before, so only string values such as `'512'` took effect. If your config contains such values they will start to apply.
 - Pooled connections that are dead when handed out (SQL state `08xxx`) are now discarded and retried (up to 4 times) instead of failing the query.
 - In-memory (hsql) connections are now closed when returned. Call `close()` on an in-memory client when done (see README).
 - Streams that are closed while not reading no longer leak.

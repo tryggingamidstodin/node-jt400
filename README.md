@@ -69,6 +69,27 @@ const config = {
 const pool = require('node-jt400').pool(config)
 ```
 
+Values can be strings, numbers or booleans (`'block size': 512` and `'block size': '512'` are the same); they are passed to the driver as strings.
+
+### Fetch size
+
+In addition to the JDBC properties, the config accepts an optional `fetch size`. It is not a driver property: node-jt400 removes it from the config and calls JDBC `setFetchSize` with it on every statement created by `query`, `createReadStream` and `execute`, also inside transactions. It is the number of rows the driver asks the server for in each round trip.
+
+```javascript
+const config = {
+  host: 'myhost',
+  user: 'myuser',
+  password: 'xxx',
+  'fetch size': 500,
+}
+const pool = require('node-jt400').pool(config)
+```
+
+- When `fetch size` is not set, nothing changes and the driver defaults apply.
+- The driver only uses the fetch size when its `block size` property is `0`; otherwise it derives the number of rows per round trip from the block size (in kilobytes, default `32`). A `fetch size` above 0 therefore also sets `block size` to `'0'`, unless you set `block size` yourself, in which case your block size is kept and the fetch size is ignored by the driver.
+- The value must be an integer (`500` or `'500'`). Anything else throws a `NumberFormatException` when the pool or connection is created. A negative value is rejected by the driver when the first statement runs.
+- It has no effect on the in-memory client (`useInMemoryDb()`).
+
 To close the connection pool you can call `pool.close()`
 
 > NOTE: `close()` has no effect on the in-memory client (`useInMemoryDb()`). All in-memory clients in a process share one HSQLDB database, so the client stays usable after `close()`. To reset the data between tests, clear or drop your tables, or run `db.execute('SHUTDOWN')`. That discards all in-memory data for every in-memory client in the process, and the next query starts with an empty database.

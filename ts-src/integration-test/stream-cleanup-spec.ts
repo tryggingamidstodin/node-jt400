@@ -8,8 +8,9 @@ import { jt400 } from './db.js'
 const { ifs } = jt400
 
 // Each iteration opens a connection to the IBM i, and `npm run integration-test`
-// applies --test-timeout=10000 to the whole file, so keep the default small.
-const ITERATIONS = Number(process.env.CLEANUP_ITERATIONS || 10)
+// applies --test-timeout=20000 to the whole file, so keep the default small.
+// The sql read stream test takes over a second per iteration.
+const ITERATIONS = Number(process.env.CLEANUP_ITERATIONS || 5)
 
 function closed(stream: NodeJS.EventEmitter) {
   return new Promise<void>((resolve) => stream.once('close', () => resolve()))
