@@ -90,6 +90,25 @@ describe('hsql in memory', () => {
       assert.strictEqual(select.length, 3)
     })
 
+    it('should accept interface-typed rows', async () => {
+      interface Row {
+        NAME: string
+        STAMP: Date
+      }
+      const rows: Row[] = [{ NAME: 'iface', STAMP: new Date() }]
+      const ids = await jt400.insertList('testtbl', 'ID', rows)
+      assert.deepStrictEqual(ids, [1234567891235])
+    })
+
+    it('should reject rows with invalid property types', async () => {
+      interface BadRow {
+        NAME: { nested: true }
+      }
+      const rows: BadRow[] = []
+      // @ts-expect-error property type is not a valid Param
+      await jt400.insertList('testtbl', 'ID', rows)
+    })
+
     it('should insert date and timestamp', async () => {
       const ids = await jt400.insertList('testtbl', 'ID', [
         {
