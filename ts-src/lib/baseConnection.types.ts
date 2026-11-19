@@ -11,7 +11,7 @@ export interface BLOB {
   value: string
 }
 
-export type Param = string | number | Date | null | CLOB | BLOB
+export type Param = string | number | Date | null | undefined | CLOB | BLOB
 
 export interface QueryOptions {
   trim: boolean
