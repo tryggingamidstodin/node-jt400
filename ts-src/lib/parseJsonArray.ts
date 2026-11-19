@@ -110,10 +110,15 @@ export function parseJsonArray() {
         }
       }
 
+      // Only copy the buffer when everything was consumed or a lot of it is
+      // dead, otherwise repeated backpressure pauses on a big chunk would
+      // re-copy the remaining text every time.
       const keepFrom = elementStart >= 0 ? elementStart : index
-      text = text.slice(keepFrom)
-      index -= keepFrom
-      if (elementStart >= 0) elementStart = 0
+      if (index >= text.length || keepFrom >= 65536) {
+        text = text.slice(keepFrom)
+        index -= keepFrom
+        if (elementStart >= 0) elementStart = 0
+      }
       if (canPush) callback()
       else pending = callback
     } catch (err) {
@@ -124,7 +129,7 @@ export function parseJsonArray() {
   return new Transform({
     readableObjectMode: true,
     transform(chunk, _encoding, callback) {
-      text += decoder.write(chunk)
+      text += typeof chunk === 'string' ? chunk : decoder.write(chunk)
       processInput(this, callback)
     },
     read(size) {
