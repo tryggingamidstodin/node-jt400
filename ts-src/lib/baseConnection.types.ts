@@ -53,10 +53,10 @@ export type CreateWriteStream = (
 ) => Writable
 export type BatchUpdate = (sql: string, params?: Param[][]) => Promise<number[]>
 export type Close = () => void
-export type InsertList = (
+export type InsertList = <T extends { [K in keyof T]: Param }>(
   tableName: string,
   idColumn: string,
-  rows: Record<string, Param>[],
+  rows: T[],
 ) => Promise<number[]>
 export interface BaseConnection {
   query: Query

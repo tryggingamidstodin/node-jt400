@@ -1,4 +1,4 @@
-import { BaseConnection, InsertList } from './baseConnection.types.js'
+import { BaseConnection, InsertList, Param } from './baseConnection.types.js'
 import { toInsertSql } from './sqlutil.js'
 
 export type CreateInsertList = (connection: BaseConnection) => InsertList
@@ -13,9 +13,11 @@ export const createInsertListInOneStatment: CreateInsertList =
       ' FROM NEW TABLE(' +
       toInsertSql(tableName, list) +
       ')'
-    const params = list.map(Object.values).reduce((arr, valueArr) => {
-      return arr.concat(valueArr)
-    }, [])
+    const params = list
+      .map((record) => Object.values<Param>(record))
+      .reduce((arr: Param[], valueArr) => {
+        return arr.concat(valueArr)
+      }, [])
 
     return jt400.query<any>(sql, params).then((idList) => {
       return idList.map((idObj) => idObj[idColumn.toUpperCase()])
@@ -31,7 +33,7 @@ export const createStandardInsertList: CreateInsertList =
       .map((record) => {
         return {
           sql: toInsertSql(tableName, [record]),
-          values: Object.values(record),
+          values: Object.values<Param>(record),
         }
       })
       .reduce((soFar: Promise<unknown>, sqlObj) => {
