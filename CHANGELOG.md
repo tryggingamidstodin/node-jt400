@@ -16,7 +16,7 @@ All notable changes to this project will be documented in this file. Please note
 - **Required Node.js versions:** `^22.22.2 || ^24.15.0 || >=26.0.0` (was `>=22`). Older Node 22 releases, Node 23 and Node 25 are no longer supported.
 - `JSONStream` was replaced with the internal JSON array parser `parseJsonArray`. `JSONStream` and `flushwritable` are no longer dependencies, so add them to your own dependencies if you relied on them being installed with this package.
 - Streams are now wired with `stream.pipeline` instead of `pipe`, so errors propagate and resources are cleaned up when a stream is closed or destroyed early.
-- Types are stricter (`strict`, no implicit any), which may surface new compile errors in consumers. The `rows` argument of `insertList` is now typed as `Record<string, Param>[]` (was `any[]`).
+- Types are stricter (`strict`, no implicit any), which may surface new compile errors in consumers. The `rows` argument of `insertList` is now typed as `Record<string, Param>[]` (was `any[]`). `Param` now also allows `undefined`, which is sent to the database as `null`, as before.
 - IFS read streams read the file in chunks of up to 65536 bytes (was 10000), which means fewer round trips to the server. The `data` events of `ifs().createReadStream` carry larger chunks as a result.
 - The Java jar was rebuilt.
 
