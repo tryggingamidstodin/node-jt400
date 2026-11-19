@@ -67,6 +67,13 @@ describe('streamTransformers', () => {
         '[1]garbage',
         '[1][2]',
         '[[1}]',
+        '{}',
+        '{"a":1}',
+        '[[1],bad[2]]',
+        '[1 2]',
+        '[bad]',
+        '[[1,]]',
+        '[{"a":}]',
       ]) {
         await assert.rejects(
           () => parse(invalid),
@@ -74,6 +81,14 @@ describe('streamTransformers', () => {
           invalid,
         )
       }
+    })
+
+    it('rejects invalid syntax split across chunks', async () => {
+      await assert.rejects(() => parse('[[1],ba', 'd[2]]'), {
+        name: 'SyntaxError',
+      })
+      await assert.rejects(() => parse('[1]', ' x'), { name: 'SyntaxError' })
+      await assert.rejects(() => parse('[1', ' 2]'), { name: 'SyntaxError' })
     })
 
     it('parses split scalar and nested values', async () => {
