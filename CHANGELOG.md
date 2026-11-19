@@ -2,25 +2,14 @@
 
 All notable changes to this project will be documented in this file. Please note that this changelog was added in version 4.0 so documentation on versions prior to that are incomplete.
 
-## [Unreleased]
+## [8.0.0] - Unreleased
 
 ### Added
 
 - `createDataQ` for plain (sequential, non-keyed) data queues, with `write`, `read` and `peek`. The queue is given by `name` (found in the library list) or by `path` (see README). The types `DataQ`, `DataQPathOptions` and `DataQWaitOptions` are exported.
-
-### Fixed
-
-- Plain data queues work with direct connections as well as pools.
-- `parseJsonArray` respects downstream backpressure and rejects malformed array syntax and trailing content. Empty input and early termination between elements are still accepted.
-- JDBC streams wait for Java resource cleanup before ending, including when closed during a pending read.
-
-## [8.0.0] - 2026-11-13
-
-### Added
-
 - Errors caused by a SQL exception now carry structured diagnostics on `error.context.sqlError`: `sqlState`, `errorCode` and `chained` (the exceptions behind `getNextException`). Use these instead of matching on the error message (see README). The types `SqlErrorInfo` and `ChainedSqlError` are exported.
 - The IFS read buffer size can be set with the `JT400_IFS_READ_BUFFER` environment variable or the `jt400.ifs.readBuffer` Java system property (see README).
-- `parseJsonArray` is exported. It turns the output of `createReadStream` into a stream of rows, skips `null` elements and fails when the input ends in the middle of an element (see README).
+- `parseJsonArray` is exported. It turns the output of `createReadStream` into a stream of rows, skips `null` elements, respects downstream backpressure, and fails on malformed array syntax, trailing content, or input that ends in the middle of an element. Empty input and early termination between elements are accepted (see README).
 
 ### Changed
 
@@ -33,7 +22,7 @@ All notable changes to this project will be documented in this file. Please note
 
 ### Fixed
 
-- Resource leaks in query and IFS read/write streams. Streams now clean up the underlying Java objects when they are destroyed or closed, also while not reading.
+- Resource leaks in query and IFS read/write streams. Streams now clean up the underlying Java objects when they are destroyed or closed, also while not reading. JDBC streams wait for the Java cleanup before ending, including when closed during a pending read.
 - Connection config values that are not strings (e.g. `'block size': 512` or `prompt: false`) are now passed to the driver. They were silently ignored before, so only string values such as `'512'` took effect. If your config contains such values they will start to apply. `host`, `user` and `password` may also be given as non-strings.
 - Pooled connections that are dead when handed out (SQL state `08003`) are now discarded and retried (up to 4 times) instead of failing the query. A rejected sign-on (`08004`) or a failed connect (`08001`) is not retried.
 - In-memory (hsql) connections are now closed when returned, so they no longer pile up as open sessions.

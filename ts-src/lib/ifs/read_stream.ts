@@ -21,6 +21,7 @@ export class IfsReadStream extends Readable {
         stream
           .read()
           .then((res) => {
+            if (this.destroyed) return
             this.push(this._javaTypeToBuffer(res))
           })
           .catch((err) => {
