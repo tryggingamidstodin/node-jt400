@@ -19,50 +19,10 @@ public class JT400 {
 	private final ConnectionProvider connectionProvider;
 
 	private final JdbcJsonClient client;
-	private final Integer fetchSize;
-
-	/**
-	 * Name of the connection config key holding the JDBC fetch size. It is
-	 * consumed by this library and not passed on to the Toolbox driver.
-	 */
-	static final String FETCH_SIZE_KEY = "fetch size";
-
-	/**
-	 * Toolbox driver property. The driver only uses the JDBC fetch size when
-	 * this is 0; otherwise it derives the rows per fetch from the block size.
-	 */
-	static final String BLOCK_SIZE_KEY = "block size";
 
 	public JT400(ConnectionProvider connectionProvider) {
-		this(connectionProvider, null);
-	}
-
-	public JT400(ConnectionProvider connectionProvider, Integer fetchSize) {
 		this.connectionProvider = connectionProvider;
-		this.fetchSize = fetchSize;
-		this.client = new JdbcJsonClient(connectionProvider, fetchSize);
-	}
-
-	/**
-	 * Removes the optional "fetch size" key from the connection config so it
-	 * is not passed on to the driver. Returns null when it is not set, which
-	 * leaves the driver default in place. A non-integer value throws
-	 * NumberFormatException; a negative one is rejected by JDBC on first use.
-	 *
-	 * The driver ignores the fetch size unless "block size" is 0, so a
-	 * positive fetch size sets "block size" to "0" when the config does not
-	 * set a block size itself. An explicit block size is left alone.
-	 */
-	public static Integer extractFetchSize(JSONObject conf) {
-		Object raw = conf.remove(FETCH_SIZE_KEY);
-		if (raw == null) {
-			return null;
-		}
-		Integer fetchSize = Integer.valueOf(String.valueOf(raw).trim());
-		if (fetchSize.intValue() > 0 && !conf.containsKey(BLOCK_SIZE_KEY)) {
-			conf.put(BLOCK_SIZE_KEY, "0");
-		}
-		return fetchSize;
+		this.client = new JdbcJsonClient(connectionProvider);
 	}
 
 	/**
@@ -119,14 +79,12 @@ public class JT400 {
 	public static final JT400 createConnection(String jsonConf)
 			throws Exception {
 		JSONObject conf = (JSONObject) JSONValue.parse(jsonConf);
-		Integer fetchSize = extractFetchSize(conf);
-		return new JT400(new SimpleConnection(conf), fetchSize);
+		return new JT400(new SimpleConnection(conf));
 	}
 
 	public static final JT400 createPool(String jsonConf) {
 		JSONObject conf = (JSONObject) JSONValue.parse(jsonConf);
-		Integer fetchSize = extractFetchSize(conf);
-		return new JT400(new Pool(conf), fetchSize);
+		return new JT400(new Pool(conf));
 	}
 
 	public String query(String sql, String paramsJson, boolean trim)
@@ -174,7 +132,7 @@ public class JT400 {
 	}
 
 	public Transaction createTransaction() throws Exception {
-		return new Transaction(connectionProvider, fetchSize);
+		return new Transaction(connectionProvider);
 	}
 
 	public Pgm pgm(String programName, String paramsSchemaJsonStr, String libraryName, Integer ccsid) {

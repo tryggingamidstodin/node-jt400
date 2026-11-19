@@ -10,10 +10,6 @@ public class Transaction implements ConnectionProvider {
 	private final JdbcJsonClient client;
 
 	public Transaction(ConnectionProvider connectionProvider) throws Exception {
-		this(connectionProvider, null);
-	}
-
-	public Transaction(ConnectionProvider connectionProvider, Integer fetchSize) throws Exception {
 		this.connectionProvider = connectionProvider;
 		this.connection = connectionProvider.getConnection();
 		try {
@@ -28,7 +24,7 @@ public class Transaction implements ConnectionProvider {
 			}
 			throw e;
 		}
-		this.client = new JdbcJsonClient(this, fetchSize);
+		this.client = new JdbcJsonClient(this);
 	}
 
 	public void commit() throws Exception {

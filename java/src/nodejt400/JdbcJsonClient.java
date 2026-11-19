@@ -27,34 +27,10 @@ import java.lang.IllegalArgumentException;
 public class JdbcJsonClient
 {
 	private final ConnectionProvider pool;
-	private final Integer fetchSize;
 
 	public JdbcJsonClient(ConnectionProvider pool)
 	{
-		this(pool, null);
-	}
-
-	/**
-	 * @param fetchSize JDBC fetch size applied to statements that produce a
-	 *                  result set. null leaves the driver default untouched.
-	 */
-	public JdbcJsonClient(ConnectionProvider pool, Integer fetchSize)
-	{
 		this.pool = pool;
-		this.fetchSize = fetchSize;
-	}
-
-	/**
-	 * Applies the configured fetch size, if any. Failures propagate: a fetch
-	 * size is only ever applied because the user asked for it, so silently
-	 * ignoring a rejected value would hide a misconfiguration.
-	 */
-	private void applyFetchSize(Statement st) throws SQLException
-	{
-		if (fetchSize != null)
-		{
-			st.setFetchSize(fetchSize.intValue());
-		}
 	}
 
 	public String query(String sql, String paramsJson, boolean trim)
@@ -67,7 +43,6 @@ public class JdbcJsonClient
 		{
 			JSONArray params = parseParams(paramsJson);
 			st = c.prepareStatement(sql);
-			applyFetchSize(st);
 			setParams(params, st);
 			ResultSet rs = st.executeQuery();
 			ResultSetMetaData metaData = rs.getMetaData();
@@ -119,7 +94,6 @@ public class JdbcJsonClient
 		try {
 			JSONArray params = parseParams(paramsJson);
 			st = c.prepareStatement(sql);
-			applyFetchSize(st);
 			setParams(params, st);
 			ResultSet rs = st.executeQuery();
 			return new ResultStream(pool, c, st, rs, bufferSize);
@@ -144,7 +118,6 @@ public class JdbcJsonClient
 		{
 			JSONArray params = parseParams(paramsJson);
 			st = c.prepareStatement(sql);
-			applyFetchSize(st);
 			setParams(params, st);
 			return new StatementWrap(pool, c, st);
 		}
