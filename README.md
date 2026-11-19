@@ -8,7 +8,7 @@ NodeJS JT400 wrapper to connect to IBM iSeries and AS/400 systems (OS400 operati
 
 This package is published as a **dual-mode package** supporting both ESM (ECMAScript Modules) and CommonJS:
 
-- Use `import` in ESM projects (Node.js 16+)
+- Use `import` in ESM projects
 - Use `require()` in CommonJS projects
 - Full TypeScript support with type definitions for both formats
 
@@ -23,6 +23,11 @@ We are always open to suggestions on how to improve and welcome most pull-reques
 ## Changes
 
 Check out our [changelog.md](https://github.com/tryggingamidstodin/node-jt400/blob/master/CHANGELOG.md) to see changes to this project. Please note that this changelog was added in version 4.0 so documentation on versions prior to that are incomplete. Feel free to add to this changelog and report an issue if you're having troubles with updating this package.
+
+## Requirements
+
+- Node.js `^22.22.2 || ^24.15.0 || >=26.0.0` (see `engines` in `package.json`)
+- A Java runtime (JDK/JRE) available on the machine, required by the `java` dependency
 
 ## Install
 
@@ -64,7 +69,11 @@ const config = {
 const pool = require('node-jt400').pool(config)
 ```
 
+Values can be strings, numbers or booleans (`'block size': 512` and `'block size': '512'` are the same); they are passed to the driver as strings.
+
 To close the connection pool you can call `pool.close()`
+
+> NOTE: `close()` has no effect on the in-memory client (`useInMemoryDb()`). All in-memory clients in a process share one HSQLDB database, so the client stays usable after `close()`. To reset the data between tests, clear or drop your tables, or run `db.execute('SHUTDOWN')`. That discards all in-memory data for every in-memory client in the process, and the next query starts with an empty database.
 
 ### Logging
 
@@ -273,14 +282,18 @@ try {
 ### SQL stream
 
 ```javascript
+import { parseJsonArray } from 'node-jt400'
+
 pool
   .createReadStream('SELECT FIELD1, FIELD2 FROM FOO WHERE BAR=? AND BAZ=?', [
     1,
     'a',
   ])
-  .pipe(JSONStream.parse([true]))
+  .pipe(parseJsonArray())
   .pipe(pool.createWriteStream('INSERT INTO FOO2 (F1, F2) VALUES(?, ?)'))
 ```
+
+`createReadStream` emits the result as the text of one JSON array of rows. `parseJsonArray()` turns that into a stream of rows (each an array of column values). It skips `null` elements and emits an error when the input ends in the middle of an element. It replaces `JSONStream.parse([true])`, which earlier versions of this example used; `JSONStream` is no longer installed with this package.
 
 #### asObjectStream
 
@@ -382,6 +395,8 @@ const readStream = ifs.createReadStream('/new.txt') // Reading bar.txt from IFS
 readStream.pipe(writeStream) // Piping from IFS to nodeJS
 ```
 
+The file is read in chunks of up to 65536 bytes, one round trip to the server per chunk. To change the chunk size, set the `JT400_IFS_READ_BUFFER` environment variable (in bytes) before the first IFS read stream is created, or the Java system property `jt400.ifs.readBuffer`. The environment variable wins when both are set, and a value that is not a positive integer is ignored.
+
 ### IFS write
 
 ```javascript
@@ -467,6 +482,48 @@ let queue = jt400.createKeyedDataQ({ name })
 let m = await queue.read({ key: inboxKey, wait: 2 })
 ```
 
+## Data Queues
+
+[IBM DataQueue Reference](https://javadoc.midrange.com/jtopen/index.html?com/ibm/as400/access/DataQueue.html)
+
+Plain (sequential, non-keyed) data queues. Entries are read in the order the queue was created with (FIFO or LIFO).
+
+```javascript
+const jt400 = pool(jt400config)
+// Find the data queue in the library list...
+const queue = jt400.createDataQ({ name: 'MYDTAQ' })
+// ...or give its full path
+const queue2 = jt400.createDataQ({
+  path: '/QSYS.LIB/MYLIB.LIB/MYDTAQ.DTAQ',
+})
+
+await queue.write('ping')
+
+// Remove the next entry and return it, or null when the queue is empty.
+// Does not wait by default.
+const entry = await queue.read()
+
+// Look at the next entry without removing it.
+const next = await queue.peek()
+
+// Wait up to 2 seconds for an entry.
+const waited = await queue.read({ wait: 2 })
+
+// A consumer: wait in bounded steps rather than forever.
+while (!stopping) {
+  const msg = await queue.read({ wait: 30 })
+  if (msg !== null) handle(msg)
+}
+```
+
+`read` and `peek` resolve with `null` when the queue has no entry within the wait. `wait` is in seconds: `0` does not wait and `-1` waits until there is an entry. Both `read` and `peek` default to `0`.
+
+A waiting `read` or `peek` holds a connection from the pool until it returns, so a few consumers waiting with `-1` can exhaust the pool. Prefer a bounded `wait` in a loop.
+
+Entries are read and written as text, converted with the connection's CCSID. Binary data is not supported.
+
+Data queues are not supported by the in-memory database: `createDataQ` throws there.
+
 ## Message Queues
 
 [IBM MessageQueue Reference](https://javadoc.midrange.com/jtopen/index.html?com/ibm/as400/access/MessageQueue.html)
@@ -501,6 +558,31 @@ The oops-error has few properties:
 - message: The basic error message.
 - cause: the original error.
 - fullstack: function that returns the fullstack of causes.
+- context: the input of the failed call (e.g. `sql` and `params`) and, for SQL errors, `sqlError` (see below).
+
+## SQL state and error code
+
+Error messages differ between DB2 releases and server language settings, so do not match on them. When the error was caused by a SQL exception, `error.context.sqlError` identifies it instead:
+
+- sqlState: the SQLSTATE, e.g. `'23505'` for a duplicate key.
+- errorCode: the vendor error code (the SQLCODE on DB2 for i), e.g. `-803`.
+- chained: `message`, `sqlState` and `errorCode` of the exceptions chained behind the first one (at most 5). DB2 for i often puts the detail that explains a failure there.
+
+Values the exception does not have are left out, and `sqlError` is missing altogether when the error is not a SQL exception (e.g. errors from `pgm` calls), so read it with optional chaining.
+
+TypeScript users can import the `SqlErrorInfo` and `ChainedSqlError` types from `node-jt400`.
+
+```javascript
+try {
+  await pool.insertAndGetId('INSERT INTO foo (bar) VALUES (?)', [1])
+} catch (error) {
+  if (error.context?.sqlError?.sqlState === '23505') {
+    // duplicate key
+  } else {
+    throw error
+  }
+}
+```
 
 ## Examples
 

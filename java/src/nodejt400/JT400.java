@@ -2,6 +2,7 @@ package nodejt400;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.Properties;
 
 import org.json.simple.JSONObject;
@@ -22,6 +23,57 @@ public class JT400 {
 	public JT400(ConnectionProvider connectionProvider) {
 		this.connectionProvider = connectionProvider;
 		this.client = new JdbcJsonClient(connectionProvider);
+	}
+
+	/**
+	 * Converts the connection config to driver properties. Every value is
+	 * converted to a String because the Toolbox driver reads its properties
+	 * with Properties.getProperty, which silently ignores other types: a
+	 * JSON number or boolean would otherwise never reach the driver. Null
+	 * values are skipped.
+	 */
+	public static Properties toProperties(JSONObject conf) {
+		Properties props = new Properties();
+		for (Object key : conf.keySet()) {
+			Object value = conf.get(key);
+			if (value != null) {
+				props.setProperty(String.valueOf(key), String.valueOf(value));
+			}
+		}
+		return props;
+	}
+
+	/**
+	 * SQLSTATE the driver reports when the pool hands out a connection that
+	 * is already closed ("connection does not exist").
+	 */
+	static final String DEAD_POOLED_CONNECTION_STATE = "08003";
+
+	/**
+	 * Tells whether getting a connection from the pool failed because the
+	 * pooled connection was already dead, which is the only failure worth
+	 * retrying.
+	 *
+	 * The other connection states must not be retried: 08004 is a rejected
+	 * sign-on (e.g. a wrong password), where every retry is another failed
+	 * sign-on attempt and can disable the user profile, and 08001 is a
+	 * failed connect (e.g. an unreachable host), where retrying only
+	 * multiplies the time until the caller sees the error.
+	 */
+	public static boolean isDeadPooledConnection(Throwable e) {
+		for (int depth = 0; e != null && depth < 10; depth++, e = e.getCause()) {
+			if (e instanceof SQLException
+					&& DEAD_POOLED_CONNECTION_STATE.equals(((SQLException) e).getSQLState())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** Reads a config value as a String, whatever JSON type it has. */
+	static String configString(JSONObject conf, String key) {
+		Object value = conf.get(key);
+		return value == null ? null : String.valueOf(value);
 	}
 
 	public static final JT400 createConnection(String jsonConf)
@@ -95,6 +147,10 @@ public class JT400 {
 		return new KeyedDataQ(connectionProvider, name);
 	}
 
+	public DataQ createDataQ(String name, Boolean isPath) throws Exception {
+		return new DataQ(connectionProvider, name, isPath);
+	}
+
 	public MessageFileHandler openMessageFile(String path) throws Exception {
 		return new MessageFileHandler(connectionProvider, path);
 	}
@@ -110,44 +166,53 @@ public class JT400 {
 
 	public String[] listIfsFiles(String folderName) throws Exception {
 		Connection connection = connectionProvider.getConnection();
-		AS400JDBCConnectionHandle handle = (AS400JDBCConnectionHandle) connection;
-		AS400 as400 = handle.getSystem();
-		IFSFile file = new IFSFile(as400, folderName);
-		String[] res = file.list();
-		connectionProvider.returnConnection(connection);
-		return res;
+		try {
+			AS400JDBCConnectionHandle handle = (AS400JDBCConnectionHandle) connection;
+			AS400 as400 = handle.getSystem();
+			IFSFile file = new IFSFile(as400, folderName);
+			return file.list();
+		} finally {
+			connectionProvider.returnConnection(connection);
+		}
 	}
 
 	public boolean moveIfsFile(String fileName, String newFileName) throws Exception {
 		Connection connection = connectionProvider.getConnection();
-		AS400JDBCConnectionHandle handle = (AS400JDBCConnectionHandle) connection;
-		AS400 as400 = handle.getSystem();
-		IFSFile file = new IFSFile(as400, fileName);
-		boolean res = file.renameTo(new IFSFile(as400, newFileName));
-		connectionProvider.returnConnection(connection);
-		return res;
+		try {
+			AS400JDBCConnectionHandle handle = (AS400JDBCConnectionHandle) connection;
+			AS400 as400 = handle.getSystem();
+			IFSFile file = new IFSFile(as400, fileName);
+			return file.renameTo(new IFSFile(as400, newFileName));
+		} finally {
+			connectionProvider.returnConnection(connection);
+		}
 	}
 
 	public boolean deleteIfsFile(String fileName) throws Exception {
 		Connection connection = connectionProvider.getConnection();
-		AS400JDBCConnectionHandle handle = (AS400JDBCConnectionHandle) connection;
-		AS400 as400 = handle.getSystem();
-		IFSFile file = new IFSFile(as400, fileName);
-		boolean res = file.delete();
-		connectionProvider.returnConnection(connection);
-		return res;
+		try {
+			AS400JDBCConnectionHandle handle = (AS400JDBCConnectionHandle) connection;
+			AS400 as400 = handle.getSystem();
+			IFSFile file = new IFSFile(as400, fileName);
+			return file.delete();
+		} finally {
+			connectionProvider.returnConnection(connection);
+		}
 	}
 
 	public String getIfsFileMetadata(String fileName) throws Exception {
 		Connection connection = connectionProvider.getConnection();
-		AS400JDBCConnectionHandle handle = (AS400JDBCConnectionHandle) connection;
-		AS400 as400 = handle.getSystem();
-		IFSFile file = new IFSFile(as400, fileName);
-		JSONObject metadata = new JSONObject();
-		metadata.put("length", file.length());
-		metadata.put("exists", file.exists());
-		connectionProvider.returnConnection(connection);
-		return metadata.toJSONString();
+		try {
+			AS400JDBCConnectionHandle handle = (AS400JDBCConnectionHandle) connection;
+			AS400 as400 = handle.getSystem();
+			IFSFile file = new IFSFile(as400, fileName);
+			JSONObject metadata = new JSONObject();
+			metadata.put("length", file.length());
+			metadata.put("exists", file.exists());
+			return metadata.toJSONString();
+		} finally {
+			connectionProvider.returnConnection(connection);
+		}
 	}
 
 	public void close() {
@@ -161,8 +226,7 @@ class SimpleConnection implements ConnectionProvider {
 
 	public SimpleConnection(JSONObject jsonConf)
 			throws Exception {
-		Properties connectionProps = new Properties();
-		connectionProps.putAll(jsonConf);
+		Properties connectionProps = JT400.toProperties(jsonConf);
 
 		DriverManager.registerDriver(new AS400JDBCDriver());
 		connection = DriverManager.getConnection("jdbc:as400://" + jsonConf.get("host"), connectionProps);
@@ -190,10 +254,11 @@ class SimpleConnection implements ConnectionProvider {
 class Pool implements ConnectionProvider {
 	private final AS400JDBCConnectionPool sqlPool;
 	private final long logConnectionTimeThreshold;
+	private static final int MAX_RECONNECT_ATTEMPTS = 4;
+	private final Thread shutdownHook;
 
 	public Pool(JSONObject jsonConf) {
-		Properties connectionProps = new Properties();
-		connectionProps.putAll(jsonConf);
+		Properties connectionProps = JT400.toProperties(jsonConf);
 		connectionProps.remove("host");
 		connectionProps.remove("user");
 		connectionProps.remove("password");
@@ -205,29 +270,50 @@ class Pool implements ConnectionProvider {
 		logConnectionTimeThreshold = Long.parseLong(conTimeThresshold);
 
 		AS400JDBCConnectionPoolDataSource ds = new AS400JDBCConnectionPoolDataSource();
-		ds.setServerName((String) jsonConf.get("host"));
-		ds.setUser((String) jsonConf.get("user"));
-		ds.setPassword((String) jsonConf.get("password"));
+		ds.setServerName(JT400.configString(jsonConf, "host"));
+		ds.setUser(JT400.configString(jsonConf, "user"));
+		ds.setPassword(JT400.configString(jsonConf, "password"));
 		ds.setProperties(connectionProps);
 		this.sqlPool = new AS400JDBCConnectionPool(ds);
-		Runtime.getRuntime().addShutdownHook(new Thread() {
+		shutdownHook = new Thread() {
 			@Override
 			public void run() {
 				System.out.println("close connectionpool.");
 				sqlPool.close();
 			}
-		});
+		};
+		Runtime.getRuntime().addShutdownHook(shutdownHook);
 	}
 
 	@Override
 	public Connection getConnection() throws Exception {
 		long t = System.currentTimeMillis();
-		Connection c = sqlPool.getConnection();
+		Connection c = getLiveConnection();
 		t = System.currentTimeMillis() - t;
 		if (t >= logConnectionTimeThreshold) {
 			System.out.println("Connect time: " + t);
 		}
 		return c;
+	}
+
+	/**
+	 * A pooled connection can already be dead when it is handed out, e.g. when
+	 * the AS400 side dropped it while it sat idle. The pool then fails here,
+	 * before any statement has been prepared or executed, and discards the dead
+	 * connection. Retrying is therefore safe for every kind of operation and
+	 * gets a different (or a new) connection. Failures that happen later, while
+	 * a statement is running, are never retried.
+	 */
+	private Connection getLiveConnection() throws Exception {
+		for (int reconnects = 0;; reconnects++) {
+			try {
+				return sqlPool.getConnection();
+			} catch (Exception e) {
+				if (reconnects >= MAX_RECONNECT_ATTEMPTS || !JT400.isDeadPooledConnection(e)) {
+					throw e;
+				}
+			}
+		}
 	}
 
 	@Override
@@ -238,5 +324,12 @@ class Pool implements ConnectionProvider {
 	@Override
 	public void close() {
 		sqlPool.close();
+		// The hook references this pool. Left registered it would keep every
+		// closed pool reachable until the JVM exits.
+		try {
+			Runtime.getRuntime().removeShutdownHook(shutdownHook);
+		} catch (IllegalStateException ignored) {
+			// The JVM is already shutting down and the hook is running.
+		}
 	}
 }

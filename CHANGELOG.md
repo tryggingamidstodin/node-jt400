@@ -2,6 +2,50 @@
 
 All notable changes to this project will be documented in this file. Please note that this changelog was added in version 4.0 so documentation on versions prior to that are incomplete.
 
+## [8.0.0] - Unreleased
+
+### Added
+
+- `createDataQ` for plain (sequential, non-keyed) data queues, with `write`, `read` and `peek`. The queue is given by `name` (found in the library list) or by `path` (see README). The types `DataQ`, `DataQPathOptions` and `DataQWaitOptions` are exported.
+- Errors caused by a SQL exception now carry structured diagnostics on `error.context.sqlError`: `sqlState`, `errorCode` and `chained` (the exceptions behind `getNextException`). Use these instead of matching on the error message (see README). The types `SqlErrorInfo` and `ChainedSqlError` are exported.
+- The IFS read buffer size can be set with the `JT400_IFS_READ_BUFFER` environment variable or the `jt400.ifs.readBuffer` Java system property (see README).
+- `parseJsonArray` is exported. It turns the output of `createReadStream` into a stream of rows, skips `null` elements, respects downstream backpressure, and fails on malformed array syntax, trailing content, or input that ends in the middle of an element. Empty input and early termination between elements are accepted (see README).
+
+### Changed
+
+- **Required Node.js versions:** `^22.22.2 || ^24.15.0 || >=26.0.0` (was `>=22`). Older Node 22 releases, Node 23 and Node 25 are no longer supported.
+- `JSONStream` was replaced with the internal JSON array parser `parseJsonArray`. `JSONStream` and `flushwritable` are no longer dependencies, so add them to your own dependencies if you relied on them being installed with this package.
+- Streams are now wired with `stream.pipeline` instead of `pipe`, so errors propagate and resources are cleaned up when a stream is closed or destroyed early.
+- Types are stricter (`strict`, no implicit any), which may surface new compile errors in consumers. The `rows` argument of `insertList` is now typed as `Record<string, Param>[]` (was `any[]`).
+- IFS read streams read the file in chunks of up to 65536 bytes (was 10000), which means fewer round trips to the server. The `data` events of `ifs().createReadStream` carry larger chunks as a result.
+- The Java jar was rebuilt.
+
+### Fixed
+
+- Resource leaks in query and IFS read/write streams. Streams now clean up the underlying Java objects when they are destroyed or closed, also while not reading. JDBC streams wait for the Java cleanup before ending, including when closed during a pending read.
+- Connection config values that are not strings (e.g. `'block size': 512` or `prompt: false`) are now passed to the driver. They were silently ignored before, so only string values such as `'512'` took effect. If your config contains such values they will start to apply. `host`, `user` and `password` may also be given as non-strings.
+- Pooled connections that are dead when handed out (SQL state `08003`) are now discarded and retried (up to 4 times) instead of failing the query. A rejected sign-on (`08004`) or a failed connect (`08001`) is not retried.
+- In-memory (hsql) connections are now closed when returned, so they no longer pile up as open sessions.
+- `execute` returns its connection to the pool when the statement fails, also when closing the failed statement fails.
+
+## [7.0.0] - 2026-08-21
+
+### Changed
+
+- CommonJS compatibility: the package ships both `dist-esm` and `dist-cjs` and exposes them through `exports` (`import` / `require`). Minimum Node.js version raised.
+
+## [6.0.0] - 2025-10-16
+
+### Changed
+
+- The package was converted to ESM (with a dual ESM/CommonJS build, see 7.0.0). Build output moved from `dist` to `dist-esm` / `dist-cjs`.
+
+## [5.4.0] - 2025-07-28
+
+### Added
+
+- Optional logging, and the `Logger` interface is exported.
+
 ## [5.3.0] - 2025-07-11
 
 New statement function created: asObjectStream. This returns a stream of object array instead of array values (asStream)

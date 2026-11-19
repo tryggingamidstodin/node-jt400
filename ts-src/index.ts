@@ -7,11 +7,15 @@ import {
 } from './lib/inMemoryConnection.js'
 import { createInsertListInOneStatment } from './lib/insertList.js'
 import { createDefaultLogger, type Logger } from './lib/logger.js'
+import { parseJsonArray } from './lib/parseJsonArray.js'
+
+export { parseJsonArray }
 
 export * from './lib/baseConnection.types.js'
 export * from './lib/connection.types.js'
 export * from './lib/ifs/types.js'
 export type { InMemoryConnection, Logger }
+export type { ChainedSqlError, SqlErrorInfo } from './lib/handleError.js'
 
 const defaultConfig = {
   host: process.env.AS400_HOST,

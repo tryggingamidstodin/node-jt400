@@ -56,7 +56,7 @@ export type Close = () => void
 export type InsertList = (
   tableName: string,
   idColumn: string,
-  rows: any[],
+  rows: Record<string, Param>[],
 ) => Promise<number[]>
 export interface BaseConnection {
   query: Query

@@ -24,7 +24,7 @@ export const createInsertListInOneStatment: CreateInsertList =
 
 export const createStandardInsertList: CreateInsertList =
   (jt400) => (tableName, _, list) => {
-    const idList = []
+    const idList: number[] = []
     const pushToIdList = idList.push.bind(idList)
 
     return list
@@ -34,7 +34,7 @@ export const createStandardInsertList: CreateInsertList =
           values: Object.values(record),
         }
       })
-      .reduce((soFar, sqlObj: any) => {
+      .reduce((soFar: Promise<unknown>, sqlObj) => {
         return soFar
           .then(() => {
             return jt400.insertAndGetId(sqlObj.sql, sqlObj.values)

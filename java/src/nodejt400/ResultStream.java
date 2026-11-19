@@ -23,6 +23,8 @@ public class ResultStream {
 
 	private boolean init = true;
 
+	private boolean closed = false;
+
 	private String sep = "[";
 
 	public ResultStream(ConnectionProvider connectionProvider, Connection c,
@@ -35,14 +37,27 @@ public class ResultStream {
 		this.bufferSize = bufferSize;
 	}
 
-	public void close() throws Exception {
+	public synchronized void close() throws Exception {
 		next = false;
-		rs.close();
-		st.close();
-		connectionProvider.returnConnection(c);
+		if (closed) {
+			return;
+		}
+		closed = true;
+		try {
+			try {
+				rs.close();
+			} finally {
+				st.close();
+			}
+		} finally {
+			connectionProvider.returnConnection(c);
+		}
 	}
 
-	public String read() throws Exception {
+	public synchronized String read() throws Exception {
+		if (closed) {
+			return null;
+		}
 		if (init) {
 			this.columnCount = rs.getMetaData().getColumnCount();
 			this.next = rs.next();

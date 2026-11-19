@@ -12,7 +12,18 @@ public class Transaction implements ConnectionProvider {
 	public Transaction(ConnectionProvider connectionProvider) throws Exception {
 		this.connectionProvider = connectionProvider;
 		this.connection = connectionProvider.getConnection();
-		this.connection.setAutoCommit(false);
+		try {
+			this.connection.setAutoCommit(false);
+		} catch (Exception e) {
+			// The caller never receives this object, so end() will never run
+			// and nothing else can return the connection.
+			try {
+				connectionProvider.returnConnection(this.connection);
+			} catch (Exception ignored) {
+				// Never mask the failure the caller is about to see.
+			}
+			throw e;
+		}
 		this.client = new JdbcJsonClient(this);
 	}
 
@@ -25,8 +36,11 @@ public class Transaction implements ConnectionProvider {
 	}
 
 	public void end() throws Exception {
-		this.connection.setAutoCommit(true);
-		this.connectionProvider.returnConnection(this.connection);
+		try {
+			this.connection.setAutoCommit(true);
+		} finally {
+			this.connectionProvider.returnConnection(this.connection);
+		}
 	}
 
 	public String query(String sql, String paramsJson, boolean trim)

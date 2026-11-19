@@ -30,8 +30,8 @@ public class MessageFileHandler {
             AS400Message entry = f.getMessage(messageId);
 
             return entry;
-        } catch (Exception ex) {
-            throw ex;
+        } finally {
+            connectionProvider.returnConnection(c);
         }
     }
 }

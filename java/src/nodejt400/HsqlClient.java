@@ -25,6 +25,9 @@ public class HsqlClient implements ConnectionProvider
 	@Override
 	public void returnConnection(Connection c) throws Exception
 	{
+		if (c != null) {
+			c.close();
+		}
 	}
 
 	@Override
@@ -93,7 +96,12 @@ public class HsqlClient implements ConnectionProvider
 	{
 		return null;
 	}
-	
+
+	public DataQ createDataQ(String name, Boolean isPath) throws Exception
+	{
+		throw new UnsupportedOperationException("Data queues are not supported by the in-memory database");
+	}
+
 	public MessageFileHandler openMessageFile(String name) throws Exception {
 		return null;
 	}

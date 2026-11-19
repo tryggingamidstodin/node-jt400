@@ -6,7 +6,11 @@ import java.sql.ResultSet;
 import org.json.simple.JSONObject;
 
 public class TablesReadStream {
+	private final ConnectionProvider connectionProvider;
+
 	private final Connection c;
+
+	private boolean closed = false;
 
 	private final ResultSet rs;
 
@@ -16,13 +20,27 @@ public class TablesReadStream {
 
 	private char sep = '[';
 
-	public TablesReadStream(Connection c, String catalog, String schema, String tableNamePattern) throws Exception {
+	public TablesReadStream(ConnectionProvider connectionProvider, Connection c, String catalog, String schema,
+			String tableNamePattern) throws Exception {
+		this.connectionProvider = connectionProvider;
 		this.c = c;
-		this.rs = c.getMetaData().getTables(catalog, schema, tableNamePattern, null);
-		this.next = rs.next();
+		ResultSet resultSet = null;
+		try {
+			resultSet = c.getMetaData().getTables(catalog, schema, tableNamePattern, null);
+			this.rs = resultSet;
+			this.next = rs.next();
+		} catch (Exception e) {
+			if (resultSet != null) {
+				try {
+					resultSet.close();
+				} catch (Exception ignored) {
+				}
+			}
+			throw e;
+		}
 	}
 
-	public String read() throws Exception {
+	public synchronized String read() throws Exception {
 		if (next) {
 			try {
 				StringBuffer sb = new StringBuffer();
@@ -44,11 +62,11 @@ public class TablesReadStream {
 				}
 				return sb.toString();
 			} catch (Exception ex) {
-				c.close();
+				close();
 				throw ex;
 			}
 		}
-		c.close();
+		close();
 		return null;
 	}
 
@@ -56,9 +74,17 @@ public class TablesReadStream {
 		return null;
 	}
 
-	public void close() throws Exception {
-		rs.close();
-		c.close();
+	public synchronized void close() throws Exception {
+		if (closed) {
+			return;
+		}
+		closed = true;
+		next = false;
+		try {
+			rs.close();
+		} finally {
+			connectionProvider.returnConnection(c);
+		}
 	}
 
 }

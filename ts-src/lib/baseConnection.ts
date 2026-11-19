@@ -1,4 +1,5 @@
-import { parse } from 'JSONStream'
+import { pipeline } from 'stream'
+import { parseJsonArray } from './parseJsonArray.js'
 import { JDBCConnection } from '../java/JT400.js'
 import { BaseConnection, Param } from './baseConnection.types.js'
 import { handleError } from './handleError.js'
@@ -65,6 +66,7 @@ export const createBaseConnection = function (
         jdbcStreamPromise: jdbcConnection
           .queryAsStream(sql, jsonParams, 100)
           .catch(handleError({ sql, params })),
+        logger,
       })
       stream.on('end', () => {
         logger.info(
@@ -90,7 +92,7 @@ export const createBaseConnection = function (
         .execute(sql, jsonParams)
         .then((statement) => {
           const isQuery = statement.isQuerySync()
-          let stream
+          let stream: JdbcStream | undefined
           const stWrap = {
             isQuery() {
               return isQuery
@@ -117,11 +119,12 @@ export const createBaseConnection = function (
                   return result
                 })
             },
-            asStream(options) {
+            asStream(options?: { bufferSize?: number }) {
               const startTime = process.hrtime.bigint()
               options = options || {}
               stream = new JdbcStream({
                 jdbcStream: statement.asStreamSync(options.bufferSize || 100),
+                logger,
               })
               stream.on('end', () => {
                 logger.info(
@@ -136,10 +139,10 @@ export const createBaseConnection = function (
               })
               return stream
             },
-            asObjectStream(options) {
+            asObjectStream(options?: { bufferSize?: number }) {
               const startTime = process.hrtime.bigint()
               options = options || {}
-              const parseJSON = parse('*')
+              const parseJSON = parseJsonArray()
 
               return statement
                 .getMetaData()
@@ -150,6 +153,7 @@ export const createBaseConnection = function (
                     jdbcStream: statement.asStreamSync(
                       options.bufferSize || 100,
                     ),
+                    logger,
                   })
                   stream.on('end', () => {
                     logger.info(
@@ -163,7 +167,12 @@ export const createBaseConnection = function (
                     )
                   })
 
-                  return stream.pipe(parseJSON).pipe(transformArrayToObject)
+                  return pipeline(
+                    stream,
+                    parseJSON,
+                    transformArrayToObject,
+                    () => undefined,
+                  )
                 })
             },
             asIterable() {

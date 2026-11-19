@@ -1,5 +1,7 @@
 import assert from 'assert'
+import { once } from 'events'
 import { readFileSync } from 'fs'
+import { beforeEach, describe, it } from 'node:test'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 import { pool, QueryOptions } from '../index.js'
@@ -8,7 +10,7 @@ import { jt400 as connection } from './db.js'
 const currentDir = dirname(fileURLToPath(import.meta.url))
 
 describe('jt400 pool', () => {
-  let idList
+  let idList: number[]
 
   beforeEach(() => {
     return connection
@@ -31,7 +33,7 @@ describe('jt400 pool', () => {
     assert.notStrictEqual(connection, pool({ host: 'foo' }))
   })
 
-  it('should configure host', () => {
+  it('should configure host', { timeout: 20000 }, () => {
     const db = pool({ host: 'nohost' })
     return db
       .query('select * from tsttbl')
@@ -42,7 +44,7 @@ describe('jt400 pool', () => {
         assert.ok(err.message.includes('nohost'))
         assert.strictEqual(err.category, 'OperationalError')
       })
-  }).timeout(20000)
+  })
 
   it('should insert records', () => {
     assert.strictEqual(idList.length, 2)
@@ -73,12 +75,11 @@ describe('jt400 pool', () => {
   })
 
   it('should trim values when trim is undefined', async () => {
-    let trim
     const data: any = await connection.query(
       'select * from tsttbl order by bar',
       [],
       {
-        trim,
+        trim: undefined as any,
       },
     )
     assert.strictEqual(data.length, 2)
@@ -98,9 +99,10 @@ describe('jt400 pool', () => {
   })
 
   it('should execute query with params', async () => {
-    const data = await connection.query('select * from tsttbl where baz=?', [
-      123.23,
-    ])
+    const data = await connection.query(
+      'select * from tsttbl where baz=?',
+      [123.23],
+    )
     assert.strictEqual(data.length, 1)
   })
 
@@ -139,7 +141,7 @@ describe('jt400 pool', () => {
       })
   })
 
-  it('should insert clob', async () => {
+  it('should insert clob', { timeout: 20000 }, async () => {
     const largeText = readFileSync(
       join(currentDir, '../../test-data/clob.txt'),
     ).toString()
@@ -148,7 +150,7 @@ describe('jt400 pool', () => {
     ])
     const res: any = await connection.query('SELECT clob from tsttbl')
     assert.strictEqual(res[0].CLOB.length, largeText.length)
-  }).timeout(20000)
+  })
 
   it('should insert blob', async () => {
     const image = readFileSync(join(currentDir, '../../test-data/blob.png'), {
@@ -232,5 +234,43 @@ describe('jt400 pool', () => {
         assert.strictEqual(error.context.params, params)
         assert.strictEqual(error.category, 'ProgrammerError')
       })
+  })
+
+  describe('createWriteStream', () => {
+    const sql = 'insert into tsttbl (foo, bar) values(?, ?)'
+
+    async function writeRows(count: number, bufferSize: number) {
+      const ws = connection.createWriteStream(sql, { bufferSize })
+      for (let i = 0; i < count; i++) {
+        ws.write(['ws-test', i])
+      }
+      ws.end()
+      await once(ws, 'finish')
+    }
+
+    it('should flush a final partial batch', async () => {
+      await writeRows(25, 10)
+      const rows = await connection.query(
+        "select * from tsttbl where foo = 'ws-test'",
+      )
+      assert.strictEqual(rows.length, 25)
+    })
+
+    it('should finish without writing when stream is empty', async () => {
+      await writeRows(0, 10)
+      const rows = await connection.query(
+        "select * from tsttbl where foo = 'ws-test'",
+      )
+      assert.strictEqual(rows.length, 0)
+    })
+
+    it('should emit error when a batch fails', async () => {
+      const ws = connection.createWriteStream(sql, { bufferSize: 10 })
+      // foo is VARCHAR(20), this value is too long
+      ws.write(['x'.repeat(100), 1])
+      ws.end()
+      const [err] = await once(ws, 'error')
+      assert.ok(err)
+    })
   })
 })

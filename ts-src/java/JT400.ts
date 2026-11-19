@@ -1,6 +1,6 @@
 export interface ResultStream {
   close: () => Promise<void>
-  read: () => Promise<string>
+  read: () => Promise<string | null>
 }
 
 export interface StatementWrap {
@@ -15,7 +15,7 @@ export interface StatementWrap {
 
 export interface TablesReadStream {
   close: () => Promise<void>
-  read: () => Promise<string>
+  read: () => Promise<string | null>
   getMetaData: () => Promise<string>
 }
 
@@ -74,6 +74,12 @@ export interface KeyedDataQ {
   write: (key: string, data: string) => Promise<void>
 }
 
+export interface DataQ {
+  read: (wait: number) => Promise<string | null>
+  peek: (wait: number) => Promise<string | null>
+  write: (data: string) => Promise<void>
+}
+
 export interface AS400Message {
   getText: () => Promise<string>
 }
@@ -83,11 +89,13 @@ export interface MessageFileHandler {
 }
 
 export interface IfsReadStream {
+  close: () => Promise<void>
   read: () => Promise<Buffer>
 }
 
 export interface IfsWriteStream {
   write: (data: Buffer) => Promise<void>
+  close: () => Promise<void>
   flush: () => Promise<void>
 }
 
@@ -106,6 +114,7 @@ export interface JT400 extends JDBCConnection {
   ) => Pgm
   openMessageQ: (name: string, isPath: boolean) => Promise<MessageQ>
   createKeyedDataQSync: (name: string) => KeyedDataQ
+  createDataQSync: (name: string, isPath: boolean) => DataQ
   openMessageFile: (path: string) => Promise<MessageFileHandler>
   createIfsReadStream: (fileName: string) => Promise<IfsReadStream>
   createIfsWriteStream: (
