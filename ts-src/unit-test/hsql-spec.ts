@@ -384,7 +384,15 @@ describe('hsql in memory', () => {
         const stream = jt400.getTablesAsStream({ schema: 'PUBLIC' })
         stream.destroy()
         await once(stream, 'close')
-        assert.strictEqual(await openSessions(), before)
+        // The JDBC source releases its connection asynchronously, so 'close'
+        // on the returned stream can fire slightly before the release is done.
+        const deadline = Date.now() + 500
+        let current = await openSessions()
+        while (current !== before && Date.now() < deadline) {
+          await new Promise((resolve) => setTimeout(resolve, 10))
+          current = await openSessions()
+        }
+        assert.strictEqual(current, before)
       })
     })
 
