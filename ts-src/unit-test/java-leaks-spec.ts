@@ -51,7 +51,9 @@ beforeEach(() => {
   returned = 0
 })
 
-describe('java connection handling', () => {
+// the suite-level timeout covers all subtests, and the global
+// --test-timeout=1000 is too tight for JVM startup + the race loops
+describe('java connection handling', { timeout: 10000 }, () => {
   describe('JdbcJsonClient', () => {
     it('queryAsStream returns the connection when the statement fails', async () => {
       await assert.rejects(() =>
