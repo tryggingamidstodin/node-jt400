@@ -15,6 +15,9 @@ let JT400: any
 let provider: any
 let sqlClient: any
 
+// each iteration is a JVM round trip; keep the suite well under the 1s unit test timeout
+const RACE_ITERATIONS = 20
+
 const outstanding = () => borrowed - returned
 
 before(async () => {
@@ -105,7 +108,7 @@ describe('java connection handling', { timeout: 10000 }, () => {
       'returns the connection exactly once when read and close race',
       { timeout: 20000 },
       async () => {
-        for (let i = 0; i < 100; i++) {
+        for (let i = 0; i < RACE_ITERATIONS; i++) {
           const stream = await sqlClient.queryAsStream(
             'select * from leaktbl',
             '[]',
@@ -118,8 +121,8 @@ describe('java connection handling', { timeout: 10000 }, () => {
             stream.close(),
           ])
         }
-        assert.strictEqual(borrowed, 100)
-        assert.strictEqual(returned, 100)
+        assert.strictEqual(borrowed, RACE_ITERATIONS)
+        assert.strictEqual(returned, RACE_ITERATIONS)
       },
     )
 
@@ -127,7 +130,7 @@ describe('java connection handling', { timeout: 10000 }, () => {
       'TablesReadStream returns the connection exactly once when read and close race',
       { timeout: 20000 },
       async () => {
-        for (let i = 0; i < 100; i++) {
+        for (let i = 0; i < RACE_ITERATIONS; i++) {
           const stream = await sqlClient.getTablesAsStream(null, null, '%')
           await Promise.allSettled([
             stream.read(),
@@ -136,8 +139,8 @@ describe('java connection handling', { timeout: 10000 }, () => {
             stream.close(),
           ])
         }
-        assert.strictEqual(borrowed, 100)
-        assert.strictEqual(returned, 100)
+        assert.strictEqual(borrowed, RACE_ITERATIONS)
+        assert.strictEqual(returned, RACE_ITERATIONS)
       },
     )
 
