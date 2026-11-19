@@ -39,7 +39,11 @@ jobs:
       - name: publish npm module
         if: github.ref == 'refs/heads/master'
         run: |
-          npm publish
+          if node -p "process.exit(require('./package.json').version.includes('-') ? 0 : 1)"; then
+            npm publish --tag rc
+          else
+            npm publish
+          fi
         shell: bash
       - name: publish release candidate to npm
         if: github.ref == 'refs/heads/rc'
