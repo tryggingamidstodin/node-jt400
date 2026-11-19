@@ -72,7 +72,7 @@ function extractSqlErrorInfo(javaError: any): SqlErrorInfo | undefined {
   }
   const chained: ChainedSqlError[] = []
   let next = readValue(javaError, 'getNextExceptionSync')
-  while (next && chained.length < MAX_CHAINED_EXCEPTIONS) {
+  for (let visited = 0; next && visited < MAX_CHAINED_EXCEPTIONS; visited++) {
     const link = withoutMissing<ChainedSqlError>({
       message: readValue(next, 'getMessageSync'),
       sqlState: readValue(next, 'getSQLStateSync'),
