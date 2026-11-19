@@ -1,6 +1,6 @@
 export interface ResultStream {
   close: () => Promise<void>
-  read: () => Promise<string>
+  read: () => Promise<string | null>
 }
 
 export interface StatementWrap {
@@ -15,7 +15,7 @@ export interface StatementWrap {
 
 export interface TablesReadStream {
   close: () => Promise<void>
-  read: () => Promise<string>
+  read: () => Promise<string | null>
   getMetaData: () => Promise<string>
 }
 

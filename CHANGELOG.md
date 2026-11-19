@@ -8,6 +8,12 @@ All notable changes to this project will be documented in this file. Please note
 
 - `createDataQ` for plain (sequential, non-keyed) data queues, with `write`, `read` and `peek`. The queue is given by `name` (found in the library list) or by `path` (see README). The types `DataQ`, `DataQPathOptions` and `DataQWaitOptions` are exported.
 
+### Fixed
+
+- Plain data queues work with direct connections as well as pools.
+- `parseJsonArray` respects downstream backpressure and rejects malformed array syntax and trailing content. Empty input and early termination between elements are still accepted.
+- JDBC streams wait for Java resource cleanup before ending, including when closed during a pending read.
+
 ## [8.0.0] - 2026-11-13
 
 ### Added

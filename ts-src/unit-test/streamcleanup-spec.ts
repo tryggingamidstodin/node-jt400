@@ -156,6 +156,80 @@ describe('JdbcStream cleanup', () => {
     assert.strictEqual(closed, 1)
   })
 
+  it('waits for Java cleanup before ending and closing', async () => {
+    let finishClose!: () => void
+    let closeCalls = 0
+    const stream = new JdbcStream({
+      jdbcStream: {
+        read: async () => '[1]',
+        close: () => {
+          closeCalls++
+          return new Promise<void>((resolve) => (finishClose = resolve))
+        },
+      },
+    })
+    let ended = false
+    let closed = false
+    stream.on('end', () => (ended = true))
+    stream.on('close', () => (closed = true))
+    const end = once(stream, 'end')
+    const close = once(stream, 'close')
+    stream.close()
+    stream.resume()
+    await new Promise((resolve) => setImmediate(resolve))
+    assert.strictEqual(closeCalls, 1)
+    assert.strictEqual(ended, false)
+    assert.strictEqual(closed, false)
+    finishClose()
+    await end
+    await close
+    assert.strictEqual(closeCalls, 1)
+  })
+
+  it('closes after an in-flight read returns null even without a consumer', async () => {
+    let finishRead!: (value: null) => void
+    let closeCalls = 0
+    const stream = new JdbcStream({
+      jdbcStream: {
+        read: () => new Promise<null>((resolve) => (finishRead = resolve)),
+        close: async () => {
+          closeCalls++
+        },
+      },
+    })
+    stream.read(0)
+    await new Promise((resolve) => setImmediate(resolve))
+    stream.close()
+    finishRead(null)
+    await new Promise((resolve) => setImmediate(resolve))
+    assert.strictEqual(closeCalls, 1)
+  })
+
+  it('waits for an already pending close when destroyed', async () => {
+    let finishClose!: () => void
+    let closeCalls = 0
+    const stream = new JdbcStream({
+      jdbcStream: {
+        read: async () => null,
+        close: () => {
+          closeCalls++
+          return new Promise<void>((resolve) => (finishClose = resolve))
+        },
+      },
+    })
+    let closed = false
+    stream.on('close', () => (closed = true))
+    const done = once(stream, 'close')
+    stream.close()
+    await new Promise((resolve) => setImmediate(resolve))
+    stream.destroy()
+    await new Promise((resolve) => setImmediate(resolve))
+    assert.strictEqual(closed, false)
+    finishClose()
+    await done
+    assert.strictEqual(closeCalls, 1)
+  })
+
   function recordingLogger() {
     const errors: any[][] = []
     return {

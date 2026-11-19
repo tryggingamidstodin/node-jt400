@@ -13,7 +13,8 @@ export class JdbcStream extends Readable {
   private _jdbcStreamPromise?: Promise<ResultStream>
   private _logger: Logger
   private _closed = false
-  private _javaClosed = false
+  private _releasePromise?: Promise<void>
+  private _ending = false
   private _reading = false
 
   constructor(opt: JdbcStreamOptions) {
@@ -30,29 +31,19 @@ export class JdbcStream extends Readable {
   }
 
   private fetch(stream: ResultStream) {
+    if (this.destroyed || this._ending) return
     if (this._closed) {
-      if (!this._javaClosed) {
-        this._javaClosed = true
-        stream.close().catch((err) => {
-          // Every requested row has been delivered, or the consumer ended the
-          // stream on purpose. A failing close is reported through the logger
-          // rather than as an 'error', which would crash consumers that have no
-          // error listener attached.
-          this._logger.error({ err }, 'IBMI DB result stream close failed')
-        })
-      }
-      this.push(null)
+      this.finish(stream)
     } else {
       this._reading = true
       stream
         .read()
         .then((res) => {
           this._reading = false
-          this.push(res)
-          if (res !== null && this._closed) {
-            // close() was called while this read was in flight and the push
-            // above may not trigger another _read (e.g. full buffer).
-            this.fetch(stream)
+          if (this.destroyed) return
+          if (res !== null) this.push(res)
+          if (res === null || this._closed) {
+            this.finish(stream)
           }
         })
         .catch((err) => {
@@ -60,6 +51,25 @@ export class JdbcStream extends Readable {
           this.destroy(err)
         })
     }
+  }
+
+  private release(stream: ResultStream): Promise<void> {
+    if (!this._releasePromise) {
+      this._releasePromise = Promise.resolve()
+        .then(() => stream.close())
+        .catch((err) => {
+          this._logger.error({ err }, 'IBMI DB result stream close failed')
+        })
+    }
+    return this._releasePromise
+  }
+
+  private finish(stream: ResultStream) {
+    if (this._ending || this.destroyed) return
+    this._ending = true
+    void this.release(stream).then(() => {
+      if (!this.destroyed) this.push(null)
+    })
   }
 
   /**
@@ -92,6 +102,7 @@ export class JdbcStream extends Readable {
   }
 
   override _read() {
+    if (this._ending || this.destroyed) return
     if (this._jdbcStream) {
       this.fetch(this._jdbcStream)
     } else {
@@ -113,17 +124,7 @@ export class JdbcStream extends Readable {
       // failure, so it must not be logged as one below.
       .catch(() => undefined)
       .then((stream) => {
-        if (stream && !this._javaClosed) {
-          this._javaClosed = true
-          return stream.close()
-        }
-      })
-      .catch((cleanupErr) => {
-        // the original error (if any) is more relevant than a failed cleanup
-        this._logger.error(
-          { err: cleanupErr },
-          'IBMI DB result stream close failed',
-        )
+        if (stream) return this.release(stream)
       })
       .then(() => callback(err))
   }

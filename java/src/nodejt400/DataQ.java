@@ -3,6 +3,7 @@ package nodejt400;
 import java.sql.Connection;
 
 import com.ibm.as400.access.AS400;
+import com.ibm.as400.access.AS400JDBCConnection;
 import com.ibm.as400.access.AS400JDBCConnectionHandle;
 import com.ibm.as400.access.DataQueue;
 import com.ibm.as400.access.DataQueueEntry;
@@ -28,8 +29,9 @@ public class DataQ {
 	}
 
 	private DataQueue openDataQ(Connection c) throws Exception {
-		AS400JDBCConnectionHandle handle = (AS400JDBCConnectionHandle) c;
-		AS400 as400 = handle.getSystem();
+		AS400 as400 = c instanceof AS400JDBCConnectionHandle
+				? ((AS400JDBCConnectionHandle) c).getSystem()
+				: ((AS400JDBCConnection) c).getSystem();
 		return new DataQueue(as400, path);
 	}
 

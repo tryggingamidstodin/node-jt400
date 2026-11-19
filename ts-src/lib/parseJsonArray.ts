@@ -1,124 +1,152 @@
-import { Transform } from 'node:stream'
+import { Transform, TransformCallback } from 'node:stream'
 import { StringDecoder } from 'node:string_decoder'
 
 const whitespace = new Set([' ', '\n', '\r', '\t'])
+type State = 'start' | 'first' | 'value' | 'delimiter' | 'done'
+type Token = 'string' | 'compound' | 'primitive'
 
 /**
- * Transform that parses a stream of JSON text holding one array and emits its
- * elements one at a time, e.g. the rows of `createReadStream`.
- *
- * - `null` elements are skipped: an object mode stream uses `null` to signal
- *   its end, so they cannot be emitted.
- * - Input that ends in the middle of an element fails with an error. Input
- *   that ends between two elements is accepted, because that is what a result
- *   stream that was closed early looks like.
+ * Parses a JSON array into a stream of elements. Null elements are skipped.
+ * Empty input and input ending between elements are accepted for early close.
  */
 export function parseJsonArray() {
   const decoder = new StringDecoder('utf8')
   let text = ''
   let index = 0
-  let depth = 0
+  let state: State = 'start'
+  let token: Token | undefined
+  let elementStart = -1
+  const brackets: string[] = []
   let inString = false
   let escape = false
-  let elementStart = -1
+  let pending: TransformCallback | undefined
 
-  const emitElement = (stream: Transform, end: number) => {
-    const raw = text.slice(elementStart, end).trim()
+  const emitElement = (stream: Transform, end: number): boolean => {
+    const element = JSON.parse(text.slice(elementStart, end))
     elementStart = -1
-    if (raw) {
-      const element = JSON.parse(raw)
-      if (element !== null) {
-        stream.push(element)
+    token = undefined
+    state = 'delimiter'
+    return element === null || stream.push(element)
+  }
+
+  const processInput = (stream: Transform, callback: TransformCallback) => {
+    try {
+      let canPush = true
+      while (index < text.length && canPush) {
+        const char = text[index]
+
+        if (token === 'primitive') {
+          if (whitespace.has(char) || char === ',' || char === ']') {
+            canPush = emitElement(stream, index)
+            continue // process the delimiter separately
+          }
+          index++
+          continue
+        }
+
+        if (token === 'string' || token === 'compound') {
+          if (inString) {
+            if (escape) escape = false
+            else if (char === '\\') escape = true
+            else if (char === '"') inString = false
+            index++
+            if (!inString && token === 'string') {
+              canPush = emitElement(stream, index)
+            }
+            continue
+          }
+          if (char === '"') {
+            inString = true
+          } else if (char === '[' || char === '{') {
+            brackets.push(char)
+          } else if (char === ']' || char === '}') {
+            const opening = brackets.pop()
+            if (opening !== (char === ']' ? '[' : '{')) {
+              throw new SyntaxError('Mismatched JSON brackets')
+            }
+            index++
+            if (brackets.length === 0) {
+              canPush = emitElement(stream, index)
+            }
+            continue
+          }
+          index++
+          continue
+        }
+
+        if (whitespace.has(char)) {
+          index++
+          continue
+        }
+        if (state === 'start') {
+          if (char !== '[') throw new SyntaxError('Expected a JSON array')
+          state = 'first'
+          index++
+        } else if (state === 'done') {
+          throw new SyntaxError('Unexpected content after JSON array')
+        } else if (state === 'delimiter') {
+          if (char === ',') state = 'value'
+          else if (char === ']') state = 'done'
+          else throw new SyntaxError('Expected a comma or end of JSON array')
+          index++
+        } else if (char === ']' && state === 'first') {
+          state = 'done'
+          index++
+        } else {
+          if (char === ']' || char === ',' || char === '}') {
+            throw new SyntaxError('Expected a JSON array element')
+          }
+          elementStart = index
+          if (char === '"') {
+            token = 'string'
+            inString = true
+          } else if (char === '[' || char === '{') {
+            token = 'compound'
+            brackets.push(char)
+          } else {
+            token = 'primitive'
+          }
+          index++
+        }
       }
+
+      const keepFrom = elementStart >= 0 ? elementStart : index
+      text = text.slice(keepFrom)
+      index -= keepFrom
+      if (elementStart >= 0) elementStart = 0
+      if (canPush) callback()
+      else pending = callback
+    } catch (err) {
+      callback(err instanceof Error ? err : new Error(String(err)))
     }
   }
 
   return new Transform({
     readableObjectMode: true,
     transform(chunk, _encoding, callback) {
-      text += typeof chunk === 'string' ? chunk : decoder.write(chunk)
-      try {
-        while (index < text.length) {
-          const char = text[index]
-
-          if (inString) {
-            if (escape) {
-              escape = false
-            } else if (char === '\\') {
-              escape = true
-            } else if (char === '"') {
-              inString = false
-            }
-            index++
-            continue
-          }
-
-          if (char === '"') {
-            if (depth === 1 && elementStart < 0) {
-              elementStart = index
-            }
-            inString = true
-            index++
-            continue
-          }
-
-          if (char === '{' || char === '[') {
-            if (depth === 1) {
-              elementStart = index
-            }
-            depth++
-            index++
-            continue
-          }
-
-          if (char === '}' || char === ']') {
-            if (depth === 1 && elementStart >= 0) {
-              emitElement(this, index)
-            }
-            depth--
-            if (depth === 1 && elementStart >= 0) {
-              emitElement(this, index + 1)
-            }
-            index++
-            continue
-          }
-
-          if (depth === 1 && char === ',') {
-            if (elementStart >= 0) {
-              emitElement(this, index)
-            }
-            index++
-            continue
-          }
-
-          if (depth === 1 && elementStart < 0 && !whitespace.has(char)) {
-            elementStart = index
-          }
-
-          index++
-        }
-
-        const keepFrom = elementStart >= 0 ? elementStart : index
-        if (keepFrom > 0) {
-          text = text.slice(keepFrom)
-          index -= keepFrom
-          if (elementStart >= 0) {
-            elementStart = 0
-          }
-        }
-        callback()
-      } catch (err) {
-        callback(err instanceof Error ? err : new Error(String(err)))
+      text += decoder.write(chunk)
+      processInput(this, callback)
+    },
+    read(size) {
+      if (pending) {
+        const callback = pending
+        pending = undefined
+        processInput(this, callback)
       }
+      Transform.prototype._read.call(this, size)
     },
     flush(callback) {
-      // drain any incomplete trailing bytes held by the decoder
       text += decoder.end()
-      if (depth > 1 || inString || elementStart >= 0) {
-        callback(new Error('Unexpected end of JSON input inside an element'))
-        return
-      }
-      callback()
+      processInput(this, (err) => {
+        if (err) return callback(err)
+        // Empty streams and streams stopped between elements are produced by
+        // empty queries and by JdbcStream.close().
+        if (token) {
+          callback(new Error('Unexpected end of JSON input inside an element'))
+        } else {
+          callback()
+        }
+      })
     },
   })
 }

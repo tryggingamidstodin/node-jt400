@@ -1,6 +1,6 @@
 import assert from 'assert'
 import { after, before, beforeEach, describe, it } from 'node:test'
-import type { DataQ } from '../index.js'
+import { connect, type DataQ } from '../index.js'
 import { jt400 } from './db.js'
 
 describe('keyed dataQ', () => {
@@ -100,6 +100,25 @@ describe('dataQ', () => {
 
     assert.strictEqual(await dataQ.peek(), 'ping')
     assert.strictEqual(await byName.read(), 'ping')
+  })
+
+  it('should read and write using a direct connection', async () => {
+    const db = await connect()
+    try {
+      const directQueue = db.createDataQ({
+        path: `/QSYS.LIB/${library}.LIB/${queueName}.DTAQ`,
+      })
+      await directQueue.write('direct')
+      assert.strictEqual(await directQueue.peek(), 'direct')
+      assert.strictEqual(await directQueue.read(), 'direct')
+      assert.strictEqual(await directQueue.read(), null)
+      assert.strictEqual(
+        (await db.query('select * from sysibm.sysdummy1')).length,
+        1,
+      )
+    } finally {
+      db.close()
+    }
   })
 
   it('should wait for an entry', { timeout: 5000 }, async () => {

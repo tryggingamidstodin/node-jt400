@@ -56,6 +56,42 @@ describe('streamTransformers', () => {
       assert.deepStrictEqual(await parse(), [])
       assert.deepStrictEqual(await parse('[]'), [])
     })
+
+    it('rejects invalid array syntax and trailing content', async () => {
+      for (const invalid of [
+        'garbage',
+        '[1,]',
+        '[,1]',
+        '[1,,2]',
+        '[[1][2]]',
+        '[1]garbage',
+        '[1][2]',
+        '[[1}]',
+      ]) {
+        await assert.rejects(
+          () => parse(invalid),
+          { name: 'SyntaxError' },
+          invalid,
+        )
+      }
+    })
+
+    it('parses split scalar and nested values', async () => {
+      assert.deepStrictEqual(
+        await parse('["a', '\\"b",tr', 'ue,', '42,', '{"x":[1,2]}]'),
+        ['a"b', true, 42, { x: [1, 2] }],
+      )
+    })
+
+    it('respects backpressure while parsing a large chunk', async () => {
+      const parser = parseJsonArray()
+      const values = Array.from({ length: 10000 }, (_, i) => [i])
+      parser.end(JSON.stringify(values))
+      assert.ok(parser.readableLength <= parser.readableHighWaterMark)
+      const result: unknown[] = []
+      for await (const row of parser) result.push(row)
+      assert.deepStrictEqual(result, values)
+    })
   })
 
   describe('arrayToObject', () => {
