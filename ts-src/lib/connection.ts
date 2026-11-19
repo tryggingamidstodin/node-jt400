@@ -181,13 +181,8 @@ export function createConnection({
           .catch(handleError({ programName: opt.programName, params, timeout }))
       }
     },
-    pgm: deprecate(function (
-      this: Connection,
-      programName,
-      paramsSchema,
-      libraryName,
-    ) {
-      return this.defineProgram({
+    pgm: deprecate(function (programName, paramsSchema, libraryName) {
+      return jt400.defineProgram({
         programName,
         paramsSchema,
         libraryName,
